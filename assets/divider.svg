@@ -8,6 +8,9 @@
     </linearGradient>
   </defs>
   <line x1="0" y1="14" x2="1200" y2="14" stroke="url(#fadeGreen)" stroke-width="1"/>
-  <polygon points="585,8 600,14 585,20" fill="#ffb000"/>
-  <polygon points="615,8 600,14 615,20" fill="#ffb000"/>
+  <g>
+    <polygon points="585,8 600,14 585,20" fill="#ffb000"/>
+    <polygon points="615,8 600,14 615,20" fill="#ffb000"/>
+    <animate attributeName="opacity" values="1;0.35;1" dur="2.4s" repeatCount="indefinite"/>
+  </g>
 </svg>

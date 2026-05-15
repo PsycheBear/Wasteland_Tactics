@@ -114,7 +114,7 @@ src/
 
 ## <img src="assets/section.svg" alt="" width="20" align="center"/> CREDITS
 
-Built by **[PsycheBear](https://github.com/PsycheBear)** with contributions from **[Jordan Salvador](https://github.com/SalvadorJordan112306)**.
+Built by **[PsycheBear](https://github.com/PsycheBear)** with contributions from **[stachenuggets](https://github.com/stachenuggets)**.
 
 ```
 > END TRANSMISSION
