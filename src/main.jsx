@@ -8,8 +8,10 @@ const rootEl = document.getElementById('root');
 if (rootEl) {
   const root = ReactDOM.createRoot(rootEl);
   root.render(
-    <WtErrorBoundary>
-      <WastelandTactics />
-    </WtErrorBoundary>
+    <React.StrictMode>
+      <WtErrorBoundary>
+        <WastelandTactics />
+      </WtErrorBoundary>
+    </React.StrictMode>
   );
 }

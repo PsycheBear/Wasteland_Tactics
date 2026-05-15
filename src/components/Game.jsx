@@ -4278,7 +4278,7 @@ function WastelandTactics() {
       )}
 
       </>)}
-      <DevTools externalActivate={devToolsActivate} onActivateConsumed={() => setDevToolsActivate(false)} />
+      {import.meta.env.DEV && <DevTools externalActivate={devToolsActivate} onActivateConsumed={() => setDevToolsActivate(false)} />}
     </div>
   );
 }

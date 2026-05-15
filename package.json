@@ -3,6 +3,15 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
+  "description": "Wasteland Tactics — a Fallout-themed auto-battler.",
+  "homepage": "https://psychebear.github.io/Wasteland_Tactics/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PsycheBear/Wasteland_Tactics.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
