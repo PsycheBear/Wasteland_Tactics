@@ -1,5 +1,6 @@
 // Sound system using Web Audio API
 // Sound system – Fallout / Pip-Boy themed (retro sci-fi, mechanical, warm)
+import { BASE } from '../baseUrl.js';
 export const WT_SETTINGS = { volume: 1, musicVolume: 1, sfxVolume: 1, uiSoundVolume: 1, ambientVolume: 1, animationSpeed: 1, scanlines: true, phosphor: true, crtMode: false };
 export const createSound = (getVol = () => WT_SETTINGS.volume) => {
   let audioCtx = null;
@@ -258,7 +259,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
         setTimeout(() => { playRichTone(659, 0.2, 'square', 0.18); playTone(1318, 0.15, 'sine', 0.04); }, 250);
         setTimeout(() => playTone(659, 0.3, 'triangle', 0.06), 380);
       };
-      playFile('/audio/sfx/ui/victory-fanfare.mp3', 0.5, synthFallback);
+      playFile(`${BASE}/audio/sfx/ui/victory-fanfare.mp3`, 0.5, synthFallback);
     },
     defeat: () => {
       const synthFallback = () => {
@@ -267,7 +268,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
         setTimeout(() => playRichTone(123, 0.22, 'sawtooth', 0.12), 120);
         setTimeout(() => playRichTone(82, 0.3, 'sawtooth', 0.1), 260);
       };
-      playFile('/audio/sfx/ui/defeat-jingle.mp3', 0.5, synthFallback);
+      playFile(`${BASE}/audio/sfx/ui/defeat-jingle.mp3`, 0.5, synthFallback);
     },
     click: () => playClick(),
     fight: () => {
@@ -286,7 +287,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     },
     experienceUp: () => {
       try {
-        const sfx = new Audio('/audio/experience-up.mp3');
+        const sfx = new Audio(`${BASE}/audio/experience-up.mp3`);
         sfx.volume = 0.5 * getVol();
         sfx.play().catch(() => {});
       } catch(_) {}
@@ -294,7 +295,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     startPrepMusic: () => {
       try {
         if (!prepMusic) {
-          prepMusic = new Audio('/audio/prep-music.mp3');
+          prepMusic = new Audio(`${BASE}/audio/prep-music.mp3`);
           prepMusic.loop = true;
         }
         prepMusic.volume = Math.max(0.01, 0.3 * getVol());
@@ -312,7 +313,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     startBattleMusic: () => {
       try {
         if (!battleMusic) {
-          battleMusic = new Audio('/audio/battle-music.m4a');
+          battleMusic = new Audio(`${BASE}/audio/battle-music.m4a`);
           battleMusic.loop = true;
         }
         battleMusic.volume = Math.max(0.01, 0.3 * getVol());
@@ -498,7 +499,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           setTimeout(() => playTone(1000, 0.04, 'sine', 0.06), 30);
         } catch(_) {}
       };
-      playFile('/audio/easter-eggs/cap-ting.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/easter-eggs/cap-ting.mp3`, 0.4, synthFallback);
     },
 
     capsSpend: () => {
@@ -509,7 +510,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           setTimeout(() => playTone(700, 0.05, 'sine', 0.06), 30);
         } catch(_) {}
       };
-      playFile('/audio/easter-eggs/metal-clink.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/easter-eggs/metal-clink.mp3`, 0.4, synthFallback);
     },
 
     // ───────────────────── Combat Sounds ─────────────────────
@@ -522,7 +523,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playNoise(0.03, 0.1, 800);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/gunshot.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/gunshot.mp3`, 0.4, synthFallback);
     },
 
     laserZap: () => {
@@ -532,7 +533,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playTone(1500, 0.04, 'sine', 0.08);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/laser-zap.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/laser-zap.mp3`, 0.4, synthFallback);
     },
 
     meleeHit: () => {
@@ -543,7 +544,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playNoise(0.03, 0.08, 3000);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/melee-hit.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/melee-hit.mp3`, 0.4, synthFallback);
     },
 
     explosion: () => {
@@ -555,7 +556,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           setTimeout(() => playFreqSweep(80, 30, 0.3, 'sine', 0.1), 100);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/explosion.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/explosion.mp3`, 0.4, synthFallback);
     },
 
     healChime: () => {
@@ -589,7 +590,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
         osc.stop(t + 0.4); lfo.stop(t + 0.4);
         osc.onended = () => { try { osc.disconnect(); lfo.disconnect(); lfoGain.disconnect(); gain.disconnect(); } catch(_){} };
       } catch(_) {} };
-      playFile('/audio/sfx/combat/ray-gun.mp3', 0.3, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/ray-gun.mp3`, 0.3, synthFallback);
     },
 
     missWhiff: () => {
@@ -598,7 +599,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playNoiseSweep(0.15, 0.1, 4000, 800, 0.6);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/sword-swing.mp3', 0.35, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/sword-swing.mp3`, 0.35, synthFallback);
     },
 
     criticalHit: () => {
@@ -653,7 +654,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           osc.onended = () => { try { osc.disconnect(); lfo.disconnect(); lfoGain.disconnect(); gain.disconnect(); } catch(_){} };
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/power-up.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/power-up.mp3`, 0.4, synthFallback);
     },
 
     abilityAoe: () => {
@@ -708,7 +709,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch(_){} };
         } catch(_) {}
       };
-      playFile('/audio/sfx/lucky38/elevator-hum.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/lucky38/elevator-hum.mp3`, 0.4, synthFallback);
     },
 
     elevatorDing: () => {
@@ -718,7 +719,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playTone(2400, 0.2, 'sine', 0.05);
         } catch(_) {}
       };
-      playFile('/audio/sfx/lucky38/elevator-ding.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/lucky38/elevator-ding.mp3`, 0.4, synthFallback);
     },
 
     doorsOpen: () => {
@@ -733,7 +734,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playTone(120, 0.12, 'sawtooth', 0.08);
         } catch(_) {}
       };
-      playFile('/audio/sfx/lucky38/neon-buzz.mp3', 0.35, synthFallback);
+      playFile(`${BASE}/audio/sfx/lucky38/neon-buzz.mp3`, 0.35, synthFallback);
     },
 
     leverPull: () => {
@@ -804,7 +805,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           }, 1000);
         } catch(_) {}
       };
-      playFile('/audio/sfx/lucky38/slot-machine.mp3', 0.45, synthFallback);
+      playFile(`${BASE}/audio/sfx/lucky38/slot-machine.mp3`, 0.45, synthFallback);
     },
 
     bustPowerdown: () => {
@@ -899,7 +900,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           setTimeout(() => playTone(880, 0.2, 'sawtooth', 0.14), 750);
         } catch(_) {}
       };
-      playFile('/audio/sfx/combat/warning-siren.mp3', 0.4, synthFallback);
+      playFile(`${BASE}/audio/sfx/combat/warning-siren.mp3`, 0.4, synthFallback);
     },
 
     bossEntrance: () => {
@@ -921,7 +922,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
       const synthFallback = () => {
         try { playNoise(0.003, 0.06, 7000); } catch(_) {}
       };
-      playFile('/audio/easter-eggs/geiger-counter.mp3', 0.35, synthFallback);
+      playFile(`${BASE}/audio/easter-eggs/geiger-counter.mp3`, 0.35, synthFallback);
     },
 
     vaultDoor: () => {
@@ -931,7 +932,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
           playFreqSweep(50, 30, 1.0, 'sine', 0.08);
         } catch(_) {}
       };
-      playFile('/audio/easter-eggs/vault-door.mp3', 0.45, synthFallback);
+      playFile(`${BASE}/audio/easter-eggs/vault-door.mp3`, 0.45, synthFallback);
     },
 
     holotapeInsert: () => {
@@ -994,7 +995,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     startCasinoMusic: () => {
       try {
         if (!casinoMusic) {
-          casinoMusic = new Audio('/audio/music/casino-jazz.mp3');
+          casinoMusic = new Audio(`${BASE}/audio/music/casino-jazz.mp3`);
           casinoMusic.loop = true;
         }
         casinoMusic.volume = Math.max(0.01, 0.25 * getVol());
@@ -1016,7 +1017,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     startBossMusic: () => {
       try {
         if (!bossMusic) {
-          bossMusic = new Audio('/audio/music/boss-battle.mp3');
+          bossMusic = new Audio(`${BASE}/audio/music/boss-battle.mp3`);
           bossMusic.loop = true;
         }
         bossMusic.volume = Math.max(0.01, 0.3 * getVol());

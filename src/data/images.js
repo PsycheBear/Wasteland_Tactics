@@ -1,6 +1,7 @@
 // Auto-extracted image data (base64 WebP)
 // Edit this file to change unit/UI images
 
+import { BASE } from '../baseUrl.js';
 export const IMAGES = {
   // Preston Garvey (1★, 2★, 3★)
   preston: {
@@ -75,9 +76,9 @@ export const IMAGES = {
     3: 'data:image/webp;base64,UklGRqYDAABXRUJQVlA4WAoAAAAQAAAAMwAAMwAAQUxQSBkAAAABUNM2EvON7PMfK4Dsr4jIe8UKOSQRQQIBAFZQOCBmAwAAEBAAnQEqNAA0AD61SqBLJyQjIawJmOAWiWcAyC4jOBXtIZhe0/RQ4kdKDj89VT/C8g31v7BSq1SKIJxb9XyJuQZ39Yd8hcdfaDac9BcxUTwvvuP/4Sm9pOsNzWjXUK0pArnZIpHZxP5U8B5oYga8Zk/vJFTHlKaJBN+adbAILiHFj9frYVJHcgAA/vxKDh5DP2xuKSlxvtLWjS/0eOB+NIbuQJjT0AHKDINF6dwjd/SbDbIyLLaccGDPgaHUyXCM9Tb/1HCZuJzxElTUfyprVfajljS8sI15n7BTKmHhVcHdrFyrA6gGlqX9QX7WhlzFhdtjd0ydR+3PXRgp+azlDtOEGzsBpkaKWMMrtIv7Gi8kaOGF76+jH4hgbRpXC52OvKi2L3CJQ6q/57FvuZ83l2yz+mMsy2fYCj1qQ2PnjF+X69+A5i26upJd7ly9e1q4jaVoLOzpYjKndqaN/7d8J6toGyl+0GfMX6Do4A4Flu6QN2KxSw0cfaAco2LYUCXAGISfyxFgc6D/lq/LpZ2jHkMk0NfjgD18YyvsGQ0dukIsAJKqA/EU5udPJPznGAgdWkdUEuKoNpVJR2srNHFQMxYqsJdUwM9JUuclWg2eH7psH76dDpvzTKRLvGEWcVOCCw1SzJsCVq5DOz/n5r5nMfjNfYIM/IUbfIHR4s7Ecktdplbqtb0T9jBO7/DAy+QaiSQCWzj39mKss0DIjoXRj9lSHoYVp9Mc8WTgoRliU2AcOfni8Be6RAIpndmfOnjZPBzyBUupfWOMY1glAg0iwJxr9iB35XZL3bP+sbfzFQXKI9XhqjWq9WB36icGwalsLF93gK8AFZidwtFsCf9XfFXxEuZv90JcQ9EckpHTlI+qP1JhzQTn7UenbHJB4f1YSeOUyW7qJ/ENmT3v50aXmWAy8t10ZfcTBPjAyHUWnuD+xSCjEtFYqpYpKtB+FXA/MWtJbzf5nL+kqI9/NmJYZmXlL6DKzyZx2EBG4dEI7YPPHq8bdx63z0Jsg85AlTxv2diugwYso8Scdsnguq65jYEnAVKduTVnhvLX8QbDEI3g+ONJp81MSpOMCC1zzJnJsBrORGmf+u9ObMFHQL1wI0DLGcm+A5uidFK3A5eT7J6QcryOusp9MkRQxH5sU85QAZHBgAAA',
   },
   marcy: {
-    1: '/images/marcy-1.png',
-    2: '/images/marcy-2.png',
-    3: '/images/marcy-3.png',
+    1: `${BASE}/images/marcy-1.png`,
+    2: `${BASE}/images/marcy-2.png`,
+    3: `${BASE}/images/marcy-3.png`,
   },
 
   fahrenheit: {
@@ -111,9 +112,9 @@ export const IMAGES = {
     3: 'data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2252%22%20height%3D%2248%22%20viewBox%3D%220%200%2052%2048%22%3E%3Crect%20width%3D%2252%22%20height%3D%2248%22%20rx%3D%224%22%20fill%3D%22%233A2222%22%2F%3E%3Cdefs%3E%3Cfilter%20id%3D%22g%22%3E%3CfeGaussianBlur%20stdDeviation%3D%222%22%2F%3E%3C%2Ffilter%3E%3C%2Fdefs%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2250%22%20height%3D%2246%22%20rx%3D%224%22%20fill%3D%22none%22%20stroke%3D%22%23FFD700%22%20stroke-width%3D%222.5%22%20filter%3D%22url%28%23g%29%22%2F%3E%3Crect%20x%3D%221%22%20y%3D%221%22%20width%3D%2250%22%20height%3D%2246%22%20rx%3D%224%22%20fill%3D%22none%22%20stroke%3D%22%23FFD700%22%20stroke-width%3D%222.5%22%2F%3E%3Cellipse%20cx%3D%2226%22%20cy%3D%2226%22%20rx%3D%2211%22%20ry%3D%2213%22%20fill%3D%22%23D0B090%22%2F%3E%3Cpath%20d%3D%22M15%2020%20Q20%2014%2026%2016%20Q32%2014%2037%2020%22%20fill%3D%22%233A3A3A%22%2F%3E%3Ccircle%20cx%3D%2222%22%20cy%3D%2224%22%20r%3D%221.5%22%20fill%3D%22%23222%22%2F%3E%3Ccircle%20cx%3D%2231%22%20cy%3D%2224%22%20r%3D%222.2%22%20fill%3D%22%23333%22%2F%3E%3Ccircle%20cx%3D%2231%22%20cy%3D%2224%22%20r%3D%221.2%22%20fill%3D%22%23EE4444%22%2F%3E%3Cline%20x1%3D%2233%22%20y1%3D%2223%22%20x2%3D%2237%22%20y2%3D%2221%22%20stroke%3D%22%23555%22%20stroke-width%3D%220.6%22%2F%3E%3Cline%20x1%3D%2233%22%20y1%3D%2225%22%20x2%3D%2236%22%20y2%3D%2227%22%20stroke%3D%22%23555%22%20stroke-width%3D%220.6%22%2F%3E%3Cpath%20d%3D%22M24%2032%20L28%2032%22%20stroke%3D%22%23222%22%20stroke-width%3D%221%22%2F%3E%3Cpath%20d%3D%22M10%2038%20L18%2033%20L34%2033%20L42%2038%20L42%2048%20L10%2048Z%22%20fill%3D%22%233C3C3C%22%2F%3E%3Crect%20x%3D%2218%22%20y%3D%2238%22%20width%3D%2216%22%20height%3D%223%22%20rx%3D%221%22%20fill%3D%22%23444%22%2F%3E%3Ccircle%20cx%3D%2226%22%20cy%3D%2239.5%22%20r%3D%221%22%20fill%3D%22%23EE4444%22%2F%3E%3C%2Fsvg%3E',
   },
   liberty: {
-    1: '/images/liberty-1.png',
-    2: '/images/liberty-2.png',
-    3: '/images/liberty-3.png',
+    1: `${BASE}/images/liberty-1.png`,
+    2: `${BASE}/images/liberty-2.png`,
+    3: `${BASE}/images/liberty-3.png`,
   },
 
   // UI Elements - placeholders

@@ -3,6 +3,7 @@ import { UNIT_DATABASE } from '../data/units.js';
 import { COMPLETED_ITEMS, ITEM_COMPONENT_KEYS, getRandomComponent } from '../data/items.js';
 import { AUGMENT_POOL } from '../data/augments.js';
 import { UNIT_KEYS, getRandomCost, makeUid } from '../data/constants.js';
+import { BASE } from '../baseUrl.js';
 
 /* ─── Wheel Slice Definitions ─── */
 const WHEEL_SLICES = [
@@ -458,7 +459,7 @@ export default function Lucky38Carousel({
             {/* Wheel image — rotates */}
             <img
               ref={wheelRef}
-              src="/images/lucky38/roulette-wheel.png"
+              src={`${BASE}/images/lucky38/roulette-wheel.png`}
               alt="Lucky 38 Wheel"
               className={`lucky38-wheel-img ${nearMiss ? 'lucky38-near-miss' : ''}`}
               draggable={false}

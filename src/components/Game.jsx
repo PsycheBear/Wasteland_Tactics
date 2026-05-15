@@ -13,6 +13,7 @@ import { GameIcon, createGameIcon } from './GameIcon.jsx';
 import Lucky38Carousel from './Lucky38Carousel.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
 import DevTools from './DevTools.jsx';
+import { BASE } from '../baseUrl.js';
 
 /* ─── Combat log emoji → colored badge parser ─── */
 const LOG_EMOJI_MAP = {
@@ -461,7 +462,7 @@ function WastelandTactics() {
     let interactCleanup = () => {};
     if (phase === 'menu') {
       const isPipBoy = (settings.uiTheme || 'tactical') === 'default';
-      const wantedSrc = isPipBoy ? '/audio/music/fo4-main-theme.mp3' : '/audio/menu-music.mp3';
+      const wantedSrc = isPipBoy ? `${BASE}/audio/music/fo4-main-theme.mp3` : `${BASE}/audio/menu-music.mp3`;
       // Switch track if theme changed
       if (menuMusicThemeRef.current !== wantedSrc) {
         if (menuMusicRef.current) { menuMusicRef.current.pause(); menuMusicRef.current = null; }
@@ -1197,7 +1198,7 @@ function WastelandTactics() {
   const SHOP_BG = IMAGES.shop_bg || '';
   const FIGHT_BTN = IMAGES.fight_btn;
   const CAPS_IMG = IMAGES.caps;
-  const LOGO_IMG = '/logo.png';
+  const LOGO_IMG = `${BASE}/logo.png`;
 
   // Helper to get unit image or generate placeholder
   const getUnitImage = (unitId, stars) => {
@@ -1253,8 +1254,8 @@ function WastelandTactics() {
           {(() => {
             const t = settings.uiTheme || 'tactical';
             const bgs = {
-              tactical: { img: '/menu-bg.jpg', overlay: 'linear-gradient(90deg, rgba(10,6,2,0.6) 0px, rgba(10,6,2,0.3) 600px, rgba(5,3,1,0.15) 1000px, rgba(5,3,1,0.1) 100%)' },
-              default: { img: '/pipboy-bg.jpg', overlay: 'none' },
+              tactical: { img: `${BASE}/menu-bg.jpg`, overlay: 'linear-gradient(90deg, rgba(10,6,2,0.6) 0px, rgba(10,6,2,0.3) 600px, rgba(5,3,1,0.15) 1000px, rgba(5,3,1,0.1) 100%)' },
+              default: { img: `${BASE}/pipboy-bg.jpg`, overlay: 'none' },
               vault: { grad: 'radial-gradient(ellipse at 60% 40%, #0a0a22 0%, #050518 40%, #020210 70%, #010108 100%)', overlay: 'linear-gradient(90deg, rgba(0,0,12,0.7) 0px, rgba(0,0,12,0.4) 600px, transparent 1000px)' },
               nuka: { grad: 'radial-gradient(ellipse at 60% 40%, #1a0808 0%, #100404 40%, #080202 70%, #040101 100%)', overlay: 'linear-gradient(90deg, rgba(12,2,2,0.7) 0px, rgba(12,2,2,0.4) 600px, transparent 1000px)' },
             };
@@ -1331,7 +1332,7 @@ function WastelandTactics() {
               </div>
               {/* Avatar — clean circle, no frame overlay */}
               <div style={{ width: 42, height: 42, borderRadius: '50%', overflow: 'hidden', flexShrink: 0 }}>
-                <img src="/images/profile/vault-boy.webp" alt="Vault Boy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 10%' }} />
+                <img src={`${BASE}/images/profile/vault-boy.webp`} alt="Vault Boy" style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 10%' }} />
               </div>
             </div>
           </div>
@@ -1781,11 +1782,11 @@ function WastelandTactics() {
                     <div style={{ fontSize: 10, color: '#7a6030', marginBottom: 12 }}>Changes the battlefield background and grid lines during combat.</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
-                        { id: 'arena2', name: 'Dustbowl', image: '/arena-2.png', border: '#a08040' },
-                        { id: 'arena1', name: 'Ruined Pit', image: '/arena-1.png', border: '#c85a20' },
-                        { id: 'arena3', name: 'The Cage', image: '/arena-3.png', border: '#666688' },
-                        { id: 'arena4', name: 'Fight Club', image: '/arena-4.png', border: '#aa6644' },
-                        { id: 'arena5', name: 'Rubble Ring', image: '/arena-5.png', border: '#777766' },
+                        { id: 'arena2', name: 'Dustbowl', image: `${BASE}/arena-2.png`, border: '#a08040' },
+                        { id: 'arena1', name: 'Ruined Pit', image: `${BASE}/arena-1.png`, border: '#c85a20' },
+                        { id: 'arena3', name: 'The Cage', image: `${BASE}/arena-3.png`, border: '#666688' },
+                        { id: 'arena4', name: 'Fight Club', image: `${BASE}/arena-4.png`, border: '#aa6644' },
+                        { id: 'arena5', name: 'Rubble Ring', image: `${BASE}/arena-5.png`, border: '#777766' },
                       ].map(skin => {
                         const isImageSkin = !!skin.image;
                         return (
@@ -1880,11 +1881,11 @@ function WastelandTactics() {
                   {/* Mini battlefield preview */}
                   <div key={settings.boardSkin || 'arena2'} style={(() => {
                     const imageSkins = {
-                      arena1: { image: '/arena-1.png', border: '#c85a20' },
-                      arena2: { image: '/arena-2.png', border: '#a08040' },
-                      arena3: { image: '/arena-3.png', border: '#666688' },
-                      arena4: { image: '/arena-4.png', border: '#aa6644' },
-                      arena5: { image: '/arena-5.png', border: '#777766' },
+                      arena1: { image: `${BASE}/arena-1.png`, border: '#c85a20' },
+                      arena2: { image: `${BASE}/arena-2.png`, border: '#a08040' },
+                      arena3: { image: `${BASE}/arena-3.png`, border: '#666688' },
+                      arena4: { image: `${BASE}/arena-4.png`, border: '#aa6644' },
+                      arena5: { image: `${BASE}/arena-5.png`, border: '#777766' },
                     };
                     const currentSkin = settings.boardSkin || 'arena2';
                     const imgSkin = imageSkins[currentSkin] || imageSkins.arena2;
@@ -2009,7 +2010,7 @@ function WastelandTactics() {
                         <button onClick={() => setCurrencyPopup(true)} style={{ marginLeft: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(200,148,42,0.2)', border: '1px solid rgba(200,148,42,0.4)', color: '#c8942a', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', padding: 0, lineHeight: 1 }}>+</button>
                       </div>
                       <div style={{ padding: '8px 16px', background: 'rgba(10,6,2,0.7)', border: '1px solid rgba(68,204,255,0.3)', borderRadius: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <img src="/nuka-cola.webp" alt="Nuka-Cola" style={{ width: 20, height: 20, objectFit: 'contain' }} />
+                        <img src={`${BASE}/nuka-cola.webp`} alt="Nuka-Cola" style={{ width: 20, height: 20, objectFit: 'contain' }} />
                         <div style={{ fontSize: 16, fontWeight: 'bold', color: '#44ccff' }}>{playerCrystals}</div>
                         <button onClick={() => setCurrencyPopup(true)} style={{ marginLeft: 4, width: 20, height: 20, borderRadius: '50%', background: 'rgba(255,60,30,0.2)', border: '1px solid rgba(68,204,255,0.4)', color: '#44ccff', fontSize: 14, fontWeight: 'bold', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'inherit', padding: 0, lineHeight: 1 }}>+</button>
                       </div>
@@ -2111,7 +2112,7 @@ function WastelandTactics() {
                       <div key={i} style={{ padding: 14, background: 'rgba(10,6,2,0.6)', border: `1px solid ${pack.crystals > 0 && pack.caps === 0 ? 'rgba(68,204,255,0.2)' : 'rgba(200,148,42,0.2)'}`, borderRadius: 6, textAlign: 'center', position: 'relative' }}>
                         {pack.bonus && <div style={{ position: 'absolute', top: -8, left: '50%', transform: 'translateX(-50%)', padding: '2px 8px', background: pack.bonus === 'BEST VALUE' ? 'rgba(180,120,30,0.9)' : 'rgba(100,65,15,0.8)', border: '1px solid #c8942a', borderRadius: 3, fontSize: 7, fontWeight: 'bold', color: '#fff8e0', letterSpacing: 1, whiteSpace: 'nowrap' }}>{pack.bonus}</div>}
                         {pack.caps > 0 && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 }}><span style={{ fontSize: 20, fontWeight: 'bold', color: '#e8c060' }}>{pack.caps}</span>{CAPS_IMG ? <img src={CAPS_IMG} alt="" style={{ width: 16, height: 16 }} /> : <span style={{ color: '#e8c060' }}>C</span>}</div>}
-                        {pack.crystals > 0 && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 }}>{pack.caps > 0 && <span style={{ color: '#888', fontSize: 11 }}>+</span>}<span style={{ fontSize: pack.caps > 0 ? 13 : 20, fontWeight: 'bold', color: '#44ccff' }}>{pack.crystals}</span><img src="/nuka-cola.webp" alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} /></div>}
+                        {pack.crystals > 0 && <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4, marginBottom: 2 }}>{pack.caps > 0 && <span style={{ color: '#888', fontSize: 11 }}>+</span>}<span style={{ fontSize: pack.caps > 0 ? 13 : 20, fontWeight: 'bold', color: '#44ccff' }}>{pack.crystals}</span><img src={`${BASE}/nuka-cola.webp`} alt="" style={{ width: 14, height: 14, objectFit: 'contain' }} /></div>}
                         <button onClick={() => { sound.purchaseCurrency(); setPlayerCaps(c => { const v = c + pack.caps; localStorage.setItem('wt_caps', v); return v; }); setPlayerCrystals(c => { const v = c + pack.crystals; localStorage.setItem('wt_crystals', v); return v; }); setCurrencyPopup(false); }} style={{ padding: '5px 18px', fontSize: 11, fontWeight: 'bold', background: 'linear-gradient(180deg, rgba(180,120,30,0.9) 0%, rgba(100,65,15,0.9) 100%)', border: '1px solid #c8942a', borderRadius: 4, color: '#fff8e0', cursor: 'pointer', fontFamily: 'inherit', letterSpacing: 1, marginTop: 6 }}>{pack.price}</button>
                       </div>
                     ))}
@@ -2723,11 +2724,11 @@ function WastelandTactics() {
           {/* Arena */}
           <div className="wt-combat-arena wt-arena-frame" style={(() => {
             const imageSkins = {
-              arena1: { image: '/arena-1.png', border: '#c85a20' },
-              arena2: { image: '/arena-2.png', border: '#a08040' },
-              arena3: { image: '/arena-3.png', border: '#666688' },
-              arena4: { image: '/arena-4.png', border: '#aa6644' },
-              arena5: { image: '/arena-5.png', border: '#777766' },
+              arena1: { image: `${BASE}/arena-1.png`, border: '#c85a20' },
+              arena2: { image: `${BASE}/arena-2.png`, border: '#a08040' },
+              arena3: { image: `${BASE}/arena-3.png`, border: '#666688' },
+              arena4: { image: `${BASE}/arena-4.png`, border: '#aa6644' },
+              arena5: { image: `${BASE}/arena-5.png`, border: '#777766' },
             };
             const currentSkin = settings.boardSkin || 'arena2';
             const imgSkin = imageSkins[currentSkin] || imageSkins.arena2;
