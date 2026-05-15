@@ -3016,35 +3016,18 @@ function WastelandTactics() {
             {/* Right — Fight + Sell stacked */}
             {phase === 'prep' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center', flexShrink: 0 }}>
-                <button onClick={startCombat} className="wt-fightBtn wt-fightBtn-prep" style={{
-                  width: 110, padding: '10px 0', fontSize: 16, fontWeight: 'bold', letterSpacing: 4,
-                  background: 'rgba(0,40,0,0.5)', border: '1px solid #00ff00', borderRadius: 4,
-                  color: '#00ff00', cursor: 'pointer', fontFamily: "'Share Tech Mono', monospace",
-                  textShadow: '0 0 10px rgba(0,255,0,0.5)',
-                  transition: 'all 0.2s',
-                }}
-                onMouseEnter={e => { e.currentTarget.style.background = 'rgba(0,80,0,0.5)'; e.currentTarget.style.boxShadow = '0 0 24px rgba(0,255,0,0.3), 0 0 48px rgba(0,255,0,0.1)'; }}
-                onMouseLeave={e => { e.currentTarget.style.background = 'rgba(0,40,0,0.5)'; e.currentTarget.style.boxShadow = ''; }}
-                >FIGHT</button>
+                <button
+                  onClick={startCombat}
+                  className="wt-fightBtn wt-fightBtn-prep wt-pipboy-btn wt-pipboy-btn--fight"
+                >
+                  <span>FIGHT</span>
+                </button>
                 <div
                   data-sell-zone
-                  style={{
-                    width: 110, padding: '6px 0',
-                    background: dragOverSell ? 'rgba(80,0,0,0.5)' : 'rgba(40,0,0,0.4)',
-                    border: dragOverSell ? '1px solid #ff4444' : '1px solid rgba(255,60,60,0.4)',
-                    borderRadius: 4,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', transition: 'all 0.2s',
-                    boxShadow: dragOverSell ? '0 0 20px rgba(255,0,0,0.4)' : 'none',
-                    transform: dragOverSell ? 'scale(1.05)' : 'scale(1)',
-                    fontFamily: "'Share Tech Mono', monospace",
-                    fontSize: 12, fontWeight: 'bold', letterSpacing: 3,
-                    color: dragOverSell ? '#ff4444' : 'rgba(255,60,60,0.7)',
-                    textShadow: dragOverSell ? '0 0 8px rgba(255,0,0,0.5)' : 'none',
-                  }}
-                  onMouseEnter={e => { if (!dragOverSell) { e.currentTarget.style.background = 'rgba(60,0,0,0.5)'; e.currentTarget.style.borderColor = 'rgba(255,60,60,0.6)'; e.currentTarget.style.color = '#ff4444'; }}}
-                  onMouseLeave={e => { if (!dragOverSell) { e.currentTarget.style.background = 'rgba(40,0,0,0.4)'; e.currentTarget.style.borderColor = 'rgba(255,60,60,0.4)'; e.currentTarget.style.color = 'rgba(255,60,60,0.7)'; }}}
-                >SELL</div>
+                  className={`wt-pipboy-btn wt-pipboy-btn--sell${dragOverSell ? ' wt-sell-dragover' : ''}`}
+                >
+                  <span>SELL</span>
+                </div>
               </div>
             ) : <div style={{ width: 110 }} />}
           </div>

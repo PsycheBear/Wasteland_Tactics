@@ -2869,3 +2869,147 @@ body { background: #0a0a06; overflow-x: hidden; }
     scroll-behavior: auto !important;
   }
 }
+
+/* ─── Pip-Boy CRT Button ─────────────────────────────────────────────
+   Pure-CSS terminal button: double-line border, scanlines overlay,
+   bracket-shape HUD corner accents, phosphor glow, chromatic aberration
+   on the text, vignette. Variants via CSS custom props.
+   ─────────────────────────────────────────────────────────────────── */
+.wt-pipboy-btn {
+  --pip-color: #39FF14;
+  --pip-glow: rgba(57, 255, 20, 0.55);
+  --pip-glow-soft: rgba(57, 255, 20, 0.25);
+
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Share Tech Mono', monospace;
+  font-weight: bold;
+  letter-spacing: 4px;
+  background: linear-gradient(180deg, rgba(0,30,0,0.78) 0%, rgba(0,8,0,0.95) 100%);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: filter 0.15s ease-out, transform 0.15s ease-out, box-shadow 0.15s ease-out, background 0.15s ease-out, color 0.15s ease-out;
+  color: var(--pip-color);
+  text-shadow:
+    -1px 0 0 rgba(255, 0, 80, 0.35),
+    1px 0 0 rgba(0, 180, 255, 0.35),
+    0 0 6px var(--pip-color),
+    0 0 14px var(--pip-glow);
+  box-shadow:
+    inset 0 0 0 1px var(--pip-color),
+    inset 0 0 0 3px rgba(0,0,0,0.7),
+    inset 0 0 0 4px var(--pip-color),
+    0 0 12px var(--pip-glow),
+    0 0 24px var(--pip-glow-soft);
+}
+
+/* Scanlines + vignette overlay */
+.wt-pipboy-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      rgba(0,0,0,0) 0,
+      rgba(0,0,0,0) 1px,
+      rgba(0,0,0,0.28) 1px,
+      rgba(0,0,0,0.28) 2px
+    ),
+    radial-gradient(ellipse at center, transparent 55%, rgba(0,0,0,0.5) 100%);
+  z-index: 1;
+}
+
+/* Four bracket-shape HUD corner accents */
+.wt-pipboy-btn::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  pointer-events: none;
+  z-index: 2;
+  background:
+    linear-gradient(90deg, var(--pip-color) 0 8px, transparent 8px) top left / 9px 1.5px no-repeat,
+    linear-gradient(180deg, var(--pip-color) 0 8px, transparent 8px) top left / 1.5px 9px no-repeat,
+    linear-gradient(270deg, var(--pip-color) 0 8px, transparent 8px) top right / 9px 1.5px no-repeat,
+    linear-gradient(180deg, var(--pip-color) 0 8px, transparent 8px) top right / 1.5px 9px no-repeat,
+    linear-gradient(90deg, var(--pip-color) 0 8px, transparent 8px) bottom left / 9px 1.5px no-repeat,
+    linear-gradient(0deg, var(--pip-color) 0 8px, transparent 8px) bottom left / 1.5px 9px no-repeat,
+    linear-gradient(270deg, var(--pip-color) 0 8px, transparent 8px) bottom right / 9px 1.5px no-repeat,
+    linear-gradient(0deg, var(--pip-color) 0 8px, transparent 8px) bottom right / 1.5px 9px no-repeat;
+  filter: drop-shadow(0 0 3px var(--pip-glow));
+}
+
+/* Text label sits above pseudo-element overlays */
+.wt-pipboy-btn > * { position: relative; z-index: 3; }
+
+/* HOVER — energized terminal: brighter bloom, slightly amped glow */
+.wt-pipboy-btn:hover {
+  filter: brightness(1.18);
+  background: linear-gradient(180deg, rgba(0,55,0,0.85) 0%, rgba(0,18,0,1) 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--pip-color),
+    inset 0 0 0 3px rgba(0,0,0,0.7),
+    inset 0 0 0 4px var(--pip-color),
+    0 0 22px var(--pip-glow),
+    0 0 48px var(--pip-glow-soft);
+}
+
+/* ACTIVE / PRESSED — inset, dimmed, darker green */
+.wt-pipboy-btn:active {
+  --pip-color: #1F8B0A;
+  --pip-glow: rgba(31, 139, 10, 0.4);
+  --pip-glow-soft: rgba(31, 139, 10, 0.15);
+  background: linear-gradient(180deg, rgba(0,15,0,1) 0%, rgba(0,5,0,1) 100%);
+  filter: brightness(0.85);
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 0 0 1px var(--pip-color),
+    inset 0 0 0 3px rgba(0,0,0,0.7),
+    inset 0 0 0 4px var(--pip-color),
+    inset 0 4px 12px rgba(0,0,0,0.7);
+}
+
+/* FIGHT variant — green (default colors already match) */
+.wt-pipboy-btn--fight {
+  width: 110px;
+  padding: 10px 0;
+  font-size: 16px;
+}
+
+/* SELL variant — red/amber Pip-Boy warning */
+.wt-pipboy-btn--sell {
+  --pip-color: #FF3030;
+  --pip-glow: rgba(255, 140, 0, 0.5);     /* amber secondary glow */
+  --pip-glow-soft: rgba(255, 48, 48, 0.25);
+  width: 110px;
+  padding: 6px 0;
+  font-size: 12px;
+  letter-spacing: 3px;
+  background: linear-gradient(180deg, rgba(30,0,0,0.78) 0%, rgba(8,0,0,0.95) 100%);
+}
+.wt-pipboy-btn--sell:hover {
+  background: linear-gradient(180deg, rgba(55,0,0,0.85) 0%, rgba(18,0,0,1) 100%);
+}
+.wt-pipboy-btn--sell:active {
+  --pip-color: #b81f1f;
+  background: linear-gradient(180deg, rgba(15,0,0,1) 0%, rgba(5,0,0,1) 100%);
+}
+
+/* SELL drag-over: amped, scaled */
+.wt-pipboy-btn--sell.wt-sell-dragover {
+  transform: scale(1.05);
+  filter: brightness(1.25);
+  background: linear-gradient(180deg, rgba(80,0,0,0.9) 0%, rgba(35,0,0,1) 100%);
+  box-shadow:
+    inset 0 0 0 1px var(--pip-color),
+    inset 0 0 0 3px rgba(0,0,0,0.7),
+    inset 0 0 0 4px var(--pip-color),
+    0 0 30px var(--pip-glow),
+    0 0 60px var(--pip-glow-soft);
+}
