@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+    <radialGradient id="nukeGlow" cx="50%" cy="40%" r="50%">
+      <stop offset="0%" stop-color="#ffaa44" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="#ff4444" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <polygon points="32,2 62,32 32,62 2,32" fill="#2a0a0a" stroke="#ff4444" stroke-width="2"/>
+  <!-- Launcher tube -->
+  <rect x="14" y="30" width="24" height="6" rx="2" fill="#5a3322" stroke="#ff4444" stroke-width="0.6"/>
+  <!-- Grip -->
+  <path d="M30,36 L28,44 L33,44 L35,36" fill="#4a2211" stroke="#ff4444" stroke-width="0.5"/>
+  <!-- Stock -->
+  <path d="M38,30 L46,26 L48,28 L48,38 L46,40 L38,36 Z" fill="#5a3322" stroke="#ff4444" stroke-width="0.5"/>
+  <!-- Mini nuke warhead -->
+  <ellipse cx="14" cy="33" rx="6" ry="5" fill="#664422" stroke="#ff4444" stroke-width="0.7" filter="url(#glow)"/>
+  <!-- Warhead nose -->
+  <path d="M8,33 L10,30 L10,36 Z" fill="#775533" stroke="#ff4444" stroke-width="0.5"/>
+  <!-- Glow effect on warhead -->
+  <ellipse cx="14" cy="33" rx="4" ry="3.5" fill="url(#nukeGlow)"/>
+  <!-- Radiation glow lines -->
+  <line x1="8" y1="28" x2="6" y2="25" stroke="#ffaa44" stroke-width="0.6" opacity="0.7"/>
+  <line x1="7" y1="33" x2="4" y2="33" stroke="#ffaa44" stroke-width="0.6" opacity="0.7"/>
+  <line x1="8" y1="38" x2="6" y2="41" stroke="#ffaa44" stroke-width="0.6" opacity="0.7"/>
+  <!-- Fins on warhead -->
+  <rect x="18" y="28" width="1" height="3" fill="#ff4444" opacity="0.6"/>
+  <rect x="18" y="35" width="1" height="3" fill="#ff4444" opacity="0.6"/>
+  <!-- Trigger -->
+  <rect x="34" y="36" width="3" height="2" rx="0.5" fill="#ff4444" opacity="0.5"/>
+</svg>

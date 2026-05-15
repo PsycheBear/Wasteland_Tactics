@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#1a0404" stroke="#ff4444" stroke-width="2"/>
+  <!-- Combat knife -->
+  <path d="M22 50 L42 14" stroke="#cccccc" stroke-width="3" stroke-linecap="round"/>
+  <!-- Blade -->
+  <path d="M42 14 L44 10 L40 12 Z" fill="#dddddd"/>
+  <!-- Handle wrap -->
+  <rect x="23" y="42" width="6" height="10" rx="1" fill="#8B4513" transform="rotate(-55 26 47)"/>
+  <!-- Speed lines (first strike) -->
+  <line x1="46" y1="18" x2="52" y2="14" stroke="#ff4444" stroke-width="1.5" opacity="0.6"/>
+  <line x1="48" y1="22" x2="54" y2="20" stroke="#ff4444" stroke-width="1" opacity="0.4"/>
+  <line x1="44" y1="14" x2="48" y2="8" stroke="#ff4444" stroke-width="1" opacity="0.4"/>
+  <!-- 2x badge -->
+  <circle cx="16" cy="18" r="7" fill="#ff4444" opacity="0.7"/>
+  <text x="16" y="21" text-anchor="middle" fill="#ffffff" font-family="Arial,sans-serif" font-size="8" font-weight="bold">2x</text>
+</svg>

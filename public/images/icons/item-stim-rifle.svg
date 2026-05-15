@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+  </defs>
+  <polygon points="32,2 62,32 32,62 2,32" fill="#0a1a0a" stroke="#44ff88" stroke-width="2"/>
+  <!-- Rifle barrel -->
+  <rect x="10" y="28" width="24" height="4" rx="1" fill="#3a5a3a" stroke="#44ff88" stroke-width="0.6" filter="url(#glow)"/>
+  <!-- Muzzle -->
+  <rect x="8" y="27" width="4" height="6" rx="0.5" fill="#2a4a2a" stroke="#44ff88" stroke-width="0.5"/>
+  <!-- Receiver -->
+  <rect x="26" y="26" width="12" height="8" rx="1.5" fill="#2a5a2a" stroke="#44ff88" stroke-width="0.7"/>
+  <!-- Stock -->
+  <path d="M38,27 L46,24 L48,26 L48,34 L46,36 L38,33 Z" fill="#3a5a3a" stroke="#44ff88" stroke-width="0.5"/>
+  <!-- Grip -->
+  <path d="M34,34 L32,42 L36,42 L38,34" fill="#2a4a2a" stroke="#44ff88" stroke-width="0.5"/>
+  <!-- Medical cross on the side -->
+  <rect x="28" y="27.5" width="8" height="5" rx="0.5" fill="#0a2a0a" stroke="#44ff88" stroke-width="0.4"/>
+  <rect x="30.5" y="28" width="3" height="4" rx="0.3" fill="#44ff88" opacity="0.8"/>
+  <rect x="29" y="29.2" width="6" height="1.6" rx="0.3" fill="#44ff88" opacity="0.8"/>
+  <!-- Stim canister on top -->
+  <rect x="20" y="22" width="3" height="6" rx="1" fill="#226644" stroke="#44ff88" stroke-width="0.4"/>
+  <rect x="20.5" y="23" width="2" height="3" rx="0.5" fill="#44ff88" opacity="0.3"/>
+  <!-- Sight -->
+  <rect x="16" y="25" width="1.5" height="3" fill="#44ff88" opacity="0.6"/>
+</svg>

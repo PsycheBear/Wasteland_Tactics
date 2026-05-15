@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#081820"/><stop offset="100%" stop-color="#020a10"/></radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#44aaff" stroke-width="2"/>
+  <!-- Shell / carapace -->
+  <ellipse cx="32" cy="30" rx="18" ry="14" fill="#2a5a4a" stroke="#1a3a2a" stroke-width="1"/>
+  <ellipse cx="32" cy="28" rx="15" ry="11" fill="#3a7a6a" opacity="0.6"/>
+  <!-- Shell ridges -->
+  <path d="M20 26 Q26 18 32 17 Q38 18 44 26" fill="none" stroke="#1a4a3a" stroke-width="1.5"/>
+  <path d="M18 32 Q26 22 32 21 Q38 22 46 32" fill="none" stroke="#1a4a3a" stroke-width="1"/>
+  <!-- Head poking out -->
+  <ellipse cx="32" cy="42" rx="8" ry="5" fill="#4a8a6a"/>
+  <ellipse cx="32" cy="40" rx="6" ry="3" fill="#5a9a7a"/>
+  <!-- Eyes -->
+  <circle cx="29" cy="40" r="1.5" fill="#ffff00"/>
+  <circle cx="35" cy="40" r="1.5" fill="#ffff00"/>
+  <circle cx="29" cy="40" r="0.6" fill="#000"/>
+  <circle cx="35" cy="40" r="0.6" fill="#000"/>
+  <!-- Claws -->
+  <path d="M16 36 Q10 32 8 28 Q7 25 10 26 L14 30 Q12 28 11 25 Q10 22 13 24 L16 30" fill="#4a8a6a" stroke="#2a5a4a" stroke-width="0.8"/>
+  <path d="M48 36 Q54 32 56 28 Q57 25 54 26 L50 30 Q52 28 53 25 Q54 22 51 24 L48 30" fill="#4a8a6a" stroke="#2a5a4a" stroke-width="0.8"/>
+  <!-- Small legs -->
+  <line x1="24" y1="42" x2="18" y2="48" stroke="#3a6a5a" stroke-width="1.5"/>
+  <line x1="22" y1="40" x2="15" y2="44" stroke="#3a6a5a" stroke-width="1.5"/>
+  <line x1="40" y1="42" x2="46" y2="48" stroke="#3a6a5a" stroke-width="1.5"/>
+  <line x1="42" y1="40" x2="49" y2="44" stroke="#3a6a5a" stroke-width="1.5"/>
+  <!-- Crown spikes (queen) -->
+  <path d="M22 22 L20 14 L24 19" fill="#2a6a5a" stroke="#1a4a3a" stroke-width="0.5"/>
+  <path d="M28 19 L27 11 L30 16" fill="#2a6a5a" stroke="#1a4a3a" stroke-width="0.5"/>
+  <path d="M32 18 L32 9 L34 15" fill="#2a6a5a" stroke="#1a4a3a" stroke-width="0.5"/>
+  <path d="M36 19 L37 11 L34 16" fill="#2a6a5a" stroke="#1a4a3a" stroke-width="0.5"/>
+  <path d="M42 22 L44 14 L40 19" fill="#2a6a5a" stroke="#1a4a3a" stroke-width="0.5"/>
+  <!-- Water drip glow -->
+  <circle cx="32" cy="48" r="3" fill="#44aaff" opacity="0.15"/>
+</svg>

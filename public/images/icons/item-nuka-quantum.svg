@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="8" fill="#04061a" stroke="#44aaff" stroke-width="2"/>
+  <!-- Bottle glow -->
+  <ellipse cx="32" cy="36" rx="14" ry="20" fill="#44aaff" opacity="0.06"/>
+  <!-- Bottle cap -->
+  <rect x="27" y="8" width="10" height="5" rx="1" fill="#cc8800" stroke="#aa6600" stroke-width="0.8"/>
+  <line x1="29" y1="8" x2="29" y2="13" stroke="#aa6600" stroke-width="0.5"/>
+  <line x1="31" y1="8" x2="31" y2="13" stroke="#aa6600" stroke-width="0.5"/>
+  <line x1="33" y1="8" x2="33" y2="13" stroke="#aa6600" stroke-width="0.5"/>
+  <line x1="35" y1="8" x2="35" y2="13" stroke="#aa6600" stroke-width="0.5"/>
+  <!-- Bottle neck -->
+  <rect x="28" y="13" width="8" height="8" rx="1" fill="#1a4488" stroke="#44aaff" stroke-width="0.8"/>
+  <!-- Bottle body -->
+  <path d="M28 21 Q22 24 20 30 Q18 38 20 46 Q22 54 32 56 Q42 54 44 46 Q46 38 44 30 Q42 24 36 21 Z" fill="#1a4488" stroke="#44aaff" stroke-width="1"/>
+  <!-- Liquid glow inside -->
+  <path d="M24 28 Q22 36 24 44 Q26 50 32 52 Q38 50 40 44 Q42 36 40 28 Z" fill="#44aaff" opacity="0.3"/>
+  <path d="M26 32 Q25 38 27 44 Q30 48 32 48 Q34 48 37 44 Q39 38 38 32 Z" fill="#66ccff" opacity="0.2"/>
+  <!-- Nuka label -->
+  <rect x="24" y="34" width="16" height="8" rx="1" fill="#ffffff" opacity="0.15"/>
+  <text x="32" y="40" text-anchor="middle" fill="#44aaff" font-family="Arial,sans-serif" font-size="5" font-weight="bold" opacity="0.6">NUKA</text>
+  <!-- Bubbles -->
+  <circle cx="28" cy="44" r="1" fill="#66ccff" opacity="0.5"/>
+  <circle cx="34" cy="40" r="1.5" fill="#66ccff" opacity="0.4"/>
+  <circle cx="30" cy="36" r="0.8" fill="#66ccff" opacity="0.5"/>
+  <circle cx="36" cy="46" r="1" fill="#66ccff" opacity="0.3"/>
+</svg>

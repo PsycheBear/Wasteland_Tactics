@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1a0404" stroke="#CC3333" stroke-width="2"/>
+  <!-- Skull -->
+  <path d="M20 30 Q20 14 32 12 Q44 14 44 30 L44 38 Q44 42 40 42 L38 40 L36 42 L34 40 L32 42 L30 40 L28 42 L26 40 L24 42 Q20 42 20 38 Z" fill="#ddccbb"/>
+  <path d="M22 30 Q22 16 32 14 Q42 16 42 30 L42 36 Q42 38 40 39 L24 39 Q22 38 22 36 Z" fill="#eeddcc" opacity="0.4"/>
+  <!-- Eye sockets -->
+  <ellipse cx="26" cy="28" rx="5" ry="5.5" fill="#1a0404"/>
+  <ellipse cx="38" cy="28" rx="5" ry="5.5" fill="#1a0404"/>
+  <!-- Glowing red eyes -->
+  <circle cx="26" cy="28" r="2" fill="#CC3333" opacity="0.8"/>
+  <circle cx="38" cy="28" r="2" fill="#CC3333" opacity="0.8"/>
+  <circle cx="26" cy="28" r="4" fill="#CC3333" opacity="0.1"/>
+  <circle cx="38" cy="28" r="4" fill="#CC3333" opacity="0.1"/>
+  <!-- Nose hole -->
+  <path d="M30 34 L32 36 L34 34" fill="#1a0404"/>
+  <!-- Teeth -->
+  <path d="M26 40 L28 42 L30 40 L32 42 L34 40 L36 42 L38 40" fill="none" stroke="#bbaa99" stroke-width="1"/>
+  <!-- Mohawk spikes -->
+  <path d="M28 14 L26 4 L30 10" fill="#CC3333"/>
+  <path d="M32 12 L32 2 L34 8" fill="#CC3333"/>
+  <path d="M36 14 L38 4 L34 10" fill="#CC3333"/>
+  <!-- Crossed bones below -->
+  <line x1="20" y1="50" x2="44" y2="56" stroke="#ddccbb" stroke-width="2.5" stroke-linecap="round"/>
+  <line x1="44" y1="50" x2="20" y2="56" stroke="#ddccbb" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="20" cy="50" r="2" fill="#ddccbb"/><circle cx="44" cy="50" r="2" fill="#ddccbb"/>
+  <circle cx="20" cy="56" r="2" fill="#ddccbb"/><circle cx="44" cy="56" r="2" fill="#ddccbb"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 62,32 32,62 2,32" fill="#1a0e04" stroke="#ffaa44" stroke-width="2"/>
+  <!-- Grenade body -->
+  <circle cx="32" cy="36" r="14" fill="#445544" stroke="#556655" stroke-width="1"/>
+  <circle cx="32" cy="36" r="11" fill="#556655" opacity="0.4"/>
+  <!-- Grid pattern on grenade -->
+  <line x1="22" y1="30" x2="42" y2="30" stroke="#334433" stroke-width="0.5"/>
+  <line x1="20" y1="36" x2="44" y2="36" stroke="#334433" stroke-width="0.5"/>
+  <line x1="22" y1="42" x2="42" y2="42" stroke="#334433" stroke-width="0.5"/>
+  <line x1="26" y1="22" x2="26" y2="50" stroke="#334433" stroke-width="0.5"/>
+  <line x1="32" y1="22" x2="32" y2="50" stroke="#334433" stroke-width="0.5"/>
+  <line x1="38" y1="22" x2="38" y2="50" stroke="#334433" stroke-width="0.5"/>
+  <!-- Nuka glow -->
+  <circle cx="32" cy="36" r="6" fill="#44aaff" opacity="0.2"/>
+  <circle cx="32" cy="36" r="3" fill="#44aaff" opacity="0.4"/>
+  <!-- Spoon/lever -->
+  <rect x="30" y="18" width="4" height="6" rx="1" fill="#666666"/>
+  <path d="M30 18 L28 10 Q28 8 30 8 L34 8 Q36 8 36 10 L34 18" fill="none" stroke="#888888" stroke-width="1.5"/>
+  <!-- Pin -->
+  <circle cx="38" cy="12" r="3" fill="none" stroke="#ffaa44" stroke-width="1.5"/>
+  <line x1="36" y1="14" x2="34" y2="16" stroke="#ffaa44" stroke-width="1"/>
+  <!-- Fuse spark -->
+  <circle cx="32" cy="8" r="2" fill="#ffaa44" opacity="0.6"/>
+  <circle cx="32" cy="8" r="4" fill="#ffaa44" opacity="0.15"/>
+</svg>

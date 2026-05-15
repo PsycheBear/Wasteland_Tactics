@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0a1a2a" stroke="#4A90D9" stroke-width="2"/>
+  <!-- Five-pointed star (Minutemen emblem) -->
+  <polygon points="32,8 37.5,24 54,24 40.5,34 45.5,50 32,40 18.5,50 23.5,34 10,24 26.5,24" fill="#4A90D9" stroke="#6AB0F9" stroke-width="0.5"/>
+  <!-- Inner star highlight -->
+  <polygon points="32,14 35.5,25 46,25 37.5,32 40.5,43 32,36 23.5,43 26.5,32 18,25 28.5,25" fill="#5AA0E9" opacity="0.4"/>
+  <!-- Center circle -->
+  <circle cx="32" cy="30" r="4" fill="#0a1a2a" stroke="#4A90D9" stroke-width="1"/>
+  <!-- Musket silhouette in center -->
+  <line x1="29" y1="30" x2="35" y2="30" stroke="#6AB0F9" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="35" y1="30" x2="36" y2="28" stroke="#6AB0F9" stroke-width="1" stroke-linecap="round"/>
+  <!-- Glow -->
+  <circle cx="32" cy="30" r="18" fill="#4A90D9" opacity="0.06"/>
+</svg>

@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64" fill="none">
+  <!-- Outer gear ring with 12 teeth -->
+  <path d="M32 1 L34.5 5 L38 3 L38.5 7.5 L42 6.5 L41 11 L44.5 11 L42.5 15 L46 16 L43 19.5
+           L46 21.5 L42.5 24 L45 27 L41 28.5 L42.5 32 L38.5 32 L39 36 L35 35 L34.5 39 L32 36
+           L29.5 39 L29 35 L25 36 L25.5 32 L21.5 32 L23 28.5 L19 27 L21.5 24 L18 21.5 L21 19.5
+           L18 16 L21.5 15 L19.5 11 L23 11 L22 6.5 L25.5 7.5 L26 3 L29.5 5 Z"
+        fill="none" stroke="#c89632" stroke-width="1.5" opacity="0.8"/>
+  <!-- Inner ring -->
+  <circle cx="32" cy="32" r="24" fill="none" stroke="#c89632" stroke-width="2"/>
+  <!-- Metallic inner border -->
+  <circle cx="32" cy="32" r="22" fill="none" stroke="#a07828" stroke-width="1"/>
+  <!-- Rivets -->
+  <circle cx="32" cy="9" r="1.5" fill="#c89632" opacity="0.6"/>
+  <circle cx="32" cy="55" r="1.5" fill="#c89632" opacity="0.6"/>
+  <circle cx="9" cy="32" r="1.5" fill="#c89632" opacity="0.6"/>
+  <circle cx="55" cy="32" r="1.5" fill="#c89632" opacity="0.6"/>
+  <circle cx="15.5" cy="15.5" r="1.2" fill="#c89632" opacity="0.5"/>
+  <circle cx="48.5" cy="15.5" r="1.2" fill="#c89632" opacity="0.5"/>
+  <circle cx="15.5" cy="48.5" r="1.2" fill="#c89632" opacity="0.5"/>
+  <circle cx="48.5" cy="48.5" r="1.2" fill="#c89632" opacity="0.5"/>
+</svg>

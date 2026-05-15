@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="1" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+  </defs>
+  <polygon points="32,2 62,32 32,62 2,32" fill="#1a1a1a" stroke="#cccccc" stroke-width="2"/>
+  <!-- Fabric/armor mesh shape -->
+  <path d="M22,18 L42,18 L44,22 L44,44 L40,48 L24,48 L20,44 L20,22 Z" fill="#2a2a2a" stroke="#cccccc" stroke-width="0.7" filter="url(#glow)"/>
+  <!-- Weave pattern - diagonal lines one direction -->
+  <line x1="22" y1="18" x2="34" y2="48" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="26" y1="18" x2="38" y2="48" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="30" y1="18" x2="42" y2="48" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="34" y1="18" x2="44" y2="42" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="38" y1="18" x2="44" y2="30" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="20" y1="26" x2="30" y2="48" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <line x1="20" y1="34" x2="26" y2="48" stroke="#999999" stroke-width="0.5" opacity="0.5"/>
+  <!-- Weave pattern - diagonal lines other direction -->
+  <line x1="42" y1="18" x2="30" y2="48" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="38" y1="18" x2="24" y2="48" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="34" y1="18" x2="20" y2="44" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="30" y1="18" x2="20" y2="32" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="26" y1="18" x2="20" y2="22" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="44" y1="26" x2="34" y2="48" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <line x1="44" y1="34" x2="38" y2="48" stroke="#888888" stroke-width="0.5" opacity="0.4"/>
+  <!-- Edge reinforcement -->
+  <path d="M22,18 L42,18" stroke="#cccccc" stroke-width="1" opacity="0.6"/>
+  <path d="M24,48 L40,48" stroke="#cccccc" stroke-width="1" opacity="0.6"/>
+  <!-- Armor plate highlights -->
+  <rect x="28" y="28" width="8" height="8" rx="1" fill="#3a3a3a" stroke="#cccccc" stroke-width="0.4" opacity="0.5"/>
+</svg>

@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+  </defs>
+  <polygon points="32,2 62,32 32,62 2,32" fill="#1a0a2a" stroke="#cc66ff" stroke-width="2"/>
+  <!-- Device base -->
+  <ellipse cx="32" cy="42" rx="8" ry="3" fill="#3a2a4a" stroke="#cc66ff" stroke-width="0.6"/>
+  <rect x="28" y="36" width="8" height="6" rx="1" fill="#3a2a4a" stroke="#cc66ff" stroke-width="0.6"/>
+  <!-- Vortex/portal swirl -->
+  <circle cx="32" cy="28" r="10" fill="none" stroke="#cc66ff" stroke-width="0.8" opacity="0.3" filter="url(#glow)"/>
+  <ellipse cx="32" cy="28" rx="8" ry="7" fill="none" stroke="#cc66ff" stroke-width="0.7" opacity="0.4" transform="rotate(15,32,28)"/>
+  <ellipse cx="32" cy="28" rx="6" ry="5" fill="none" stroke="#cc66ff" stroke-width="0.8" opacity="0.5" transform="rotate(30,32,28)"/>
+  <ellipse cx="32" cy="28" rx="4" ry="3.5" fill="none" stroke="#dd88ff" stroke-width="0.9" opacity="0.6" transform="rotate(45,32,28)"/>
+  <ellipse cx="32" cy="28" rx="2" ry="2" fill="none" stroke="#ee99ff" stroke-width="1" opacity="0.8"/>
+  <!-- Center glow -->
+  <circle cx="32" cy="28" r="1.5" fill="#ee99ff" opacity="0.7"/>
+  <circle cx="32" cy="28" r="3" fill="#cc66ff" opacity="0.15"/>
+  <!-- Energy wisps emanating -->
+  <path d="M24,22 C20,18 22,14 26,16" stroke="#cc66ff" stroke-width="0.5" fill="none" opacity="0.4"/>
+  <path d="M40,22 C44,18 42,14 38,16" stroke="#cc66ff" stroke-width="0.5" fill="none" opacity="0.4"/>
+  <path d="M32,18 C32,14 34,12 36,14" stroke="#cc66ff" stroke-width="0.5" fill="none" opacity="0.3"/>
+  <!-- Device details -->
+  <circle cx="30" cy="40" r="1" fill="#cc66ff" opacity="0.5"/>
+  <circle cx="34" cy="40" r="1" fill="#cc66ff" opacity="0.5"/>
+</svg>

@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#041a0e" stroke="#2E8B57" stroke-width="2"/>
+  <!-- Heart shape -->
+  <path d="M32 48 Q20 38 14 28 Q10 20 18 16 Q26 14 32 22 Q38 14 46 16 Q54 20 50 28 Q44 38 32 48Z" fill="#2E8B57" opacity="0.9"/>
+  <path d="M32 44 Q22 36 17 28 Q14 22 20 19 Q26 17 32 24 Q38 17 44 19 Q50 22 47 28 Q42 36 32 44Z" fill="#3EAB67" opacity="0.4"/>
+  <!-- Cross inside heart -->
+  <rect x="29" y="24" width="6" height="16" rx="1" fill="#041a0e" opacity="0.7"/>
+  <rect x="24" y="29" width="16" height="6" rx="1" fill="#041a0e" opacity="0.7"/>
+  <!-- Pulse line -->
+  <path d="M12 52 L22 52 L25 46 L28 56 L31 48 L34 52 L52 52" fill="none" stroke="#2E8B57" stroke-width="1.5" opacity="0.5"/>
+</svg>

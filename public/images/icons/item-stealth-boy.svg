@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="8" fill="#0e061a" stroke="#aa66ff" stroke-width="2"/>
+  <!-- Ghost/phantom figure fading out -->
+  <!-- Body silhouette with transparency gradient -->
+  <path d="M32 10 Q42 12 44 24 Q45 34 42 42 Q40 48 38 52 L36 52 Q37 48 36 44 L34 52 L32 52 Q33 46 32 42 L30 52 L28 52 Q29 48 28 44 L26 52 L24 52 Q22 48 22 42 Q19 34 20 24 Q22 12 32 10Z" fill="#aa66ff" opacity="0.5"/>
+  <path d="M32 12 Q40 14 42 24 Q43 32 40 40 Q38 46 36 48 L30 48 Q26 46 24 40 Q21 32 22 24 Q24 14 32 12Z" fill="#aa66ff" opacity="0.3"/>
+  <!-- Eyes -->
+  <ellipse cx="28" cy="22" rx="3" ry="2" fill="#ffffff" opacity="0.7"/>
+  <ellipse cx="36" cy="22" rx="3" ry="2" fill="#ffffff" opacity="0.7"/>
+  <circle cx="28" cy="22" r="1" fill="#aa66ff"/>
+  <circle cx="36" cy="22" r="1" fill="#aa66ff"/>
+  <!-- Shimmer/distortion lines -->
+  <path d="M16 20 Q18 22 16 24" fill="none" stroke="#aa66ff" stroke-width="0.8" opacity="0.4"/>
+  <path d="M14 28 Q16 30 14 32" fill="none" stroke="#aa66ff" stroke-width="0.8" opacity="0.3"/>
+  <path d="M48 20 Q46 22 48 24" fill="none" stroke="#aa66ff" stroke-width="0.8" opacity="0.4"/>
+  <path d="M50 28 Q48 30 50 32" fill="none" stroke="#aa66ff" stroke-width="0.8" opacity="0.3"/>
+  <!-- Sparkle dots -->
+  <circle cx="18" cy="16" r="1" fill="#aa66ff" opacity="0.5"/>
+  <circle cx="46" cy="14" r="1" fill="#aa66ff" opacity="0.5"/>
+  <circle cx="12" cy="38" r="1" fill="#aa66ff" opacity="0.3"/>
+  <circle cx="52" cy="36" r="1" fill="#aa66ff" opacity="0.3"/>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#1a1a04" stroke="#ffdd44" stroke-width="2"/>
+  <!-- Stack of coins -->
+  <ellipse cx="32" cy="48" rx="14" ry="4" fill="#aa8800" stroke="#ffdd44" stroke-width="0.8"/>
+  <ellipse cx="32" cy="44" rx="14" ry="4" fill="#bb9900" stroke="#ffdd44" stroke-width="0.8"/>
+  <ellipse cx="32" cy="40" rx="12" ry="3.5" fill="#cc9900" stroke="#ffdd44" stroke-width="0.8"/>
+  <ellipse cx="32" cy="36" rx="10" ry="3" fill="#ddaa00" stroke="#ffdd44" stroke-width="0.8"/>
+  <ellipse cx="32" cy="32" rx="8" ry="2.5" fill="#eebb00" stroke="#ffdd44" stroke-width="0.8"/>
+  <!-- Top coin with $ -->
+  <ellipse cx="32" cy="28" rx="8" ry="2.5" fill="#ffcc00" stroke="#ffdd44" stroke-width="1"/>
+  <text x="32" y="30" text-anchor="middle" fill="#886600" font-family="Arial,sans-serif" font-size="4" font-weight="bold">$</text>
+  <!-- Arrow going up (growth) -->
+  <path d="M48 28 L48 14 L44 18 M48 14 L52 18" fill="none" stroke="#ffdd44" stroke-width="2" stroke-linecap="round"/>
+  <!-- Interest cap 7 -->
+  <text x="48" y="12" text-anchor="middle" fill="#ffdd44" font-family="monospace" font-size="6" font-weight="bold" opacity="0.6">7</text>
+</svg>

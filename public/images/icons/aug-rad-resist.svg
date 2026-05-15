@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#061406" stroke="#66ff44" stroke-width="2"/>
+  <!-- Shield outline -->
+  <path d="M32 10 L48 20 L48 38 Q48 50 32 56 Q16 50 16 38 L16 20Z" fill="none" stroke="#66ff44" stroke-width="1.5" opacity="0.6"/>
+  <!-- Radiation symbol inside shield -->
+  <circle cx="32" cy="32" r="3" fill="#061406" stroke="#66ff44" stroke-width="1"/>
+  <path d="M32 29 A10 10 0 0 1 40.7 36" fill="none" stroke="#66ff44" stroke-width="2.5"/>
+  <path d="M40.7 36 A10 10 0 0 1 23.3 36" fill="none" stroke="#66ff44" stroke-width="2.5"/>
+  <path d="M23.3 36 A10 10 0 0 1 32 29" fill="none" stroke="#66ff44" stroke-width="2.5"/>
+  <circle cx="32" cy="24" r="2.5" fill="#061406"/>
+  <circle cx="38" cy="38" r="2.5" fill="#061406"/>
+  <circle cx="26" cy="38" r="2.5" fill="#061406"/>
+  <circle cx="32" cy="32" r="1.5" fill="#66ff44" opacity="0.6"/>
+</svg>

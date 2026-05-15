@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#060e1e" stroke="#3366CC" stroke-width="2"/>
+  <!-- Shield shape -->
+  <path d="M32 8 L50 16 L50 36 Q50 50 32 58 Q14 50 14 36 L14 16 Z" fill="#1a3366" stroke="#3366CC" stroke-width="1.5"/>
+  <path d="M32 12 L46 18 L46 35 Q46 47 32 54 Q18 47 18 35 L18 18 Z" fill="#224488" opacity="0.4"/>
+  <!-- Sword in center -->
+  <rect x="31" y="16" width="2" height="28" fill="#aabbdd"/>
+  <!-- Crossguard -->
+  <rect x="26" y="26" width="12" height="3" rx="1" fill="#8899bb"/>
+  <!-- Pommel -->
+  <circle cx="32" cy="46" r="2.5" fill="#8899bb"/>
+  <!-- Blade highlight -->
+  <line x1="32" y1="16" x2="32" y2="26" stroke="#ccddff" stroke-width="0.8" opacity="0.5"/>
+  <!-- Wing gears (BoS style) -->
+  <circle cx="22" cy="22" r="3" fill="none" stroke="#3366CC" stroke-width="1" opacity="0.6"/>
+  <circle cx="42" cy="22" r="3" fill="none" stroke="#3366CC" stroke-width="1" opacity="0.6"/>
+  <line x1="19" y1="22" x2="16" y2="20" stroke="#3366CC" stroke-width="0.8" opacity="0.5"/>
+  <line x1="19" y1="22" x2="16" y2="24" stroke="#3366CC" stroke-width="0.8" opacity="0.5"/>
+  <line x1="45" y1="22" x2="48" y2="20" stroke="#3366CC" stroke-width="0.8" opacity="0.5"/>
+  <line x1="45" y1="22" x2="48" y2="24" stroke="#3366CC" stroke-width="0.8" opacity="0.5"/>
+</svg>

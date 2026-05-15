@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#1a1a04" stroke="#ffff44" stroke-width="2"/>
+  <!-- Lightning bolt -->
+  <path d="M36 8 L22 30 L30 30 L26 56 L44 28 L34 28Z" fill="#ffff44" opacity="0.85" stroke="#dddd22" stroke-width="0.5"/>
+  <path d="M34 14 L26 30 L31 30 L28 48 L40 28 L34 28Z" fill="#ffffaa" opacity="0.3"/>
+  <!-- Energy sparks -->
+  <circle cx="18" cy="20" r="1.5" fill="#ffff44" opacity="0.5"/>
+  <circle cx="46" cy="22" r="1" fill="#ffff44" opacity="0.4"/>
+  <circle cx="16" cy="40" r="1" fill="#ffff44" opacity="0.3"/>
+  <circle cx="48" cy="42" r="1.5" fill="#ffff44" opacity="0.4"/>
+</svg>

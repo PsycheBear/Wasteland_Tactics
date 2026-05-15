@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 62,32 32,62 2,32" fill="#0e0e1a" stroke="#6688ff" stroke-width="2"/>
+  <!-- Helmet -->
+  <path d="M24 18 Q24 12 32 10 Q40 12 40 18 L40 24 Q40 28 36 28 L28 28 Q24 28 24 24Z" fill="#4466aa" stroke="#5577bb" stroke-width="0.8"/>
+  <!-- Visor -->
+  <rect x="26" y="18" width="12" height="4" rx="1" fill="#ffaa00" opacity="0.8"/>
+  <!-- Chest plate -->
+  <path d="M20 28 L16 32 L16 44 L22 48 L32 50 L42 48 L48 44 L48 32 L44 28 Z" fill="#4466aa" stroke="#5577bb" stroke-width="0.8"/>
+  <!-- Chest detail line -->
+  <line x1="32" y1="28" x2="32" y2="48" stroke="#334488" stroke-width="1"/>
+  <!-- Chest reactor -->
+  <circle cx="32" cy="36" r="4" fill="#1a1a3a" stroke="#6688ff" stroke-width="1"/>
+  <circle cx="32" cy="36" r="2" fill="#6688ff" opacity="0.6"/>
+  <!-- Shoulder plates -->
+  <path d="M20 28 Q14 26 10 30 Q12 34 16 32" fill="#4466aa" stroke="#5577bb" stroke-width="0.8"/>
+  <path d="M44 28 Q50 26 54 30 Q52 34 48 32" fill="#4466aa" stroke="#5577bb" stroke-width="0.8"/>
+  <!-- Arms -->
+  <rect x="10" y="30" width="6" height="16" rx="2" fill="#3a5599" stroke="#4466aa" stroke-width="0.5"/>
+  <rect x="48" y="30" width="6" height="16" rx="2" fill="#3a5599" stroke="#4466aa" stroke-width="0.5"/>
+  <!-- Legs -->
+  <rect x="24" y="48" width="6" height="10" rx="2" fill="#3a5599"/>
+  <rect x="34" y="48" width="6" height="10" rx="2" fill="#3a5599"/>
+</svg>

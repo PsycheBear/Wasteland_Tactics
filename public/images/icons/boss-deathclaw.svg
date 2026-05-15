@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1a0a1a"/><stop offset="100%" stop-color="#080408"/></radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#ff44ff" stroke-width="2"/>
+  <!-- Deathclaw head/face - front-facing intimidating -->
+  <!-- Horns -->
+  <path d="M20 22 Q16 12 14 6" fill="none" stroke="#8a7a6a" stroke-width="2.5" stroke-linecap="round"/>
+  <path d="M44 22 Q48 12 50 6" fill="none" stroke="#8a7a6a" stroke-width="2.5" stroke-linecap="round"/>
+  <!-- Head shape -->
+  <path d="M20 22 Q18 28 20 34 Q24 40 32 42 Q40 40 44 34 Q46 28 44 22 Q40 16 32 15 Q24 16 20 22" fill="#6a5a4a"/>
+  <path d="M22 24 Q21 28 22 32 Q26 38 32 39 Q38 38 42 32 Q43 28 42 24 Q38 18 32 17 Q26 18 22 24" fill="#7a6a5a" opacity="0.5"/>
+  <!-- Brow ridge -->
+  <path d="M22 24 Q27 21 32 22 Q37 21 42 24" fill="#5a4a3a" stroke="#4a3a2a" stroke-width="1"/>
+  <!-- Eyes (glowing) -->
+  <ellipse cx="27" cy="27" rx="3" ry="2" fill="#220022"/>
+  <ellipse cx="37" cy="27" rx="3" ry="2" fill="#220022"/>
+  <ellipse cx="27" cy="27" rx="2" ry="1.2" fill="#ff00ff" opacity="0.9"/>
+  <ellipse cx="37" cy="27" rx="2" ry="1.2" fill="#ff00ff" opacity="0.9"/>
+  <circle cx="27" cy="27" r="4" fill="#ff00ff" opacity="0.1"/>
+  <circle cx="37" cy="27" r="4" fill="#ff00ff" opacity="0.1"/>
+  <!-- Snout -->
+  <path d="M28 32 Q32 36 36 32 Q34 34 32 35 Q30 34 28 32" fill="#5a4a3a"/>
+  <!-- Nostrils -->
+  <circle cx="30" cy="33" r="1" fill="#3a2a1a"/>
+  <circle cx="34" cy="33" r="1" fill="#3a2a1a"/>
+  <!-- Teeth -->
+  <path d="M26 36 L28 39 L30 36 L32 40 L34 36 L36 39 L38 36" fill="none" stroke="#ffffff" stroke-width="1.2"/>
+  <!-- Neck/shoulders -->
+  <path d="M20 38 Q16 42 12 48 L20 50 Q24 44 28 42" fill="#6a5a4a"/>
+  <path d="M44 38 Q48 42 52 48 L44 50 Q40 44 36 42" fill="#6a5a4a"/>
+  <!-- Claws reaching forward -->
+  <path d="M12 48 L6 52 L8 50 L4 55 L7 52 L5 57" fill="none" stroke="#8a7a6a" stroke-width="1.5" stroke-linecap="round"/>
+  <path d="M52 48 L58 52 L56 50 L60 55 L57 52 L59 57" fill="none" stroke="#8a7a6a" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

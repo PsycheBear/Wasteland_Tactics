@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#04061a" stroke="#4488ff" stroke-width="2"/>
+  <!-- Open book -->
+  <path d="M32 18 L14 22 L14 48 L32 44Z" fill="#2244aa" opacity="0.5" stroke="#4488ff" stroke-width="0.8"/>
+  <path d="M32 18 L50 22 L50 48 L32 44Z" fill="#2244aa" opacity="0.5" stroke="#4488ff" stroke-width="0.8"/>
+  <!-- Page lines -->
+  <line x1="18" y1="28" x2="30" y2="25" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="18" y1="32" x2="30" y2="29" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="18" y1="36" x2="30" y2="33" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="34" y1="25" x2="46" y2="28" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="34" y1="29" x2="46" y2="32" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <line x1="34" y1="33" x2="46" y2="36" stroke="#4488ff" stroke-width="0.5" opacity="0.5"/>
+  <!-- Up arrow (fast/XP) -->
+  <path d="M32 16 L28 12 L32 4 L36 12Z" fill="#4488ff" opacity="0.7"/>
+  <text x="32" y="56" text-anchor="middle" fill="#4488ff" font-family="monospace" font-size="6" opacity="0.5">+XP</text>
+</svg>

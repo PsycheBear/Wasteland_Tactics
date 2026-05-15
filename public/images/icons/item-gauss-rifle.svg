@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 62,32 32,62 2,32" fill="#061406" stroke="#44ff44" stroke-width="2"/>
+  <!-- Rifle barrel -->
+  <rect x="8" y="28" width="40" height="6" rx="1" fill="#555555" stroke="#666666" stroke-width="0.5"/>
+  <!-- Barrel tip -->
+  <rect x="4" y="29" width="6" height="4" rx="1" fill="#666666"/>
+  <!-- Coils around barrel (gauss acceleration) -->
+  <ellipse cx="16" cy="31" rx="3" ry="6" fill="none" stroke="#44ff44" stroke-width="1" opacity="0.7"/>
+  <ellipse cx="22" cy="31" rx="3" ry="6" fill="none" stroke="#44ff44" stroke-width="1" opacity="0.6"/>
+  <ellipse cx="28" cy="31" rx="3" ry="6" fill="none" stroke="#44ff44" stroke-width="1" opacity="0.5"/>
+  <ellipse cx="34" cy="31" rx="3" ry="6" fill="none" stroke="#44ff44" stroke-width="1" opacity="0.4"/>
+  <!-- Stock -->
+  <path d="M48 28 L54 24 Q58 22 58 26 L58 34 Q58 38 54 36 L48 34 Z" fill="#8B7355"/>
+  <!-- Trigger guard -->
+  <path d="M40 34 Q38 40 42 42 Q46 40 44 34" fill="none" stroke="#555555" stroke-width="1.5"/>
+  <!-- Scope -->
+  <rect x="24" y="22" width="14" height="5" rx="2" fill="#444444" stroke="#555555" stroke-width="0.5"/>
+  <circle cx="24" cy="24.5" r="2.5" fill="#333333" stroke="#444444" stroke-width="0.5"/>
+  <circle cx="24" cy="24.5" r="1" fill="#44ff44" opacity="0.5"/>
+  <!-- Energy glow at muzzle -->
+  <circle cx="4" cy="31" r="3" fill="#44ff44" opacity="0.2"/>
+  <circle cx="4" cy="31" r="1.5" fill="#44ff44" opacity="0.4"/>
+</svg>

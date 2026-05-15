@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 62,32 32,62 2,32" fill="#1a0606" stroke="#ff6666" stroke-width="2"/>
+  <!-- Syringe body -->
+  <rect x="28" y="12" width="8" height="30" rx="2" fill="#dddddd" stroke="#aaaaaa" stroke-width="0.8"/>
+  <!-- Plunger -->
+  <rect x="30" y="6" width="4" height="8" rx="1" fill="#999999"/>
+  <rect x="26" y="5" width="12" height="3" rx="1" fill="#aaaaaa"/>
+  <!-- Red liquid -->
+  <rect x="29" y="26" width="6" height="14" rx="1" fill="#ff3333" opacity="0.8"/>
+  <rect x="29" y="30" width="6" height="10" rx="1" fill="#ff6666" opacity="0.4"/>
+  <!-- Needle -->
+  <rect x="31" y="42" width="2" height="14" fill="#cccccc"/>
+  <path d="M31 56 L32 60 L33 56" fill="#cccccc"/>
+  <!-- Measurement lines -->
+  <line x1="28" y1="20" x2="30" y2="20" stroke="#888888" stroke-width="0.5"/>
+  <line x1="28" y1="26" x2="30" y2="26" stroke="#888888" stroke-width="0.5"/>
+  <line x1="28" y1="32" x2="30" y2="32" stroke="#888888" stroke-width="0.5"/>
+  <line x1="28" y1="38" x2="30" y2="38" stroke="#888888" stroke-width="0.5"/>
+  <!-- Plus symbol -->
+  <rect x="14" y="28" width="8" height="3" rx="0.5" fill="#ff3333" opacity="0.6"/>
+  <rect x="16.5" y="25.5" width="3" height="8" rx="0.5" fill="#ff3333" opacity="0.6"/>
+</svg>

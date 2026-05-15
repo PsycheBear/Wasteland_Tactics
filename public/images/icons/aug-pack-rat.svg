@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#12120a" stroke="#ccaa44" stroke-width="2"/>
+  <!-- Backpack -->
+  <rect x="20" y="18" width="24" height="30" rx="4" fill="#886622" stroke="#ccaa44" stroke-width="1"/>
+  <rect x="22" y="20" width="20" height="12" rx="2" fill="#aa8833" opacity="0.4"/>
+  <!-- Flap -->
+  <path d="M20 26 Q20 22 24 20 L40 20 Q44 22 44 26" fill="none" stroke="#ccaa44" stroke-width="1"/>
+  <!-- Buckle -->
+  <rect x="29" y="24" width="6" height="4" rx="1" fill="#ccaa44" opacity="0.7"/>
+  <!-- Straps -->
+  <path d="M22 18 Q18 14 18 20 L18 44 Q18 48 22 48" fill="none" stroke="#aa8833" stroke-width="2"/>
+  <path d="M42 18 Q46 14 46 20 L46 44 Q46 48 42 48" fill="none" stroke="#aa8833" stroke-width="2"/>
+  <!-- Side pockets -->
+  <rect x="14" y="30" width="6" height="10" rx="2" fill="#775511" stroke="#886622" stroke-width="0.5"/>
+  <rect x="44" y="30" width="6" height="10" rx="2" fill="#775511" stroke="#886622" stroke-width="0.5"/>
+  <!-- +2 badge -->
+  <circle cx="44" cy="18" r="6" fill="#ccaa44" opacity="0.8"/>
+  <text x="44" y="21" text-anchor="middle" fill="#12120a" font-family="Arial,sans-serif" font-size="8" font-weight="bold">+2</text>
+</svg>

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#1a0808"/><stop offset="100%" stop-color="#0a0202"/></radialGradient>
+  </defs>
+  <circle cx="32" cy="32" r="30" fill="url(#bg)" stroke="#ff3333" stroke-width="2"/>
+  <!-- Body segments -->
+  <ellipse cx="32" cy="38" rx="10" ry="6" fill="#8B4513" opacity="0.9"/>
+  <ellipse cx="32" cy="34" rx="8" ry="5" fill="#A0522D"/>
+  <ellipse cx="32" cy="30" rx="6" ry="4" fill="#8B4513"/>
+  <!-- Head -->
+  <ellipse cx="32" cy="27" rx="5" ry="3.5" fill="#A0522D"/>
+  <circle cx="30" cy="26" r="1" fill="#ff0000"/>
+  <circle cx="34" cy="26" r="1" fill="#ff0000"/>
+  <!-- Pincers -->
+  <path d="M27 27 Q22 22 20 18 Q18 15 21 15 Q24 15 25 19 L27 24" fill="#8B4513" stroke="#6B3410" stroke-width="0.5"/>
+  <path d="M37 27 Q42 22 44 18 Q46 15 43 15 Q40 15 39 19 L37 24" fill="#8B4513" stroke="#6B3410" stroke-width="0.5"/>
+  <path d="M20 18 Q17 16 19 14 Q21 13 21 15" fill="#A0522D" stroke="#6B3410" stroke-width="0.5"/>
+  <path d="M44 18 Q47 16 45 14 Q43 13 43 15" fill="#A0522D" stroke="#6B3410" stroke-width="0.5"/>
+  <!-- Tail curving up with stinger -->
+  <path d="M32 38 Q32 44 34 48 Q36 52 40 50 Q44 47 42 42" fill="none" stroke="#8B4513" stroke-width="3" stroke-linecap="round"/>
+  <path d="M40 50 Q43 48 44 45" fill="none" stroke="#00ff00" stroke-width="2.5" stroke-linecap="round"/>
+  <circle cx="44" cy="44" r="2" fill="#00ff00" opacity="0.8"/>
+  <circle cx="44" cy="44" r="4" fill="#00ff00" opacity="0.15"/>
+  <!-- Legs -->
+  <line x1="26" y1="34" x2="18" y2="40" stroke="#6B3410" stroke-width="1.5"/>
+  <line x1="26" y1="37" x2="17" y2="44" stroke="#6B3410" stroke-width="1.5"/>
+  <line x1="27" y1="40" x2="19" y2="47" stroke="#6B3410" stroke-width="1.5"/>
+  <line x1="38" y1="34" x2="46" y2="40" stroke="#6B3410" stroke-width="1.5"/>
+  <line x1="38" y1="37" x2="47" y2="44" stroke="#6B3410" stroke-width="1.5"/>
+  <line x1="37" y1="40" x2="45" y2="47" stroke="#6B3410" stroke-width="1.5"/>
+</svg>

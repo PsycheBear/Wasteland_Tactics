@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="1.5" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+  </defs>
+  <polygon points="32,2 62,32 32,62 2,32" fill="#1a1a2a" stroke="#aaccff" stroke-width="2"/>
+  <!-- Inhaler body -->
+  <rect x="25" y="24" width="14" height="20" rx="3" fill="#445577" stroke="#aaccff" stroke-width="0.8" filter="url(#glow)"/>
+  <!-- Canister top -->
+  <rect x="28" y="16" width="8" height="10" rx="2" fill="#556688" stroke="#aaccff" stroke-width="0.7"/>
+  <rect x="30" y="14" width="4" height="4" rx="1" fill="#667799" stroke="#aaccff" stroke-width="0.5"/>
+  <!-- Mouthpiece -->
+  <path d="M27,44 L25,48 L39,48 L37,44" fill="#334466" stroke="#aaccff" stroke-width="0.6"/>
+  <!-- Grip details -->
+  <line x1="27" y1="28" x2="37" y2="28" stroke="#aaccff" stroke-width="0.4" opacity="0.5"/>
+  <line x1="27" y1="31" x2="37" y2="31" stroke="#aaccff" stroke-width="0.4" opacity="0.5"/>
+  <line x1="27" y1="34" x2="37" y2="34" stroke="#aaccff" stroke-width="0.4" opacity="0.5"/>
+  <!-- Vapor trail -->
+  <path d="M26,47 C22,44 18,46 16,42" stroke="#aaccff" stroke-width="1" fill="none" opacity="0.6" stroke-linecap="round"/>
+  <path d="M24,49 C20,47 16,49 13,45" stroke="#aaccff" stroke-width="0.8" fill="none" opacity="0.4" stroke-linecap="round"/>
+  <path d="M28,50 C24,49 22,51 18,48" stroke="#aaccff" stroke-width="0.6" fill="none" opacity="0.3" stroke-linecap="round"/>
+  <!-- Pressure indicator -->
+  <circle cx="32" cy="38" r="2" fill="#1a1a2a" stroke="#aaccff" stroke-width="0.5"/>
+  <line x1="32" y1="37" x2="33" y2="36.5" stroke="#aaccff" stroke-width="0.5"/>
+</svg>

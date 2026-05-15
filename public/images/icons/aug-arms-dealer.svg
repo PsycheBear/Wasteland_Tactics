@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#121212" stroke="#aaaaaa" stroke-width="2"/>
+  <!-- Pistol silhouette -->
+  <rect x="12" y="26" width="30" height="6" rx="1" fill="#888888"/>
+  <rect x="8" y="27" width="6" height="4" rx="1" fill="#999999"/>
+  <path d="M32 32 L38 32 L40 44 L34 44 Z" fill="#777777"/>
+  <rect x="36" y="24" width="8" height="10" rx="2" fill="#666666"/>
+  <!-- Crossed with another pistol -->
+  <rect x="18" y="36" width="28" height="5" rx="1" fill="#777777" transform="rotate(-20 32 38)"/>
+  <path d="M16 42 L22 42 L24 52 L18 52 Z" fill="#666666" transform="rotate(-20 20 47)"/>
+  <!-- Price tag -->
+  <circle cx="48" cy="18" r="6" fill="#aaaaaa" opacity="0.6"/>
+  <text x="48" y="21" text-anchor="middle" fill="#121212" font-family="Arial,sans-serif" font-size="7" font-weight="bold">$</text>
+</svg>

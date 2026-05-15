@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <rect x="2" y="2" width="60" height="60" rx="8" fill="#061206" stroke="#44ff44" stroke-width="2"/>
+  <!-- Battery body -->
+  <rect x="20" y="14" width="24" height="38" rx="3" fill="#2a4a2a" stroke="#44ff44" stroke-width="1.2"/>
+  <!-- Battery terminal -->
+  <rect x="27" y="10" width="10" height="6" rx="2" fill="#3a6a3a" stroke="#44ff44" stroke-width="1"/>
+  <!-- Energy fill (glowing) -->
+  <rect x="23" y="18" width="18" height="30" rx="1" fill="#44ff44" opacity="0.15"/>
+  <rect x="23" y="26" width="18" height="22" rx="1" fill="#44ff44" opacity="0.2"/>
+  <rect x="23" y="34" width="18" height="14" rx="1" fill="#44ff44" opacity="0.25"/>
+  <!-- Lightning bolt -->
+  <path d="M34 20 L28 32 L33 32 L30 44 L38 30 L33 30 Z" fill="#44ff44" opacity="0.9"/>
+  <!-- Glow effect -->
+  <rect x="23" y="18" width="18" height="30" rx="1" fill="#44ff44" opacity="0.05"/>
+  <!-- Energy lines -->
+  <line x1="24" y1="24" x2="40" y2="24" stroke="#44ff44" stroke-width="0.5" opacity="0.3"/>
+  <line x1="24" y1="32" x2="40" y2="32" stroke="#44ff44" stroke-width="0.5" opacity="0.3"/>
+  <line x1="24" y1="40" x2="40" y2="40" stroke="#44ff44" stroke-width="0.5" opacity="0.3"/>
+</svg>

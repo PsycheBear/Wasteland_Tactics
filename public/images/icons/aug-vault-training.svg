@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#0e041a" stroke="#cc66ff" stroke-width="2"/>
+  <!-- Dumbbell -->
+  <rect x="14" y="28" width="36" height="6" rx="2" fill="#888888"/>
+  <!-- Left weight -->
+  <rect x="8" y="20" width="8" height="22" rx="2" fill="#cc66ff" opacity="0.7" stroke="#aa44dd" stroke-width="0.8"/>
+  <rect x="10" y="22" width="4" height="18" rx="1" fill="#dd88ff" opacity="0.3"/>
+  <!-- Right weight -->
+  <rect x="48" y="20" width="8" height="22" rx="2" fill="#cc66ff" opacity="0.7" stroke="#aa44dd" stroke-width="0.8"/>
+  <rect x="50" y="22" width="4" height="18" rx="1" fill="#dd88ff" opacity="0.3"/>
+  <!-- Vault number -->
+  <circle cx="32" cy="50" r="6" fill="#0e041a" stroke="#cc66ff" stroke-width="1" opacity="0.6"/>
+  <text x="32" y="53" text-anchor="middle" fill="#cc66ff" font-family="Arial,sans-serif" font-size="8" font-weight="bold" opacity="0.6">111</text>
+</svg>

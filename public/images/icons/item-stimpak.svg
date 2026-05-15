@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <defs>
+    <filter id="glow"><feGaussianBlur stdDeviation="2" result="blur"/><feComposite in="SourceGraphic" in2="blur" operator="over"/></filter>
+  </defs>
+  <rect x="2" y="2" width="60" height="60" rx="8" fill="#1a0a0a" stroke="#ff4444" stroke-width="2"/>
+  <text x="32" y="39.333333333333336" text-anchor="middle" fill="#ff4444" font-family="Arial,sans-serif" font-size="22" font-weight="bold" filter="url(#glow)">St</text>
+</svg>

@@ -2,7 +2,8 @@
 
 import { UNIT_DATABASE } from './units.js';
 
-export const COST_COLORS = { 1: '#888', 2: '#4CAF50', 3: '#2196F3', 4: '#9C27B0', 5: '#FF9800' };
+export const COST_COLORS = { 1: '#cccccc', 2: '#1eff00', 3: '#4488ff', 4: '#cc44ff', 5: '#ffd700' };
+export const TIER_LABELS = { 1: 'Common', 2: 'Uncommon', 3: 'Rare', 4: 'Epic', 5: 'Legendary' };
 
 export const SHOP_ODDS = {
   1: [100, 0, 0, 0, 0],
@@ -44,3 +45,10 @@ export const initPool = () => {
 export function makeUid() {
   return Math.random().toString(36).slice(2, 11);
 }
+
+// Carousel triggers after the last round of each stage (every 3 rounds), starting after stage 1
+// Stage 1 ends at round 3, stage 2 at round 6, etc. First carousel after round 3 (end of stage 1).
+export const ROUNDS_PER_STAGE = 3;
+export const isCarouselRound = (round) => round >= 3 && round % ROUNDS_PER_STAGE === 0;
+// Keep array export for backward compat (used in pip rendering) — generates first 10 carousel rounds
+export const CAROUSEL_ROUNDS = Array.from({ length: 10 }, (_, i) => (i + 1) * ROUNDS_PER_STAGE);

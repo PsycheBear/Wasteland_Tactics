@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1a0e04" stroke="#8B4513" stroke-width="2"/>
+  <!-- Radiation trefoil -->
+  <circle cx="32" cy="32" r="4" fill="#cc8833"/>
+  <!-- Three blades -->
+  <path d="M32 28 A16 16 0 0 1 45.9 39 L32 32 Z" fill="#cc8833"/>
+  <path d="M45.9 39 A16 16 0 0 1 18.1 39 L32 32 Z" fill="#cc8833"/>
+  <path d="M18.1 39 A16 16 0 0 1 32 28 L32 32 Z" fill="#cc8833"/>
+  <!-- Gaps between blades (cut out with bg color circles) -->
+  <circle cx="32" cy="22" r="4" fill="#1a0e04"/>
+  <circle cx="40.7" cy="37" r="4" fill="#1a0e04"/>
+  <circle cx="23.3" cy="37" r="4" fill="#1a0e04"/>
+  <!-- Center dot -->
+  <circle cx="32" cy="32" r="3" fill="#1a0e04"/>
+  <circle cx="32" cy="32" r="1.5" fill="#cc8833"/>
+  <!-- Subtle glow -->
+  <circle cx="32" cy="32" r="20" fill="#cc8833" opacity="0.06"/>
+</svg>

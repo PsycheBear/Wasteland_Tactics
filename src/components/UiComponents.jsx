@@ -3,14 +3,23 @@ import { UNIT_DATABASE } from '../data/units.js';
 import { TRAITS } from '../data/traits.js';
 import { ITEM_COMPONENTS, COMPLETED_ITEMS } from '../data/items.js';
 import { COST_COLORS } from '../data/constants.js';
+import { GameIcon } from './GameIcon.jsx';
+import { getWeaponType, IDLE_CLASSES } from '../systems/unitTypes.js';
 import { IMAGES } from '../data/images.js';
 
 /* ─── helpers ─── */
 const getColor = (cost) => COST_COLORS[cost] || '#888';
-const stars = (n) => '⭐'.repeat(n);
+const stars = (n) => '\u2605'.repeat(n);
 const getUnitImage = (unitId, starLevel) => {
   const img = IMAGES[unitId]?.[starLevel] || IMAGES[unitId]?.[1];
   return img || null;
+};
+const TIER_GLOW = {
+  1: 'none',
+  2: '0 0 6px rgba(30,255,0,0.2)',
+  3: '0 0 6px rgba(68,136,255,0.3)',
+  4: '0 0 8px rgba(204,68,255,0.3)',
+  5: '0 0 10px rgba(255,215,0,0.4)',
 };
 
 /* ─── CombatBars ─── */
@@ -20,7 +29,7 @@ export function CombatBars({ currentHp, maxHp, mana, manaMax, variant = 'ally', 
   const manaFull = mana >= manaMax;
 
   const barWidth = compact ? 50 : 60;
-  const barHeight = compact ? 5 : 7;
+  const barHeight = compact ? 10 : 12;
 
   const hpColor = variant === 'enemy' ? '#ff4444' : '#44ff44';
   const hpBg = variant === 'enemy' ? 'rgba(100,0,0,0.6)' : 'rgba(0,60,0,0.6)';
@@ -36,10 +45,17 @@ export function CombatBars({ currentHp, maxHp, mana, manaMax, variant = 'ally', 
           width: `${hpPct}%`, height: '100%', background: hpColor,
           borderRadius: 2, transition: 'width 0.3s ease',
         }} />
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, fontWeight: 'bold', color: '#fff', textShadow: '0 0 2px #000, 0 0 4px #000',
+          lineHeight: 1, pointerEvents: 'none',
+        }}>
+          {Math.round(Math.max(0, currentHp))}/{Math.round(maxHp)}
+        </div>
       </div>
       {/* AP / Mana bar */}
       <div style={{
-        width: '100%', height: barHeight - 1, background: 'rgba(0,0,60,0.6)',
+        width: '100%', height: barHeight - 2, background: 'rgba(0,0,60,0.6)',
         borderRadius: 2, overflow: 'hidden', position: 'relative',
         boxShadow: manaFull ? '0 0 6px rgba(0,150,255,0.8)' : 'none',
       }}>
@@ -48,6 +64,15 @@ export function CombatBars({ currentHp, maxHp, mana, manaMax, variant = 'ally', 
           background: manaFull ? '#00ccff' : '#4488ff',
           borderRadius: 2, transition: 'width 0.2s ease',
         }} />
+        {manaMax > 0 && (
+          <div style={{
+            position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: 10, fontWeight: 'bold', color: '#fff', textShadow: '0 0 2px #000, 0 0 4px #000',
+            lineHeight: 1, pointerEvents: 'none',
+          }}>
+            {Math.round(mana)}/{manaMax}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -102,8 +127,8 @@ export function UnitTooltip({ unitTooltip, onClose }) {
           {(db.traits || unit.traits || []).map(t => {
             const trait = TRAITS[t];
             return trait ? (
-              <span key={t} style={{ marginRight: 6, color: trait.color }}>
-                {trait.icon} {trait.name}
+              <span key={t} style={{ marginRight: 6, color: trait.color, display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+                <GameIcon iconImg={trait.iconImg} icon={trait.icon} size={12} /> {trait.name}
               </span>
             ) : t;
           })}
@@ -141,7 +166,7 @@ export function UnitTooltip({ unitTooltip, onClose }) {
               const item = completed || comp;
               return item ? (
                 <div key={i} style={{ fontSize: 11, color: completed ? '#ffcc00' : '#ccc' }}>
-                  {item.icon} {item.name} — <span style={{ color: '#999' }}>{item.desc}</span>
+                  <GameIcon iconImg={item.iconImg} icon={item.icon} size={11} /> {item.name} — <span style={{ color: '#999' }}>{item.desc}</span>
                 </div>
               ) : null;
             })}
@@ -158,7 +183,7 @@ export function UnitCard({
   selected, draggedFrom, phase,
   combatUnits, animations,
   onPointerDown, onContextMenu, onClick,
-  selectedItem,
+  selectedItem, isBoard,
 }) {
   if (!unit) return null;
 
@@ -174,32 +199,20 @@ export function UnitCard({
   const isHit = animations.hit.includes(unit.uid);
   const isDying = animations.dying.includes(unit.uid);
   const isAbility = animations.ability?.includes(unit.uid);
-  const animClass = isAbility ? 'wt-anim-ability' : isDying ? 'wt-anim-dying' : isHit ? 'wt-anim-hit' : isAttacking ? 'wt-anim-attack' : '';
+  const isManaFull = displayUnit.mana >= displayUnit.manaMax && displayUnit.manaMax > 0;
+  const weaponType = getWeaponType(unit.id);
+  const idleClass = inCombat && !isAttacking && !isHit && !isDying && !isAbility ? (IDLE_CLASSES[weaponType] || '') : '';
+  const legendaryClass = unit.stars >= 3 ? 'wt-legendary-border wt-legendary-glow' : '';
+  const animClass = (isAbility ? 'wt-anim-ability' : isDying ? 'wt-anim-dying' : isHit ? 'wt-anim-hit' : isAttacking ? 'wt-anim-attack' : idleClass) + (isManaFull ? ' wt-mana-full' : '') + (legendaryClass ? ` ${legendaryClass}` : '');
 
-  const imgSize = small ? 48 : 56;
+  const imgSize = small ? 44 : 56;
   const unitImg = getUnitImage(unit.id, unit.stars);
 
   // Item badges
   const equippedItems = unit.items || [];
 
-  return (
-    <div
-      className={animClass}
-      data-unit-uid={unit.uid}
-      onPointerDown={(e) => onPointerDown?.(e, location, index, unit)}
-      onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, unit); }}
-      onClick={(e) => onClick?.(e, unit, location, index)}
-      style={{
-        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-        cursor: selectedItem ? 'crosshair' : 'pointer',
-        opacity: isDragSource ? 0.3 : (isDying ? undefined : (displayUnit.currentHp !== undefined && displayUnit.currentHp <= 0) ? 0.3 : 1),
-        position: 'relative', overflow: 'visible',
-        outline: isSelected ? '2px solid #00ff00' : 'none',
-        borderRadius: 4,
-        transition: animClass ? 'none' : 'transform 0.15s ease-out, opacity 0.15s',
-        userSelect: 'none', touchAction: 'none',
-      }}
-    >
+  const cardContent = (
+    <>
       {/* Cost color top border */}
       <div style={{
         position: 'absolute', top: -2, left: 0, right: 0, height: 3,
@@ -213,8 +226,8 @@ export function UnitCard({
           draggable={false}
           style={{
             width: imgSize, height: imgSize,
-            objectFit: unit.id === 'nick' ? 'cover' : 'contain',
-            borderRadius: unit.id === 'nick' ? '50%' : undefined,
+            objectFit: 'contain',
+            borderRadius: undefined,
             pointerEvents: 'none',
           }}
         />
@@ -240,7 +253,7 @@ export function UnitCard({
                 fontSize: 10, background: 'rgba(0,0,0,0.7)', borderRadius: 2, padding: '0 1px',
                 border: completed ? '1px solid #ffaa00' : '1px solid #555',
               }}>
-                {item.icon}
+                <GameIcon iconImg={item.iconImg} icon={item.icon} size={10} />
               </span>
             ) : null;
           })}
@@ -258,6 +271,47 @@ export function UnitCard({
           compact
         />
       )}
+    </>
+  );
+
+  return (
+    <div
+      className={animClass}
+      data-unit-uid={unit.uid}
+      onPointerDown={(e) => onPointerDown?.(e, location, index, unit)}
+      onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, unit); }}
+      onClick={(e) => onClick?.(e, unit, location, index)}
+      style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        cursor: selectedItem ? 'crosshair' : 'pointer',
+        opacity: isDragSource ? 0.3 : (isDying ? undefined : (displayUnit.currentHp !== undefined && displayUnit.currentHp <= 0) ? 0.3 : 1),
+        position: 'relative', overflow: 'visible',
+        outline: isSelected ? '2px solid #00ff00' : 'none',
+        borderRadius: 4,
+        boxShadow: isSelected ? '0 0 8px rgba(0,255,0,0.5)' : (TIER_GLOW[unit.cost] || 'none'),
+        transition: animClass ? 'none' : 'transform 0.15s ease-out, opacity 0.15s',
+        userSelect: 'none', touchAction: 'none',
+        transformStyle: undefined,
+      }}
+    >
+      {/* Flat shadow on the board plane (not counter-rotated) */}
+      {isBoard && (
+        <div style={{
+          position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)',
+          width: '80%', height: 8,
+          background: 'rgba(0,0,0,0.4)', borderRadius: '50%',
+          filter: 'blur(4px)', pointerEvents: 'none',
+        }} />
+      )}
+      {/* Counter-rotate unit content so it faces the camera */}
+      {isBoard ? (
+        <div className="wt-iso-unit" style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          position: 'relative', overflow: 'visible',
+        }}>
+          {cardContent}
+        </div>
+      ) : cardContent}
     </div>
   );
 }

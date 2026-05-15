@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#040e1a" stroke="#44aaff" stroke-width="2"/>
+  <!-- Multiple Nuka bottles -->
+  <!-- Bottle 1 -->
+  <rect x="16" y="22" width="3" height="4" rx="1" fill="#44aaff" opacity="0.6"/>
+  <path d="M14 26 Q12 28 12 34 Q12 40 16 42 Q22 42 22 36 Q22 28 20 26Z" fill="#1a4488" stroke="#44aaff" stroke-width="0.8"/>
+  <path d="M14 30 Q13 34 15 38 Q17 40 19 38 Q21 34 20 30Z" fill="#44aaff" opacity="0.2"/>
+  <!-- Bottle 2 (center, bigger) -->
+  <rect x="29" y="14" width="4" height="5" rx="1" fill="#44aaff" opacity="0.7"/>
+  <path d="M26 19 Q23 22 22 30 Q22 40 28 44 Q36 44 40 40 Q42 30 40 22 Q38 19 36 19Z" fill="#1a4488" stroke="#44aaff" stroke-width="1"/>
+  <path d="M27 24 Q25 30 27 38 Q30 42 33 38 Q36 30 35 24Z" fill="#44aaff" opacity="0.25"/>
+  <!-- Bottle 3 -->
+  <rect x="44" y="22" width="3" height="4" rx="1" fill="#44aaff" opacity="0.6"/>
+  <path d="M42 26 Q40 28 40 34 Q40 40 44 42 Q50 42 50 36 Q50 28 48 26Z" fill="#1a4488" stroke="#44aaff" stroke-width="0.8"/>
+  <path d="M43 30 Q42 34 44 38 Q46 40 48 38 Q49 34 48 30Z" fill="#44aaff" opacity="0.2"/>
+  <!-- Glow -->
+  <circle cx="31" cy="32" r="12" fill="#44aaff" opacity="0.06"/>
+  <!-- +15% text -->
+  <text x="32" y="56" text-anchor="middle" fill="#44aaff" font-family="monospace" font-size="5" opacity="0.5">+15% DMG</text>
+</svg>
