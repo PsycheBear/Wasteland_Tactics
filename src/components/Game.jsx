@@ -9,7 +9,7 @@ import { IMAGES } from '../data/images.js';
 import { COST_COLORS, TIER_LABELS, SHOP_ODDS, getRandomCost, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, ROUNDS_PER_STAGE, isCarouselRound, initPool, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from '../systems/audio.js';
 import { getActiveSynergies, generateEnemies, initGhostPlayers, ghostPlayerShop, ghostPlayerBoard, runCombat, spawnFloat } from '../systems/combat.js';
-import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard, PortraitImg } from './UiComponents.jsx';
+import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard, PortraitImg, hasPortrait } from './UiComponents.jsx';
 import { GameIcon, createGameIcon } from './GameIcon.jsx';
 import Lucky38Carousel from './Lucky38Carousel.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
