@@ -2946,7 +2946,15 @@ function WastelandTactics() {
                         <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', width: '80%', height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', filter: 'blur(4px)', pointerEvents: 'none' }} />
                         {/* Counter-rotate enemy unit to face camera */}
                         <div className="wt-iso-unit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible' }}>
-                          <PortraitImg unit={enemy} unitDef={UNIT_DATABASE[enemy.id]} size={44} alt={enemy.name} />
+                          {/* Render the placeholder UNDER the portrait so if PortraitImg
+                              resolves to null (no manifest hit, no legacy data url) the
+                              user still sees the unit's silhouette instead of an empty cell. */}
+                          <div style={{ position: 'relative', width: 44, height: 44 }}>
+                            <UnitPlaceholder name={enemy.name} size={44} />
+                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                              <PortraitImg unit={enemy} unitDef={UNIT_DATABASE[enemy.id]} size={44} alt={enemy.name} />
+                            </div>
+                          </div>
                           <div style={{ fontSize: 9 }}>{stars(enemy.stars)}</div>
                           <CombatBars currentHp={enemy.currentHp} maxHp={enemy.maxHp} mana={enemy.mana} manaMax={enemy.manaMax} variant="enemy" compact />
                         </div>
@@ -4163,23 +4171,27 @@ function WastelandTactics() {
         </button>
       </div>
 
-      {/* Pointer drag preview – smooth floating card */}
+      {/* Pointer drag preview — wider banner using the unit's header.png while dragging.
+          Falls back to PortraitImg + UnitPlaceholder so the preview is never empty. */}
       {pointerDrag && (
         <div ref={dragPreviewRef} style={{
           position: 'fixed', left: 0, top: 0,
           transform: `translate(${pointerDrag.startX}px, ${pointerDrag.startY}px) translate(-50%, -50%)`,
-          width: 54, height: 66, zIndex: 2500, pointerEvents: 'none',
+          width: 140, height: 72, zIndex: 2500, pointerEvents: 'none',
           willChange: 'transform',
           background: `linear-gradient(180deg, ${getColor(pointerDrag.unit.cost)}88 0%, ${getColor(pointerDrag.unit.cost)}44 100%)`,
-          border: '2px solid #00ff00', borderRadius: 4, boxShadow: '0 0 20px rgba(0,255,0,0.5)',
+          border: `2px solid ${getColor(pointerDrag.unit.cost)}`, borderRadius: 4,
+          boxShadow: `0 0 20px ${getColor(pointerDrag.unit.cost)}88`,
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          overflow: 'hidden',
         }}>
-          {getUnitImage(pointerDrag.unit.id, pointerDrag.unit.stars) ? (
-            <img src={getUnitImage(pointerDrag.unit.id, pointerDrag.unit.stars)} alt="" style={{ width: 42, height: 42, objectFit: pointerDrag.unit.id === 'nick' ? 'cover' : 'contain', borderRadius: pointerDrag.unit.id === 'nick' ? '50%' : undefined }} />
-          ) : (
-            <UnitPlaceholder name={pointerDrag.unit.name} size={42} />
-          )}
-          <div style={{ fontSize: 9 }}>{stars(pointerDrag.unit.stars)}</div>
+          <div style={{ position: 'relative', width: '100%', height: 54, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <UnitPlaceholder name={pointerDrag.unit.name} size={48} />
+            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <PortraitImg unit={pointerDrag.unit} unitDef={UNIT_DATABASE[pointerDrag.unit.id]} size={132} alt={pointerDrag.unit.name} forceHeader />
+            </div>
+          </div>
+          <div style={{ fontSize: 9, lineHeight: 1, marginTop: 1 }}>{stars(pointerDrag.unit.stars)}</div>
         </div>
       )}
 

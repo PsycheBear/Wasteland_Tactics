@@ -179,9 +179,10 @@ body {
   border-bottom: none;
   box-shadow: 0 0 30px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.3);
   position: relative;
-  /* Clip the arena so the iso board cells and other absolute overlays never
-     spill into the bench/shop area below. */
-  overflow: hidden;
+  /* Allow iso-tilted enemy board to render above the arena bg without being
+     clipped. The bench cells below handle their own overflow so the bench
+     can't spill back upward into the arena. */
+  overflow: visible;
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
