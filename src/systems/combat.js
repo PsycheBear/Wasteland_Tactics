@@ -5,6 +5,7 @@ import { ITEM_COMPONENTS, COMPLETED_ITEMS, getRandomComponent } from '../data/it
 import { AUGMENT_POOL } from '../data/augments.js';
 import { BOSS_DATABASE } from '../data/bosses.js';
 import { getDifficultyMode, DEFAULT_DIFFICULTY_ID } from '../data/difficulty.js';
+import { isPveRound, getPveWave } from '../data/pveWaves.js';
 import { COST_COLORS, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, isCarouselRound, getRandomCost, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from './audio.js';
 
@@ -1878,11 +1879,21 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       const dogmeat3 = pUnits.find(u => u.id === 'dogmeat' && u.stars >= 3);
       if (won && dogmeat3) extraGold = 1;
 
-      // TFT-style damage: base per stage + surviving unit star damage
+      // TFT-style player damage on loss: base by stage + sum of surviving enemy unit damage by cost.
+      // Per-unit damage scales with cost (1c→1, 2c→1, 3c→2, 4c→3, 5c→4) with a small star bump
+      // (+0 / +0 / +1 for 1★/2★/3★). Matches TFT's "you take more if they kept their stronger units".
       const currentStage = Math.ceil(round / 3);
-      const baseDmg = currentStage <= 2 ? 0 : currentStage === 3 ? 2 : currentStage === 4 ? 3 : currentStage === 5 ? 4 : currentStage === 6 ? 5 : 6;
-      const unitDmg = eUnits.filter(u => u.currentHp > 0).reduce((a, u) => a + (u.stars === 3 ? 4 : u.stars === 2 ? 2 : 1), 0);
+      const baseDmg = currentStage <= 2 ? 0 : currentStage === 3 ? 2 : currentStage === 4 ? 3 : currentStage === 5 ? 5 : currentStage === 6 ? 6 : 7;
+      const costDamage = { 1: 1, 2: 1, 3: 2, 4: 3, 5: 4 };
+      const survivors = eUnits.filter(u => u.currentHp > 0);
+      const unitDmg = survivors.reduce((a, u) => {
+        const cost = UNIT_DATABASE[u.id]?.cost || 1;
+        const perUnit = (costDamage[cost] || 1) + (u.stars === 3 ? 1 : 0);
+        return a + perUnit;
+      }, 0);
       const dmg = won ? 0 : baseDmg + unitDmg;
+      // Stash the breakdown so the post-fight UI can show "5 (2 base + 3 from 2 survivors)".
+      callbacks.setLastDamageBreakdown?.({ won, total: dmg, base: baseDmg, survivors: survivors.length, fromUnits: unitDmg, stage: currentStage });
       let nextStreak = 0;
       if (won) {
         logs.unshift('🎉 VICTORY!');
@@ -1893,7 +1904,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         sound.victory();
         spawnRoundText('VICTORY', 'victory');
       } else {
-        logs.unshift(`💀 DEFEAT! -${dmg} HP`);
+        logs.unshift(`💀 DEFEAT! -${dmg} HP  ·  ${baseDmg} stage + ${unitDmg} from ${survivors.length} survivor${survivors.length === 1 ? '' : 's'}`);
         setStreak(s => {
           nextStreak = Math.min(s - 1, -1);
           return nextStreak;
@@ -1910,13 +1921,14 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       setLog(logs.slice(0, 10));
       setBonusGold(won ? extraGold : 0);
       setDamageStats?.(damageStats);
-      const isPvERound = round <= 3;
+      const isPvERound = isPveRound(round);
       const isBossRound = round > 3 && round % 7 === 0;
+      const pveWave = isPvERound ? getPveWave(round) : null;
       addMatchHistory?.({
         round,
         won,
         damage: dmg,
-        opponent: isBossRound ? 'Boss' : isPvERound ? 'PvE' : (callbacks.currentOpponent || 'Ghost'),
+        opponent: isBossRound ? 'Boss' : isPvERound ? (pveWave?.name || 'PvE') : (callbacks.currentOpponent || 'Ghost'),
         unitsAlive: pUnits.filter(u => u.currentHp > 0).length,
       });
 
@@ -1974,8 +1986,8 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           return totalXp;
         });
 
-        // Item drops: PvE rounds (1-3) and boss rounds (every 7th) drop components
-        const isPvE = round <= 3;
+        // Item drops: any PvE round (themed creep waves) and boss rounds drop components.
+        const isPvE = isPveRound(round);
         const isBossRound = round > 3 && round % 7 === 0;
         if (won && (isPvE || isBossRound)) {
           const drops = [getRandomComponent(), getRandomComponent(), getRandomComponent()];

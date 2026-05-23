@@ -4,6 +4,7 @@ import { TRAITS } from '../data/traits.js';
 import { ITEM_COMPONENTS, COMPLETED_ITEMS, ITEM_COMPONENT_KEYS, findCompletedItem, getRandomComponent } from '../data/items.js';
 import { AUGMENT_POOL } from '../data/augments.js';
 import { BOSS_DATABASE } from '../data/bosses.js';
+import { isPveRound, getPveWave } from '../data/pveWaves.js';
 import { IMAGES } from '../data/images.js';
 import { COST_COLORS, TIER_LABELS, SHOP_ODDS, getRandomCost, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, ROUNDS_PER_STAGE, isCarouselRound, initPool, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from '../systems/audio.js';
@@ -1059,9 +1060,14 @@ function WastelandTactics() {
     // Ghost players shop from the pool each round
     const aliveGhosts = ghostPlayersRef.current.filter(g => g.alive);
     aliveGhosts.forEach(g => ghostPlayerShop(g, poolRef.current, round));
-    // PvE rounds (1-3) and boss rounds use generateEnemies; PvP rounds use ghost army
-    const isPvE = round <= 3;
+    // PvE rounds (1-3 + themed creep waves at 8/15/22/29) and boss rounds use generateEnemies;
+    // PvP rounds use ghost army.
+    const isPvE = isPveRound(round);
     const isBoss = round > 3 && round % 7 === 0 && BOSS_DATABASE[round];
+    const pveWaveTheme = isPvE ? getPveWave(round) : null;
+    if (pveWaveTheme && !isBoss) {
+      setLog(prev => [pveWaveTheme.logLine, ...prev.slice(0, 9)]);
+    }
     let enemyUnits;
     let opponent = null;
     if (isPvE || isBoss) {
@@ -2745,12 +2751,46 @@ function WastelandTactics() {
         {/* Left panel - Synergies */}
         <div className="wt-synergy-panel">
           <div className="wt-panel-header">SYNERGIES</div>
-          {synergies.length === 0 ? <div className="wt-synergy-empty">No active synergies</div> : synergies.map(s => (
+          {synergies.length === 0 ? <div className="wt-synergy-empty">No active synergies</div> : synergies.map(s => {
+            // TFT-style tier ladder: surface every threshold (2, 3, ...) and highlight reached ones.
+            // bonuses is keyed by count thresholds — derive the ladder from that data.
+            const tiers = Object.keys(s.bonuses).map(Number).sort((a, b) => a - b);
+            const reachedTiers = tiers.filter(t => s.count >= t);
+            const activeTier = reachedTiers.length ? reachedTiers[reachedTiers.length - 1] : null;
+            const nextTier = tiers.find(t => s.count < t);
+            const displayBonus = activeTier ? s.bonuses[activeTier] : (nextTier ? `Need ${nextTier - s.count} more for ${s.bonuses[nextTier]}` : s.bonuses[tiers[0]]);
+            return (
             <div key={s.trait} className={`wt-synergy-row ${s.count >= 2 ? 'wt-synergy-row-active' : ''}`} style={{ '--synergy-color': s.color, borderColor: s.count >= 2 ? `${s.color}44` : undefined, boxShadow: s.count >= 2 ? `0 0 8px ${s.color}33` : undefined }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}><GameIcon iconImg={s.iconImg} icon={s.icon} size={14} /><span style={{ color: s.color, fontWeight: 'bold', fontSize: 11 }}>{s.name}</span><span style={{ marginLeft: 'auto', fontSize: 11, color: s.count >= 2 ? s.color : 'var(--ui-text-dim)' }}>{s.count}</span></div>
-              <div style={{ fontSize: 8, opacity: 0.6, marginTop: 2, lineHeight: 1.3 }}>{s.bonuses[s.count] || s.bonuses[2]}</div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                <GameIcon iconImg={s.iconImg} icon={s.icon} size={14} />
+                <span style={{ color: s.color, fontWeight: 'bold', fontSize: 11 }}>{s.name}</span>
+                <span style={{ marginLeft: 'auto', fontSize: 11, color: s.count >= 2 ? s.color : 'var(--ui-text-dim)' }}>{s.count}</span>
+              </div>
+              {/* Tier ladder pills — reached tiers get the trait colour, unreached are dim. */}
+              <div style={{ display: 'flex', gap: 3, marginTop: 3 }}>
+                {tiers.map(t => {
+                  const reached = s.count >= t;
+                  const isActive = t === activeTier;
+                  return (
+                    <span
+                      key={t}
+                      title={`${t}: ${s.bonuses[t]}`}
+                      style={{
+                        fontSize: 8, fontWeight: 'bold', padding: '1px 5px', borderRadius: 2,
+                        background: reached ? s.color : 'transparent',
+                        color: reached ? '#0a0a0a' : `${s.color}88`,
+                        border: `1px solid ${reached ? s.color : `${s.color}44`}`,
+                        outline: isActive ? `1px solid ${s.color}` : 'none',
+                        outlineOffset: 1,
+                      }}
+                    >{t}</span>
+                  );
+                })}
+              </div>
+              <div style={{ fontSize: 8, opacity: activeTier ? 0.75 : 0.45, marginTop: 3, lineHeight: 1.3 }}>{displayBonus}</div>
             </div>
-          ))}
+            );
+          })}
           {augments.length > 0 && (
             <div style={{ marginTop: 8, borderTop: '1px solid var(--ui-border-dim)', paddingTop: 6 }}>
               <div style={{ fontSize: 10, fontWeight: 'bold', color: '#cc66ff', marginBottom: 4 }}>AUGMENTS</div>
@@ -2791,6 +2831,29 @@ function WastelandTactics() {
                 onDone={() => { /* boss intro auto-dismiss handled by existing timeout in setBossIntro flow */ }}
               />
             )}
+            {/* PvE creep-wave banner — shown when on a themed PvE round, in either prep or combat.
+                Non-intrusive: thin coloured bar, no full overlay. */}
+            {isPveRound(round) && !(round > 3 && round % 7 === 0 && BOSS_DATABASE[round]) && getPveWave(round) && (() => {
+              const wave = getPveWave(round);
+              return (
+                <div style={{
+                  maxWidth: 780, width: '100%', margin: '0 auto 6px',
+                  display: 'flex', alignItems: 'center', gap: 10,
+                  padding: '4px 12px',
+                  background: `linear-gradient(90deg, ${wave.color}33, transparent 60%)`,
+                  border: `1px solid ${wave.color}66`,
+                  borderRadius: 3,
+                  fontFamily: "'Share Tech Mono', monospace",
+                }}>
+                  <span style={{ fontSize: 18, lineHeight: 1 }}>{wave.icon}</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 11, fontWeight: 'bold', color: wave.color, letterSpacing: 1, textTransform: 'uppercase' }}>{wave.name}</span>
+                    <span style={{ fontSize: 9, opacity: 0.65, color: 'var(--ui-text)' }}>{wave.flavour}</span>
+                  </div>
+                  <span style={{ fontSize: 9, color: wave.color, opacity: 0.85, whiteSpace: 'nowrap' }}>PvE · item drop</span>
+                </div>
+              );
+            })()}
             {/* Combat progress bar */}
             {phase === 'combat' && (
               <div style={{ maxWidth: 780, width: '100%', margin: '0 auto 8px', position: 'relative', height: 18, background: '#111', border: '1px solid var(--ui-secondary)', borderRadius: 3, overflow: 'hidden' }}>
@@ -2805,8 +2868,8 @@ function WastelandTactics() {
                 </div>
               </div>
             )}
-            {/* Enemy board / Scout preview */}
-            {phase === 'prep' && round > 3 && !(round % 7 === 0 && BOSS_DATABASE[round]) && (() => {
+            {/* Enemy board / Scout preview — only for ghost PvP rounds (not PvE creep waves, not bosses) */}
+            {phase === 'prep' && round > 3 && !isPveRound(round) && !(round % 7 === 0 && BOSS_DATABASE[round]) && (() => {
               const aliveGhosts = ghostPlayersRef.current.filter(g => g.alive);
               if (aliveGhosts.length === 0) return null;
               const sIdx = scoutIndex % aliveGhosts.length;
