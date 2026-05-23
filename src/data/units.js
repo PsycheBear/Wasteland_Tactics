@@ -1,6 +1,13 @@
 // Animation classification: melee = full lunge, ranged = lean + projectile (Sturges is melee despite range 3)
+import { BASE } from '../baseUrl.js';
 export const MELEE_UNITS = ['dogmeat', 'cait', 'sturges', 'hancock', 'strong', 'deathclaw', 'fahrenheit', 'wiseman'];
 export const isMeleeUnit = (unitId) => MELEE_UNITS.includes(unitId);
+
+// Convenience: portrait path for a unit ID. Used by UnitCard / UnitTooltip with
+// `onError` fallback to emoji/icon when the PNG doesn't exist yet (Wave 1's
+// Gemini quota was zero — files may not be on disk).
+export const getUnitPortrait = (unitId) => unitId ? `${BASE}/images/units/${unitId}.png` : null;
+
 export const UNIT_DATABASE = {
   // === COST 1 (early game filler, fall off late) ===
   preston: { name: 'Preston Garvey', cost: 1, traits: ['Minutemen', 'Support'], hp: 480, atk: 50, def: 20, range: 2, attackSpeed: 0.95, apMax: 80, apGain: 10, apOnHit: 10, ability: 'Rally Minutemen', abilityDesc: '+20% ATK to all allies for 4s', passiveDesc: "General's Inspiration: allies start with 20% AP" },
@@ -36,3 +43,10 @@ export const UNIT_DATABASE = {
   // === COST 5 ===
   liberty: { name: 'Liberty Prime', cost: 5, traits: ['Brotherhood', 'Tech'], hp: 1000, atk: 85, def: 40, range: 2, attackSpeed: 0.85, apMax: 90, apGain: 12, apOnHit: 12, ability: 'Nuclear Football', abilityDesc: '250 AoE damage to all enemies', passiveDesc: 'Democracy is Non-Negotiable: immune to all debuffs, +5% ATK to all allies' },
 };
+
+// Stamp a portrait field onto every unit. Lazy path resolution via getUnitPortrait
+// keeps the data section above readable; the UI layer uses <img onError> to
+// fall back to the existing emoji+icon presentation when the file doesn't exist.
+for (const id of Object.keys(UNIT_DATABASE)) {
+  UNIT_DATABASE[id].portrait = getUnitPortrait(id);
+}

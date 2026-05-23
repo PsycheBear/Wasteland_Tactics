@@ -1,9 +1,26 @@
-/* Google Fonts */
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+/* Self-hosted Pip-Boy / CRT fonts (no external CDN, GDPR-friendly) */
+@font-face {
+  font-family: 'VT323';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/Wasteland_Tactics/fonts/vt323.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Share Tech Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/Wasteland_Tactics/fonts/share-tech-mono.woff2') format('woff2');
+}
 
 /* Base reset */
 * { margin: 0; padding: 0; box-sizing: border-box; }
-body { background: #0a0a06; overflow-x: hidden; }
+body {
+  background: #0a0a06;
+  overflow-x: hidden;
+  font-family: 'VT323', 'Share Tech Mono', 'Courier New', monospace;
+}
 
 /* === UI THEME CSS VARIABLES === */
 :root, [data-theme="tactical"] {
@@ -3012,4 +3029,112 @@ body { background: #0a0a06; overflow-x: hidden; }
     inset 0 0 0 4px var(--pip-color),
     0 0 30px var(--pip-glow),
     0 0 60px var(--pip-glow-soft);
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* === MOBILE === Phase 3 responsive + a11y additions      */
+/* ═══════════════════════════════════════════════════════ */
+
+/* --- Tablet & small laptop: stack boards, scrollable shop --- */
+@media (max-width: 768px) {
+  /* Stack the player vs enemy boards vertically — center column is the main play area */
+  .wt-center-column { width: 100%; }
+  .wt-arena-frame {
+    padding: 8px !important;
+  }
+  /* Make the shop bar horizontally scrollable so cards never clip on narrow screens */
+  .wt-shop-bar {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    flex-wrap: nowrap !important;
+    scrollbar-width: thin;
+  }
+  .wt-shop-cards {
+    flex-wrap: nowrap !important;
+    justify-content: flex-start !important;
+    min-width: max-content;
+  }
+  /* Tap targets — Apple/Material recommend ≥44px */
+  .wt-shop-btn,
+  .wt-pipboy-btn,
+  .wt-fightBtn,
+  button {
+    min-height: 44px;
+  }
+  /* Side panels collapse to horizontal scroll strips */
+  .wt-synergy-panel,
+  .wt-info-panel {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Bench items breathing room for fat fingers */
+  .wt-bench-strip { padding: 8px 6px !important; gap: 4px !important; }
+}
+
+/* --- Phone: drop heavy effects --- */
+@media (max-width: 480px) {
+  /* Disable scanline overlay — heavy on GPU and unreadable at small sizes */
+  .wt-game-scanlines,
+  .wt-loading-scanlines,
+  .wt-terminal-log-scanlines {
+    display: none !important;
+  }
+  /* Smaller, tighter HUD */
+  .wt-top-bar {
+    padding: 4px 8px !important;
+    height: auto !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .wt-stage-badge { padding: 2px 8px !important; }
+  /* Buttons take full width when wrapped */
+  .wt-shop-controls { flex-direction: row !important; flex-wrap: wrap !important; }
+}
+
+/* ═══════════════════════════════════════════════════════ */
+/* === ACCESSIBILITY === Phase 3 focus rings + motion      */
+/* ═══════════════════════════════════════════════════════ */
+
+/* Pip-Boy-green focus ring for keyboard navigation only.
+   Browsers that support :focus-visible (all modern) will only show
+   this ring for keyboard focus, not mouse clicks. */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid #4eff4e;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Themed focus ring — picks up the active theme's primary colour */
+button:focus-visible,
+[role="button"]:focus-visible,
+a:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--ui-primary, #4eff4e);
+  outline-offset: 2px;
+  box-shadow: 0 0 8px var(--ui-glow, rgba(78,255,78,0.5));
+}
+
+/* Respect users who prefer reduced motion — disable CRT flicker,
+   pulses, shimmer, scope glints, and other decorative animations.
+   Keep functional animations (combat hits, ability casts) running
+   so the game remains playable. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  /* Explicitly kill the looping CRT-flavoured ambience */
+  .wt-game-scanlines,
+  .wt-loading-scanlines,
+  .wt-terminal-log-scanlines {
+    animation: none !important;
+  }
 }

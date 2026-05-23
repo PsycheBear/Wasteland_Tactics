@@ -4,8 +4,27 @@ import { TRAITS } from '../data/traits.js';
 import { ITEM_COMPONENTS, COMPLETED_ITEMS, getRandomComponent } from '../data/items.js';
 import { AUGMENT_POOL } from '../data/augments.js';
 import { BOSS_DATABASE } from '../data/bosses.js';
+import { getDifficultyMode, DEFAULT_DIFFICULTY_ID } from '../data/difficulty.js';
 import { COST_COLORS, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, isCarouselRound, getRandomCost, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from './audio.js';
+
+// ── Mothman darkness-shroud damage modifier ─────────────────────────
+// When a unit takes damage and it's the Mothman boss with darkness_shroud
+// active, look up the current phase's incoming-damage multiplier (thick
+// halves AoE, thin doubles single-target). For any other target this is a
+// pass-through (returns the original damage unchanged), so we can call it
+// unconditionally on every damage write.
+export const applyShroudMultiplier = (target, damage, isAoE) => {
+  if (!target || !target.isBoss || target.bossMechanic !== 'darkness_shroud') return damage;
+  const phases = target.shroudPhases;
+  const effects = target.shroudEffects;
+  if (!Array.isArray(phases) || !effects) return damage;
+  const phaseName = phases[target._shroudPhaseIdx || 0];
+  const eff = effects[phaseName];
+  if (!eff) return damage;
+  const mult = isAoE ? (eff.aoeIncomingMult ?? 1) : (eff.singleTargetIncomingMult ?? 1);
+  return damage * mult;
+};
 
 // ── Grid distance for proximity targeting ───────────────────────────
 // Board is 2 rows of 7: positions 0-6 = row 0, 7-13 = row 1
@@ -47,28 +66,68 @@ export const initGhostPlayers = (pool) => {
   });
 };
 
+// Ghost AI scorer (Wave 3) — replaces the previous random cost-weighted draft.
+//
+// For each pool-eligible candidate unit we compute:
+//   score = costWeight                                    // higher-cost = stronger
+//         + traitStackingBonus                            // 50 * (existing copies of this trait already on the board, summed across all of the candidate's traits) — naturally fills 2-piece breakpoints before 4-piece
+//         + roundFitBonus                                 // penalises units far from the round's target avg cost (round/3)
+//         + preferredTraitBonus                           // small thumb on the scale toward each ghost's two preferred traits
+//
+// We greedily pick the top-scored, in-pool candidate for each open slot.
+// `getCandidateScore` is exported for unit tests.
+export const getCandidateScore = (ghost, unitKey, round) => {
+  const unit = UNIT_DATABASE[unitKey];
+  if (!unit) return -Infinity;
+  const costWeight = unit.cost * 10;
+
+  // Trait stacking — count existing trait occurrences across ghost.board.
+  // Each shared trait contributes +50 per existing copy of that trait,
+  // so e.g. 1 existing Minutemen on the board makes a 2nd Minutemen pick +50.
+  const traitCounts = {};
+  for (const u of ghost.board) {
+    const base = UNIT_DATABASE[u.id];
+    if (!base) continue;
+    for (const t of base.traits) traitCounts[t] = (traitCounts[t] || 0) + 1;
+  }
+  let traitStackingBonus = 0;
+  for (const t of unit.traits) {
+    traitStackingBonus += 50 * (traitCounts[t] || 0);
+  }
+
+  // Round-appropriate cost preference — penalise units far from the
+  // round's target average cost (round/3). Keeps early ghosts on 1-cost
+  // chaff and late ghosts on 4/5-cost carries.
+  const targetCost = round / 3;
+  const roundFitBonus = -10 * Math.abs(unit.cost - targetCost);
+
+  const preferredTraitBonus = unit.traits.some(t => ghost.preferredTraits?.includes(t)) ? 8 : 0;
+
+  return costWeight + traitStackingBonus + roundFitBonus + preferredTraitBonus;
+};
+
 export const ghostPlayerShop = (ghost, pool, round) => {
   if (!ghost.alive) return;
   // Ghost levels up roughly with the round
   ghost.level = Math.min(9, 3 + Math.floor(round / 3));
   const maxBoardSize = ghost.level;
 
-  // Ghost tries to buy 1-2 units per round from the pool
+  // Ghost tries to buy 1-2 units per round from the pool, picking the
+  // highest-scoring in-pool candidate each iteration (greedy fill).
   const buyCount = round <= 3 ? 1 : Math.min(2, maxBoardSize - ghost.board.length);
   for (let b = 0; b < buyCount; b++) {
     if (ghost.board.length >= maxBoardSize) break;
-    const cost = getRandomCost(ghost.level);
-    // Prefer units matching ghost's traits
-    const preferred = UNIT_KEYS.filter(k =>
-      UNIT_DATABASE[k].cost === cost && pool[k] > 0 &&
-      UNIT_DATABASE[k].traits.some(t => ghost.preferredTraits.includes(t))
-    );
-    const fallback = UNIT_KEYS.filter(k => UNIT_DATABASE[k].cost === cost && pool[k] > 0);
-    const candidates = preferred.length > 0 ? preferred : fallback;
+    const candidates = UNIT_KEYS.filter(k => pool[k] > 0);
     if (candidates.length === 0) continue;
-    const unitKey = candidates[Math.floor(Math.random() * candidates.length)];
-    pool[unitKey]--;
-    ghost.board.push({ id: unitKey, stars: 1, boughtRound: round });
+    let best = null;
+    let bestScore = -Infinity;
+    for (const k of candidates) {
+      const s = getCandidateScore(ghost, k, round);
+      if (s > bestScore) { bestScore = s; best = k; }
+    }
+    if (!best) continue;
+    pool[best]--;
+    ghost.board.push({ id: best, stars: 1, boughtRound: round });
   }
 
   // Upgrade: if ghost has 3 copies of same unit at same star level, upgrade
@@ -95,6 +154,31 @@ export const ghostPlayerShop = (ghost, pool, round) => {
       }
     });
   }
+};
+
+// Ghost item assignment (Wave 3). When a ghost holds completed items in its
+// (optional) `ghost.items` array, equip each to whichever of its board units
+// has the highest base HP. This is intentionally simple — it just picks the
+// chunkiest unit on the team as the "items go on the tank" carrier.
+//
+// Returns the unit id chosen (or null if the board is empty), for tests.
+export const ghostEquipItem = (ghost, itemId) => {
+  if (!ghost?.board || ghost.board.length === 0) return null;
+  let bestIdx = -1;
+  let bestHp = -Infinity;
+  for (let i = 0; i < ghost.board.length; i++) {
+    const u = ghost.board[i];
+    const base = UNIT_DATABASE[u?.id];
+    if (!base) continue;
+    const starMult = u.stars === 3 ? 2.5 : u.stars === 2 ? 1.8 : 1;
+    const hp = base.hp * starMult;
+    if (hp > bestHp) { bestHp = hp; bestIdx = i; }
+  }
+  if (bestIdx === -1) return null;
+  const target = ghost.board[bestIdx];
+  target.items = target.items || [];
+  target.items.push(itemId);
+  return target.id;
 };
 
 export const ghostPlayerBoard = (ghost, round) => {
@@ -148,22 +232,36 @@ export const ghostPlayerBoard = (ghost, round) => {
 };
 
 // ── generateEnemies ─────────────────────────────────────────────────
-export const generateEnemies = (round) => {
+// `difficultyId` (Wave 3) scales enemy HP/ATK via DIFFICULTY_MODES. Omit it
+// or pass 'normal' to preserve the legacy 1.0x behavior — combat-parity tests
+// assert that 'normal' produces identical numbers to the pre-Wave-3 engine.
+export const generateEnemies = (round, difficultyId = DEFAULT_DIFFICULTY_ID) => {
+  const diff = getDifficultyMode(difficultyId);
+  const hpMult = diff.enemyHpMult;
+  const atkMult = diff.enemyAtkMult;
+
   // === BOSS ROUND ===
   if (round > 3 && round % 7 === 0 && BOSS_DATABASE[round]) {
     const boss = BOSS_DATABASE[round];
     const roundScale = 1 + round * 0.04;
     const slots = Array(14).fill(null);
+    const bossHp = boss.hp * roundScale * hpMult;
+    const bossAtk = boss.atk * roundScale * atkMult;
     slots[3] = {
       name: boss.name, id: 'boss_' + round, stars: 3, uid: 'boss_0', isBoss: true,
-      currentHp: boss.hp * roundScale, maxHp: boss.hp * roundScale,
-      atk: boss.atk * roundScale, baseAtk: boss.atk * roundScale,
+      currentHp: bossHp, maxHp: bossHp,
+      atk: bossAtk, baseAtk: bossAtk,
       baseDef: boss.def, def: boss.def, position: 3, isEnemy: true, stunDuration: 0,
       mana: 0, manaMax: 0, apGain: 0, apOnHit: 0, abilityUsed: false, buffDuration: 0, buffAtkMult: 1,
       attackSpeed: 0.8, attackCooldown: 8,
       traits: [], cost: 5, items: [],
       bossMechanic: boss.mechanic, bossInterval: boss.mechanicInterval,
       bossDmg: boss.mechanicDmg || 0, bossEnrageThreshold: boss.enrageThreshold || 0,
+      // Mothman darkness-shroud bookkeeping. Phase index starts at 0 ('thick').
+      // Only meaningful when bossMechanic === 'darkness_shroud'.
+      shroudPhases: boss.shroudPhases || null,
+      shroudEffects: boss.shroudEffects || null,
+      _shroudPhaseIdx: 0,
       _bossTickCounter: 0, _enraged: false,
     };
     return slots;
@@ -180,11 +278,12 @@ export const generateEnemies = (round) => {
                   round >= 5 ? (starRoll > 0.6 ? 2 : 1) : 1;
     const mult = stars === 3 ? 2.5 : stars === 2 ? 1.8 : 1;
     const roundScale = 1 + round * 0.06;
-    const baseAtk = unit.atk * mult * roundScale;
+    const baseAtk = unit.atk * mult * roundScale * atkMult;
+    const baseHp = unit.hp * mult * (1 + round * 0.08) * hpMult;
     const attackSpeed = unit.attackSpeed ?? 1.0;
     return {
       ...unit, id: unitKey, stars, uid: `enemy_${i}`,
-      currentHp: unit.hp * mult * (1 + round * 0.08), maxHp: unit.hp * mult * (1 + round * 0.08),
+      currentHp: baseHp, maxHp: baseHp,
       atk: baseAtk, baseAtk, baseDef: unit.def * mult, def: unit.def * mult, position: 0, isEnemy: true, stunDuration: 0,
       mana: 0, manaMax: unit.apMax || 0, apGain: unit.apGain || 0, apOnHit: unit.apOnHit || 0,
       abilityUsed: false, buffDuration: 0, buffAtkMult: 1,
@@ -337,7 +436,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const targets = [];
       const shuffled = [...aliveEnemies].sort(() => Math.random() - 0.5);
       for (let i = 0; i < Math.min(2, shuffled.length); i++) {
-        shuffled[i].currentHp -= baseDmg;
+        shuffled[i].currentHp -= applyShroudMultiplier(shuffled[i], baseDmg, true);
         targets.push(shuffled[i].name);
       }
       logs.unshift(`🔥 ${unit.name}'s Flamer scorches ${targets.join(' & ')} for ${Math.round(baseDmg)} each!`);
@@ -368,7 +467,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const laserDmg = 150 * starMult * abilityMult;
       aliveEnemies.forEach(e => {
         const dmg = laserDmg * (0.85 + Math.random() * 0.3);
-        e.currentHp -= dmg;
+        e.currentHp -= applyShroudMultiplier(e, dmg, true);
       });
       logs.unshift(`⚡ ${unit.name}: AD VICTORIAM! Laser blast hits ${aliveEnemies.length} enemies for ~${Math.round(laserDmg)} each!`);
       abilityUnits.push(unit.uid);
@@ -427,7 +526,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       if (aliveEnemies.length === 0) return false;
       const radDmg = 100 * starMult * abilityMult;
       aliveEnemies.forEach(e => {
-        e.currentHp -= radDmg * (0.85 + Math.random() * 0.3);
+        e.currentHp -= applyShroudMultiplier(e, radDmg * (0.85 + Math.random() * 0.3), true);
       });
       logs.unshift(`☢️ ${unit.name}'s Ghoulish Fury! ${Math.round(radDmg)} radiation damage to ${aliveEnemies.length} enemies!`);
       abilityUnits.push(unit.uid);
@@ -474,7 +573,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const shuffled = [...aliveEnemies].sort(() => Math.random() - 0.5);
       const targets = shuffled.slice(0, Math.min(3, shuffled.length));
       targets.forEach(t => {
-        t.currentHp -= baseDmg;
+        t.currentHp -= applyShroudMultiplier(t, baseDmg, true);
         t.burnDmg = (t.burnDmg || 0) + burnPerTick;
         t.burnTicks = 6;
         const burnEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (burnEl) burnEl.classList.add('wt-burning');
@@ -547,7 +646,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const laserDmg = 200 * starMult * abilityMult;
       const targets = [...aliveEnemies].sort(() => Math.random() - 0.5).slice(0, Math.min(3, aliveEnemies.length));
       targets.forEach(t => {
-        t.currentHp -= laserDmg * (0.85 + Math.random() * 0.3);
+        t.currentHp -= applyShroudMultiplier(t, laserDmg * (0.85 + Math.random() * 0.3), true);
       });
       logs.unshift(`⚡ ${unit.name}: FINAL JUDGMENT! Gatling laser hits ${targets.map(t => t.name).join(', ')} for ~${Math.round(laserDmg)} each!`);
       abilityUnits.push(unit.uid);
@@ -564,7 +663,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const targets = [...aliveEnemies].sort(() => Math.random() - 0.5).slice(0, Math.min(2, aliveEnemies.length));
       targets.forEach(t => {
         t.stunDuration = Math.round(stunTicks);
-        t.currentHp -= stunDmg;
+        t.currentHp -= applyShroudMultiplier(t, stunDmg, true);
         const stunEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (stunEl) stunEl.classList.add('wt-stunned');
       });
       logs.unshift(`🤖 ${unit.name}'s Cybernetic Override! Stuns & deals ${Math.round(stunDmg)} to ${targets.map(t => t.name).join(' & ')}!`);
@@ -579,7 +678,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       if (aliveEnemies.length === 0) return false;
       const nukeDmg = 250 * starMult * abilityMult;
       aliveEnemies.forEach(e => {
-        e.currentHp -= nukeDmg * (0.9 + Math.random() * 0.2);
+        e.currentHp -= applyShroudMultiplier(e, nukeDmg * (0.9 + Math.random() * 0.2), true);
       });
       logs.unshift(`☢️ ${unit.name}: NUCLEAR FOOTBALL! ${Math.round(nukeDmg)} damage to ${aliveEnemies.length} enemies! DEMOCRACY IS NON-NEGOTIABLE!`);
       abilityUnits.push(unit.uid);
@@ -1325,6 +1424,20 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         pUnits.filter(p => p.currentHp > 0).forEach(p => { p.currentHp -= stompDmg; });
         logs.unshift(`🐉 ${u.name} STOMPS! ${Math.round(stompDmg)} damage to all!`);
       }
+      // Mothman 'darkness_shroud' — phase alternates between 'thick' and
+      // 'thin' every SHROUD_PHASE_TICKS ticks. Damage taken by the boss is
+      // modified on the attack path (see applyShroudMultiplier callsites).
+      if (u.bossMechanic === 'darkness_shroud' && Array.isArray(u.shroudPhases) && u.shroudPhases.length > 0) {
+        const SHROUD_PHASE_TICKS = 40; // ~4 seconds at 100ms/tick
+        // _shroudPhaseIdx tracks the CURRENT phase index. Flip when ticks line up.
+        if (u._bossTickCounter > 0 && u._bossTickCounter % SHROUD_PHASE_TICKS === 0) {
+          u._shroudPhaseIdx = (u._shroudPhaseIdx + 1) % u.shroudPhases.length;
+          const phaseName = u.shroudPhases[u._shroudPhaseIdx];
+          if (phaseName === 'thick') logs.unshift(`🌑 The shroud thickens...`);
+          else if (phaseName === 'thin') logs.unshift(`🌫️ The shroud thins...`);
+          else logs.unshift(`🌑 The shroud shifts to ${phaseName}...`);
+        }
+      }
     });
 
     // Tick down attack cooldowns — stunned units do NOT tick
@@ -1478,6 +1591,8 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         logs.unshift(`🗡️ ${unit.name} strikes from stealth! +${Math.round(unit.itemBonusDmgFromStealth * 100)}% damage!`);
         { const stealthEl = document.querySelector(`[data-unit-uid="${unit.uid}"]`); if (stealthEl) { stealthEl.classList.add('wt-stealth-attack'); setTimeout(() => stealthEl.classList.remove('wt-stealth-attack'), 400); } }
       }
+      // Mothman: single-target auto-attacks are doubled in 'thin' phase.
+      damage = applyShroudMultiplier(target, damage, false);
       target.currentHp -= damage;
       // Enemy target gains AP when hit (apOnHit)
       target.mana = Math.min(target.manaMax, (target.mana || 0) + (target.apOnHit || 0));
@@ -1834,7 +1949,12 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           const streakBonus = absStreak >= 6 ? 3 : absStreak >= 4 ? 2 : absStreak >= 2 ? 1 : 0;
           const baseIncome = round >= 5 ? 5 : round >= 4 ? 4 : round >= 3 ? 3 : 2;
           const winBonus = won ? 1 : 0;
-          const base = baseIncome + interest + streakBonus + winBonus + augScavenger;
+          const baseRaw = baseIncome + interest + streakBonus + winBonus + augScavenger;
+          // Wave 3: difficulty.goldMult scales total earned income. Normal=1.0
+          // so this is a no-op there (parity tests assert this).
+          const diff = getDifficultyMode(callbacks.difficultyId);
+          const goldMult = diff.goldMult;
+          const base = Math.round(baseRaw * goldMult);
           const bonus = won ? extraGold : 0;
           setIncomeBreakdown?.({ base: baseIncome, interest, streak: streakBonus, augment: augScavenger, total: base + bonus });
           return g + base + bonus;

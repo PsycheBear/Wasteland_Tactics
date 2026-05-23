@@ -3,9 +3,34 @@ import { UNIT_DATABASE } from '../data/units.js';
 import { TRAITS } from '../data/traits.js';
 import { ITEM_COMPONENTS, COMPLETED_ITEMS } from '../data/items.js';
 import { COST_COLORS } from '../data/constants.js';
+import { LORE } from '../data/lore.js';
 import { GameIcon } from './GameIcon.jsx';
 import { getWeaponType, IDLE_CLASSES } from '../systems/unitTypes.js';
 import { IMAGES } from '../data/images.js';
+
+/* ─── PortraitImg ─── tries the unit's external portrait PNG first; on error,
+ * falls back to the existing IMAGES data URL; on error again, the caller renders
+ * a placeholder (UnitPlaceholder). */
+export function PortraitImg({ unitId, starLevel, size, alt }) {
+  const portrait = UNIT_DATABASE[unitId]?.portrait;
+  const dataUrl = IMAGES[unitId]?.[starLevel] || IMAGES[unitId]?.[1] || null;
+  const initial = portrait || dataUrl;
+  const [src, setSrc] = React.useState(initial);
+  React.useEffect(() => { setSrc(portrait || dataUrl); }, [portrait, dataUrl]);
+  if (!src) return null;
+  return (
+    <img
+      src={src}
+      alt={alt}
+      draggable={false}
+      onError={() => {
+        if (src === portrait && dataUrl) setSrc(dataUrl);
+        else setSrc(null);
+      }}
+      style={{ width: size, height: size, objectFit: 'contain', pointerEvents: 'none' }}
+    />
+  );
+}
 
 /* ─── helpers ─── */
 const getColor = (cost) => COST_COLORS[cost] || '#888';
@@ -97,9 +122,34 @@ export function UnitPlaceholder({ name, size }) {
 
 /* ─── UnitTooltip ─── */
 export function UnitTooltip({ unitTooltip, onClose }) {
+  // Expanded-lore toggle: hold Shift on desktop, or long-press anywhere on touch.
+  const [showLore, setShowLore] = React.useState(false);
+  React.useEffect(() => {
+    if (!unitTooltip) { setShowLore(false); return; }
+    const onKeyDown = (e) => { if (e.key === 'Shift') setShowLore(true); };
+    const onKeyUp = (e) => { if (e.key === 'Shift') setShowLore(false); };
+    window.addEventListener('keydown', onKeyDown);
+    window.addEventListener('keyup', onKeyUp);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+    };
+  }, [unitTooltip]);
+  // Long-press handlers attached on the tooltip card itself for touch.
+  const longPressTimer = React.useRef(null);
+  const startLongPress = () => {
+    clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => setShowLore(true), 500);
+  };
+  const cancelLongPress = () => {
+    clearTimeout(longPressTimer.current);
+    setShowLore(false);
+  };
+
   if (!unitTooltip) return null;
   const { unit, x, y } = unitTooltip;
   const db = UNIT_DATABASE[unit.id] || {};
+  const loreText = LORE.units?.[unit.id];
 
   // Gather item info
   const equippedItems = unit.items || [];
@@ -110,7 +160,11 @@ export function UnitTooltip({ unitTooltip, onClose }) {
       <div onClick={onClose} style={{
         position: 'fixed', inset: 0, zIndex: 3000, background: 'transparent',
       }} />
-      <div style={{
+      <div
+        onTouchStart={startLongPress}
+        onTouchEnd={cancelLongPress}
+        onTouchCancel={cancelLongPress}
+        style={{
         position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 350),
         zIndex: 3001, background: 'rgba(20,20,20,0.95)', border: '2px solid #ffd700',
         borderRadius: 6, padding: 12, minWidth: 240, maxWidth: 300,
@@ -172,6 +226,25 @@ export function UnitTooltip({ unitTooltip, onClose }) {
             })}
           </div>
         )}
+
+        {/* Lore — small italic blockquote shown when Shift is held (desktop) or
+            during a long-press (touch). Skipped silently when LORE has no entry
+            for this unit ID. */}
+        {loreText && showLore && (
+          <blockquote style={{
+            marginTop: 6, marginLeft: 0, marginRight: 0,
+            borderTop: '1px solid #444', paddingTop: 6,
+            fontSize: 10, fontStyle: 'italic', color: '#bbb',
+            lineHeight: 1.45, borderLeft: '2px solid #ffd70066', paddingLeft: 6,
+          }}>
+            {loreText}
+          </blockquote>
+        )}
+        {loreText && !showLore && (
+          <div style={{ marginTop: 4, fontSize: 9, opacity: 0.45, color: '#aaa' }}>
+            Hold Shift (or long-press) for lore
+          </div>
+        )}
       </div>
     </>
   );
@@ -219,18 +292,9 @@ export function UnitCard({
         background: getColor(unit.cost), borderRadius: '4px 4px 0 0',
       }} />
 
-      {/* Unit image or placeholder */}
-      {unitImg ? (
-        <img
-          src={unitImg} alt={unit.name}
-          draggable={false}
-          style={{
-            width: imgSize, height: imgSize,
-            objectFit: 'contain',
-            borderRadius: undefined,
-            pointerEvents: 'none',
-          }}
-        />
+      {/* Unit portrait (PNG) → IMAGES data URL → placeholder fallback chain */}
+      {(UNIT_DATABASE[unit.id]?.portrait || unitImg) ? (
+        <PortraitImg unitId={unit.id} starLevel={unit.stars} size={imgSize} alt={unit.name} />
       ) : (
         <UnitPlaceholder name={unit.name} size={imgSize} />
       )}
@@ -286,7 +350,10 @@ export function UnitCard({
         cursor: selectedItem ? 'crosshair' : 'pointer',
         opacity: isDragSource ? 0.3 : (isDying ? undefined : (displayUnit.currentHp !== undefined && displayUnit.currentHp <= 0) ? 0.3 : 1),
         position: 'relative', overflow: 'visible',
-        outline: isSelected ? '2px solid #00ff00' : 'none',
+        // Selection ring overrides the default focus ring; otherwise leave outline
+        // untouched so the `:focus-visible` rule in styles.css can paint a green-glow
+        // ring for keyboard navigation.
+        outline: isSelected ? '2px solid #00ff00' : undefined,
         borderRadius: 4,
         boxShadow: isSelected ? '0 0 8px rgba(0,255,0,0.5)' : (TIER_GLOW[unit.cost] || 'none'),
         transition: animClass ? 'none' : 'transform 0.15s ease-out, opacity 0.15s',
@@ -317,6 +384,8 @@ export function UnitCard({
 }
 
 /* ─── WtErrorBoundary ─── */
+import { logError } from '../lib/logger.js';
+
 export class WtErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -329,7 +398,8 @@ export class WtErrorBoundary extends React.Component {
 
   componentDidCatch(error, errorInfo) {
     this.setState({ errorInfo });
-    console.error('WtErrorBoundary caught:', error, errorInfo);
+    // Mirror to console + retain in the ring buffer so ProfilePanel can show it.
+    logError(error, { boundary: 'WtErrorBoundary', componentStack: errorInfo?.componentStack || null });
   }
 
   render() {

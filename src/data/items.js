@@ -1,5 +1,6 @@
 // === ITEM SYSTEM ===
 import { BASE } from '../baseUrl.js';
+import { extraItems } from './extraItems.js';
 export const ITEM_COMPONENTS = {
   scrap_metal: { name: 'Scrap Metal', icon: '\uD83D\uDD29', iconImg: `${BASE}/images/icons/item-scrap-metal.svg`, stat: 'def', value: 15, desc: '+15 DEF' },
   stimpak: { name: 'Stimpak', icon: '\uD83D\uDC89', iconImg: `${BASE}/images/icons/item-stimpak.png`, stat: 'hp', value: 200, desc: '+200 HP' },
@@ -7,6 +8,9 @@ export const ITEM_COMPONENTS = {
   targeting_module: { name: 'Targeting Module', icon: '\uD83C\uDFAF', iconImg: `${BASE}/images/icons/item-targeting-module.svg`, stat: 'apGain', value: 0.15, desc: '+15% AP gain' },
   stealth_boy: { name: 'Stealth Boy', icon: '\uD83D\uDC7B', iconImg: `${BASE}/images/icons/item-stealth-boy.png`, stat: 'dodge', value: 0.15, desc: '+15% dodge' },
   nuka_quantum: { name: 'Nuka-Cola Quantum', icon: '\uD83E\uDD64', iconImg: `${BASE}/images/icons/item-nuka-quantum.svg`, stat: 'abilityPower', value: 0.2, desc: '+20% ability power' },
+  // 7th component \u2014 opens 7 new recipe pairs (plasma_core + each existing comp + plasma_core+plasma_core).
+  // Flavor: a glowing green plasma cell drop. Used by the extra items wired in below.
+  plasma_core: { name: 'Plasma Core', icon: '\uD83D\uDFE2', iconImg: `${BASE}/images/icons/item-plasma-core.svg`, stat: 'abilityPower', value: 0.15, desc: '+15% ability power' },
 };
 export const ITEM_COMPONENT_KEYS = Object.keys(ITEM_COMPONENTS);
 
@@ -34,6 +38,14 @@ export const COMPLETED_ITEMS = {
   infiltrator_kit: { name: 'Infiltrator\'s Kit', icon: '\uD83D\uDDE1\uFE0F', iconImg: `${BASE}/images/icons/item-infiltrator-kit.svg`, recipe: ['targeting_module', 'stealth_boy'], effects: { apGain: 0.1, dodge: 0.15, bonusDmgFromStealth: 0.3 }, desc: '+10% AP gain, +15% dodge, +30% dmg from stealth' },
   laser_sight: { name: 'Laser Sight Barrel', icon: '\uD83D\uDD26', iconImg: `${BASE}/images/icons/item-laser-sight.svg`, recipe: ['fusion_cell', 'stealth_boy'], effects: { atk: 15, dodge: 0.1, critChance: 0.2 }, desc: '+15 ATK, +10% dodge, +20% crit chance' },
 };
+
+// Spread Wave 1 extras into the completed-items table. They use the new
+// `plasma_core` component so no recipe collisions are possible.
+// Keys are slugified from the display name (e.g. "Plasma Cleaver" \u2192 "plasma_cleaver").
+for (const xi of extraItems) {
+  const key = xi.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+  COMPLETED_ITEMS[key] = { name: xi.name, icon: xi.icon, iconImg: xi.iconImg, recipe: xi.recipe, effects: xi.effects, desc: xi.desc };
+}
 
 export const findCompletedItem = (comp1, comp2) => {
   return Object.entries(COMPLETED_ITEMS).find(([key, item]) => {

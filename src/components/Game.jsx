@@ -13,7 +13,13 @@ import { GameIcon, createGameIcon } from './GameIcon.jsx';
 import Lucky38Carousel from './Lucky38Carousel.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
 import DevTools from './DevTools.jsx';
+import AugmentPicker from './AugmentPicker.jsx';
+import BossIntro from './BossIntro.jsx';
+import ProfilePanel from './ProfilePanel.jsx';
+import DifficultySelector, { loadStoredDifficulty } from './DifficultySelector.jsx';
 import { BASE } from '../baseUrl.js';
+import { saveReplay } from '../hooks/useSave.js';
+import { logError } from '../lib/logger.js';
 
 /* ─── Combat log emoji → colored badge parser ─── */
 const LOG_EMOJI_MAP = {
@@ -187,6 +193,8 @@ function WastelandTactics() {
   const [vpSize, setVpSize] = useState({ w: window.innerWidth, h: window.innerHeight });
   useEffect(() => { const onResize = () => setVpSize({ w: window.innerWidth, h: window.innerHeight }); window.addEventListener('resize', onResize); return () => window.removeEventListener('resize', onResize); }, []);
   const [menuFirstLoad, setMenuFirstLoad] = useState(true);
+  // Wave 3: difficulty selection persists across reloads. Defaults to 'normal'.
+  const [difficultyId, setDifficultyId] = useState(() => loadStoredDifficulty('normal'));
   const startGame = (loadSave) => {
     try { sound.vaultDoor?.(); } catch(_) {}
     pendingLoadRef.current = loadSave;
@@ -250,6 +258,10 @@ function WastelandTactics() {
   const [floatingNumbers, setFloatingNumbers] = useState([]);
   const [noBoardFlash, setNoBoardFlash] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  // Wave 2: ProfilePanel modal (lifetime stats + build codec + replay viewer).
+  // Toggle via Ctrl+Shift+P (a small hotkey added below). The panel can also be
+  // opened by other UIs in the future by calling setProfileOpen(true).
+  const [profileOpen, setProfileOpen] = useState(false);
   const [devToolsActivate, setDevToolsActivate] = useState(false);
   const [bossIntro, setBossIntro] = useState(null);
   const [cheatSheetOpen, setCheatSheetOpen] = useState(false);
@@ -269,6 +281,19 @@ function WastelandTactics() {
     window.addEventListener('keydown', handler);
     return () => window.removeEventListener('keydown', handler);
   }, [cheatSheetOpen]);
+
+  // Wave 2: ProfilePanel hotkey — Ctrl+Shift+P (uppercase + lowercase to be safe)
+  // toggles the panel. Wrapped in its own effect so it has no other dependencies.
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.ctrlKey && e.shiftKey && (e.key === 'P' || e.key === 'p')) {
+        e.preventDefault();
+        setProfileOpen(o => !o);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   // incomeBreakdown persists until next round — shown in bottom bar
   const [settings, setSettings] = useState(() => {
     try {
@@ -1040,7 +1065,7 @@ function WastelandTactics() {
     let enemyUnits;
     let opponent = null;
     if (isPvE || isBoss) {
-      enemyUnits = generateEnemies(round);
+      enemyUnits = generateEnemies(round, difficultyId);
     } else {
       // Pick a random alive ghost player to fight
       if (aliveGhosts.length > 0) {
@@ -1048,7 +1073,7 @@ function WastelandTactics() {
         enemyUnits = ghostPlayerBoard(opponent, round);
         setCurrentOpponent(opponent.name);
       } else {
-        enemyUnits = generateEnemies(round);
+        enemyUnits = generateEnemies(round, difficultyId);
       }
     }
     if (!opponent) setCurrentOpponent(null);
@@ -1091,7 +1116,20 @@ function WastelandTactics() {
       setCombatTick,
       setIncomeBreakdown,
       setDamageStats,
-      addMatchHistory: (entry) => setMatchHistory(prev => [...prev, entry]),
+      addMatchHistory: (entry) => {
+        setMatchHistory(prev => [...prev, entry]);
+        // Wave 2: also persist a trimmed replay to localStorage so ReplayViewer
+        // can step through the last 5 fights. We pull the current log buffer at
+        // call-time; combat.js's log is the source of truth for action ordering.
+        try {
+          saveReplay({
+            round: entry?.round ?? round,
+            opponent: entry?.opponent || currentOpponent?.name || '?',
+            result: entry?.result || (entry?.win ? 'win' : 'loss'),
+            log: entry?.log || [],
+          });
+        } catch (e) { logError(e, { source: 'addMatchHistory.saveReplay' }); }
+      },
       currentOpponent: currentOpponent || null,
       generateShop,
       getRandomComponent,
@@ -1099,6 +1137,7 @@ function WastelandTactics() {
       augAbilityDmgMult,
       augHealMult,
       augFirstStrikeMult,
+      difficultyId,
       prepTimer: settings.prepTimer || 30,
       setPlayerStats,
       saveGame: () => saveGameRef.current?.(),
@@ -1515,6 +1554,11 @@ function WastelandTactics() {
                         'Synergies activate at 2 and 3 units. Check the codex for breakpoints.',
                         'Higher level means better shop odds for rare units. Level up strategically.',
                       ][Math.floor(Date.now() / 86400000) % 8]}</div>
+                    </div>
+
+                    {/* Difficulty selector */}
+                    <div style={{ marginBottom: 12, opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 2.2s forwards' : 'none' }}>
+                      <DifficultySelector value={difficultyId} onChange={setDifficultyId} />
                     </div>
 
                     {/* Buttons */}
@@ -2532,7 +2576,7 @@ function WastelandTactics() {
                 <div style={{ fontSize: 12, fontWeight: 'bold', color: 'var(--ui-primary)', marginBottom: 4, letterSpacing: 1, borderBottom: '1px solid var(--ui-border-dim)', paddingBottom: 4 }}>FALLOUT 4 AUDIO</div>
                 <div style={{ fontSize: 9, color: 'var(--ui-text-dim)', marginBottom: 8 }}>Point to your Fallout 4 install to use authentic sounds</div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <input type="text" placeholder="C:\Program Files\Steam\steamapps\common\Fallout 4" value={settings.fo4Path || ''} onChange={e => setSettings(s => ({ ...s, fo4Path: e.target.value }))} style={{ flex: 1, padding: '6px 10px', fontSize: 10, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--ui-border-dim)', borderRadius: 4, color: 'var(--ui-text)', fontFamily: 'inherit', outline: 'none' }} />
+                  <input type="text" placeholder="C:\Program Files\Steam\steamapps\common\Fallout 4" value={settings.fo4Path || ''} onChange={e => setSettings(s => ({ ...s, fo4Path: e.target.value }))} style={{ flex: 1, padding: '6px 10px', fontSize: 10, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--ui-border-dim)', borderRadius: 4, color: 'var(--ui-text)', fontFamily: 'inherit' }} />
                   <button onClick={() => {
                     try {
                       localStorage.setItem('wt_fo4_cache_dir', settings.fo4Path || '');
@@ -2741,13 +2785,11 @@ function WastelandTactics() {
           })()}>
             <div className="wt-board-vignette" />
             {bossIntro && (
-              <>
-                <div className="wt-boss-spotlight" />
-                <div className="wt-boss-title">
-                  <div className="wt-boss-title-name">{bossIntro.name}</div>
-                  <div className="wt-boss-title-sub">WASTELAND BOSS</div>
-                </div>
-              </>
+              <BossIntro
+                boss={bossIntro}
+                frames={Array.isArray(bossIntro.introFrames) ? bossIntro.introFrames : null}
+                onDone={() => { /* boss intro auto-dismiss handled by existing timeout in setBossIntro flow */ }}
+              />
             )}
             {/* Combat progress bar */}
             {phase === 'combat' && (
@@ -3276,7 +3318,7 @@ function WastelandTactics() {
                     value={terminalSearch}
                     onChange={e => setTerminalSearch(e.target.value)}
                     placeholder="Search units..."
-                    style={{ width: '100%', padding: '4px 8px', marginBottom: 8, background: 'rgba(0,20,0,0.6)', border: '1px solid var(--ui-secondary)', borderRadius: 3, color: 'var(--ui-primary)', fontFamily: 'inherit', fontSize: 11, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '4px 8px', marginBottom: 8, background: 'rgba(0,20,0,0.6)', border: '1px solid var(--ui-secondary)', borderRadius: 3, color: 'var(--ui-primary)', fontFamily: 'inherit', fontSize: 11, boxSizing: 'border-box' }}
                   />
                   {[1, 2, 3, 4, 5].map(cost => {
                     const units = UNIT_KEYS.filter(k => UNIT_DATABASE[k].cost === cost).filter(k => !terminalSearch || UNIT_DATABASE[k].name.toLowerCase().includes(terminalSearch.toLowerCase()));
@@ -3435,7 +3477,7 @@ function WastelandTactics() {
                     value={terminalSearch}
                     onChange={e => setTerminalSearch(e.target.value)}
                     placeholder="Search synergies..."
-                    style={{ width: '100%', padding: '4px 8px', marginBottom: 8, background: 'rgba(0,20,0,0.6)', border: '1px solid var(--ui-secondary)', borderRadius: 3, color: 'var(--ui-primary)', fontFamily: 'inherit', fontSize: 11, outline: 'none', boxSizing: 'border-box' }}
+                    style={{ width: '100%', padding: '4px 8px', marginBottom: 8, background: 'rgba(0,20,0,0.6)', border: '1px solid var(--ui-secondary)', borderRadius: 3, color: 'var(--ui-primary)', fontFamily: 'inherit', fontSize: 11, boxSizing: 'border-box' }}
                   />
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     {Object.entries(TRAITS).filter(([key, trait]) => !terminalSearch || trait.name.toLowerCase().includes(terminalSearch.toLowerCase())).map(([traitKey, trait]) => {
@@ -4164,40 +4206,36 @@ function WastelandTactics() {
         );
       })()}
 
-      {/* Augment Choice Overlay */}
-      {augmentChoice && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500 }}>
-          <div style={{ background: 'linear-gradient(180deg, #0a001a 0%, #0a0a00 100%)', border: '3px solid #9900ff', borderRadius: 8, padding: 30, textAlign: 'center', boxShadow: '0 0 40px rgba(153,0,255,0.5)' }}>
-            <div style={{ fontSize: 24, fontWeight: 'bold', color: '#cc66ff', marginBottom: 16 }}>Choose an Augment</div>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
-              {augmentChoice.options.map((aug, idx) => (
-                React.createElement('div', {
-                  key: idx,
-                  onClick: () => {
-                    setAugments(prev => [...prev, aug.id]);
-                    setAugmentChoice(null);
-                    // Apply immediate effects
-                    if (aug.effect.benchAdd) {
-                      setBench(prev => [...prev, ...Array(aug.effect.benchAdd).fill(null)]);
-                    }
-                    setLog(prev => [`⚡ Acquired augment: ${aug.name}!`, ...prev.slice(0, 9)]);
-                    sound.upgrade();
-                  },
-                  style: {
-                    width: 120, padding: 16, background: 'rgba(50,0,80,0.6)', border: '2px solid #9900ff',
-                    borderRadius: 8, cursor: 'pointer', textAlign: 'center', transition: 'all 0.2s',
-                  },
-                  onMouseEnter: (e) => { e.currentTarget.style.background = 'rgba(80,0,120,0.6)'; e.currentTarget.style.borderColor = '#cc66ff'; },
-                  onMouseLeave: (e) => { e.currentTarget.style.background = 'rgba(50,0,80,0.6)'; e.currentTarget.style.borderColor = '#9900ff'; },
-                },
-                  React.createElement('div', { style: { fontSize: 32, marginBottom: 8 } }, createGameIcon(aug.iconImg, aug.icon, 32)),
-                  React.createElement('div', { style: { fontSize: 12, fontWeight: 'bold', color: '#ffffff', marginBottom: 4 } }, aug.name),
-                  React.createElement('div', { style: { fontSize: 10, color: '#cc99ff' } }, aug.desc)
-                )
-              ))}
-            </div>
-          </div>
-        </div>
+      {/* Augment Choice Overlay — extracted to AugmentPicker.jsx */}
+      <AugmentPicker
+        choice={augmentChoice}
+        onPick={(aug) => {
+          setAugments(prev => [...prev, aug.id]);
+          setAugmentChoice(null);
+          // Apply immediate effects
+          if (aug.effect.benchAdd) {
+            setBench(prev => [...prev, ...Array(aug.effect.benchAdd).fill(null)]);
+          }
+          setLog(prev => [`⚡ Acquired augment: ${aug.name}!`, ...prev.slice(0, 9)]);
+          sound.upgrade();
+        }}
+      />
+
+      {/* Vault-Tec Profile Panel — opens via Ctrl+Shift+P */}
+      {profileOpen && (
+        <ProfilePanel
+          onClose={() => setProfileOpen(false)}
+          currentBuild={{ board, bench, augments, items: itemInventory }}
+          onImport={(payload) => {
+            try {
+              if (Array.isArray(payload.board)) setBoard(payload.board);
+              if (Array.isArray(payload.bench)) setBench(payload.bench);
+              if (Array.isArray(payload.augments)) setAugments(payload.augments);
+              if (Array.isArray(payload.items)) setItemInventory(payload.items);
+              setLog(prev => [`💾 Build imported from code`, ...prev.slice(0, 9)]);
+            } catch (e) { logError(e, { source: 'ProfilePanel.onImport' }); }
+          }}
+        />
       )}
 
       {/* Lucky 38 Carousel */}

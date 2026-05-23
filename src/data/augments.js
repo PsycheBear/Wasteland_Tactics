@@ -1,5 +1,6 @@
 // === AUGMENT SYSTEM ===
 import { BASE } from '../baseUrl.js';
+import { extraAugments } from './extraAugments.js';
 export const AUGMENT_POOL = [
   { id: 'vault_training', name: 'Vault-Tec Training', icon: '\uD83C\uDFCB\uFE0F', iconImg: `${BASE}/images/icons/aug-vault-training.svg`, desc: '+5 ATK to all units', effect: { atkAdd: 5 } },
   { id: 'rad_resist', name: 'Rad Resistance', icon: '\u2622\uFE0F', iconImg: `${BASE}/images/icons/aug-rad-resist.svg`, desc: 'All units take 15% less ability damage', effect: { abilityResist: 0.15 } },
@@ -17,4 +18,6 @@ export const AUGMENT_POOL = [
   { id: 'econ_scale', name: 'Economy of Scale', icon: '\uD83D\uDCB0', iconImg: `${BASE}/images/icons/aug-econ-scale.svg`, desc: 'Interest cap raised to 7', effect: { interestCap: 7 } },
   { id: 'lucky_find', name: 'Lucky Find', icon: '\uD83C\uDF40', iconImg: `${BASE}/images/icons/aug-lucky-find.svg`, desc: '20% chance of free shop reroll', effect: { freeReroll: 0.2 } },
   { id: 'high_roller', name: 'High Roller', icon: '\uD83C\uDFB2', iconImg: `${BASE}/images/icons/aug-high-roller.svg`, desc: 'One free re-spin per Lucky 38 round', effect: { reSpinLucky38: true } },
+  // Spread Wave 1 extras at the bottom of the pool. Same schema, same offer path.
+  ...extraAugments,
 ];
