@@ -22,6 +22,16 @@ export default function BossIntro({ boss, frames, durationMs = 2000, onDone }) {
   // Inject a one-off keyframe rule that crossfades through N frames using
   // discrete opacity stops. This avoids per-frame JS timing.
   useEffect(() => {
+    // Inject the fade keyframe even for single-frame mode so the portrait banner
+    // gets a graceful entrance.
+    if (document.getElementById('wt-boss-frame-fade-style')) return;
+    const baseStyle = document.createElement('style');
+    baseStyle.id = 'wt-boss-frame-fade-style';
+    baseStyle.textContent = `@keyframes wt-boss-frame-fade { 0% { opacity: 0; transform: translate(-50%, -50%) scale(0.85); } 30% { opacity: 1; transform: translate(-50%, -50%) scale(1.02); } 100% { opacity: 1; transform: translate(-50%, -50%) scale(1); } }`;
+    document.head.appendChild(baseStyle);
+  }, []);
+
+  useEffect(() => {
     if (framesList.length < 2) return;
     if (document.getElementById(styleId)) return;
     const stops = framesList.map((_, i) => {
@@ -86,11 +96,25 @@ export default function BossIntro({ boss, frames, durationMs = 2000, onDone }) {
     );
   }
 
-  // Single-frame / no art — preserve the original spotlight + title presentation
-  // that Game.jsx used to render inline.
+  // Single-frame: prefer the boss's portrait art (PNG/webp under public/images/bosses/)
+  // as a static banner. Falls back to spotlight+title when no portrait exists.
   return (
     <>
       <div className="wt-boss-spotlight" />
+      {boss.portrait && (
+        <img
+          src={boss.portrait}
+          alt={boss.name}
+          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+          style={{
+            position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
+            maxWidth: '60%', maxHeight: '60%', objectFit: 'contain',
+            filter: 'drop-shadow(0 0 30px rgba(255,80,80,0.7)) drop-shadow(0 0 60px rgba(0,0,0,0.9))',
+            animation: 'wt-boss-frame-fade 1800ms ease-in-out',
+            zIndex: 51, pointerEvents: 'none',
+          }}
+        />
+      )}
       <div className="wt-boss-title">
         <div className="wt-boss-title-name">{boss.name}</div>
         <div className="wt-boss-title-sub">WASTELAND BOSS</div>

@@ -455,12 +455,13 @@ export const generateEnemies = (round, difficultyId = DEFAULT_DIFFICULTY_ID) => 
   // these are NOT shop-roster units. TFT-style krug/wolf/raptor equivalents.
   const pveWave = isPveRound(round) ? getPveWave(round) : null;
   if (pveWave && pveWave.creeps && pveWave.creeps.length > 0) {
-    // Count + stats scale with round stage.
+    // Count + stats scale with round stage. Curve tuned to feel TFT-Krug-easy
+    // on stage 1 and ramp predictably through stage 6 (round 42 endgame).
     const stage = Math.ceil(round / 7);
     const creepCount = Math.min(2 + Math.floor((round - 1) / 3), 5);
-    const baseHpForRound = 320 + (stage - 1) * 220;       // 320, 540, 760, 980, ...
-    const baseAtkForRound = 28 + (stage - 1) * 18;        // 28, 46, 64, 82, ...
-    const baseDefForRound = 18 + (stage - 1) * 8;
+    const baseHpForRound = 250 + (stage - 1) * 200;       // 250, 450, 650, 850, 1050, 1250
+    const baseAtkForRound = 24 + (stage - 1) * 18;        // 24, 42, 60, 78, 96, 114
+    const baseDefForRound = 14 + (stage - 1) * 8;
     const creeps = Array(creepCount).fill(null).map((_, i) => {
       // Rotate through the wave's creep art so a wave of 4 with 2 art entries
       // produces an alternating squad.
@@ -668,23 +669,6 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       return true;
     }
 
-    case 'codsworth': {
-      // Flamer Burst: scorch 2 random enemies for 120 damage each (scales)
-      const aliveEnemies = [...targetable];
-      if (aliveEnemies.length === 0) return false;
-      const baseDmg = 120 * starMult * abilityMult;
-      const targets = [];
-      const shuffled = [...aliveEnemies].sort(() => Math.random() - 0.5);
-      for (let i = 0; i < Math.min(2, shuffled.length); i++) {
-        shuffled[i].currentHp -= applyShroudMultiplier(shuffled[i], baseDmg, true);
-        targets.push(shuffled[i].name);
-      }
-      logs.unshift(`[FIRE] ${unit.name}'s Flamer scorches ${targets.join(' & ')} for ${Math.round(baseDmg)} each!`);
-      abilityUnits.push(unit.uid);
-      try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
-      return true;
-    }
-
     case 'strong': {
       // Berserker Rage: +50% ATK and gains 200 HP shield for 6s (12 ticks)
       const rageBuff = 0.5 * starMult * abilityMult;
@@ -789,21 +773,6 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       return true;
     }
 
-    case 'marcy': {
-      // Bitter Complaints: -25% ATK to target enemy for 4s (8 ticks)
-      const aliveEnemies = [...targetable];
-      if (aliveEnemies.length === 0) return false;
-      aliveEnemies.sort((a, b) => b.atk - a.atk);
-      const debuffTarget = aliveEnemies[0];
-      const debuffPct = 0.25 * abilityMult;
-      debuffTarget.buffAtkMult = 1 - debuffPct;
-      debuffTarget.buffDuration = 8;
-      logs.unshift(`[RAGE] ${unit.name} complains bitterly! ${debuffTarget.name} -${Math.round(debuffPct * 100)}% ATK!`);
-      abilityUnits.push(unit.uid);
-      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
-      return true;
-    }
-
     case 'fahrenheit': {
       // Incendiary Strike: melee AoE dealing 100 damage + burn DoT to target and adjacent
       const aliveEnemies = [...targetable];
@@ -863,22 +832,6 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       return true;
     }
 
-    case 'wiseman': {
-      // Ghoul's Wisdom: reduce all enemy ATK by 20% for 4s (8 ticks)
-      const debuffPct = 0.2 * abilityMult;
-      const aliveEnemies = enemies.filter(e => e.currentHp > 0);
-      if (aliveEnemies.length === 0) return false;
-      aliveEnemies.forEach(e => {
-        e.buffAtkMult = 1 - debuffPct;
-        e.buffDuration = 8;
-      });
-      logs.unshift(`[BIO] ${unit.name}'s Ghoul's Wisdom! All enemies -${Math.round(debuffPct * 100)}% ATK!`);
-      abilityUnits.push(unit.uid);
-      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
-      try { sound.geigerTick?.(); } catch(_) {}
-      return true;
-    }
-
     case 'maxson': {
       // Final Judgment: gatling laser hits 3 random enemies for 200 damage each
       const aliveEnemies = [...targetable];
@@ -909,20 +862,6 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       logs.unshift(`[BOT] ${unit.name}'s Cybernetic Override! Stuns & deals ${Math.round(stunDmg)} to ${targets.map(t => t.name).join(' & ')}!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
-      return true;
-    }
-
-    case 'liberty': {
-      // Nuclear Football: 250 AoE damage to all enemies
-      const aliveEnemies = enemies.filter(e => e.currentHp > 0);
-      if (aliveEnemies.length === 0) return false;
-      const nukeDmg = 250 * starMult * abilityMult;
-      aliveEnemies.forEach(e => {
-        e.currentHp -= applyShroudMultiplier(e, nukeDmg * (0.9 + Math.random() * 0.2), true);
-      });
-      logs.unshift(`[RAD] ${unit.name}: NUCLEAR FOOTBALL! ${Math.round(nukeDmg)} damage to ${aliveEnemies.length} enemies! DEMOCRACY IS NON-NEGOTIABLE!`);
-      abilityUnits.push(unit.uid);
-      try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
     }
 
@@ -1701,8 +1640,8 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             slash.style.cssText = `position:fixed;left:${to.x}px;top:${to.y}px;width:50px;height:50px;margin:-25px 0 0 -25px;background:radial-gradient(circle,rgba(255,0,0,0.6) 0%,transparent 70%);z-index:2700;pointer-events:none;animation:wt-pop 300ms ease-out forwards`;
             document.body.appendChild(slash);
             setTimeout(() => slash.remove(), 350);
-          } else if (unitId === 'liberty') {
-            // Nuclear Football — big nuke flash + screen shake
+          } else if (unitId === 'maxson' || unitId === 'mother-isolde') {
+            // Big nuke flash for AoE radiation-style abilities (Final Judgment, Atom Communion).
             screenShake(8);
             const nuke = document.createElement('div');
             nuke.style.cssText = `position:fixed;inset:0;background:radial-gradient(circle at ${from.x}px ${from.y}px, rgba(255,200,0,0.5) 0%, rgba(255,80,0,0.2) 30%, transparent 60%);z-index:2500;pointer-events:none`;
@@ -1850,18 +1789,6 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       if (u.deaconUntargetable > 0) u.deaconUntargetable--;
     });
 
-    // Liberty Prime 3★: cleanse all debuffs once per combat (first time debuffed)
-    pUnits.forEach(u => {
-      if (u.id === 'liberty' && u.stars >= 3 && !u._libertyImmunityUsed) {
-        const hasDebuff = u.stunDuration > 0 || u.suppressed || u.poisonTicks > 0 || u.burnTicks > 0;
-        if (hasDebuff) {
-          u.stunDuration = 0; u.suppressed = false; u.suppressedDuration = 0; u.poisonTicks = 0; u.poisonDmg = 0; u.burnTicks = 0; u.burnDmg = 0;
-          u._libertyImmunityUsed = true;
-          logs.unshift(`[USA] ${u.name} cleanses all debuffs! (once per combat)`);
-        }
-      }
-    });
-
     // Item: Invisible timer countdown (Chinese Stealth Suit)
     pUnits.forEach(u => { if (u._invisibleTimer > 0) u._invisibleTimer--; });
 
@@ -1936,16 +1863,6 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
     pUnits.forEach(u => {
       if (u._curieAsBuff > 0) { u._curieAsBuff--; if (u._curieAsBuff <= 0) { u.attackSpeed = u._preCurieAttackSpeed || (UNIT_DATABASE[u.id]?.attackSpeed ?? 1.0); delete u._preCurieAttackSpeed; } }
     });
-    // Codsworth 3★: Mister Handy — repair lowest ally 3% max HP every 8 ticks (~4s)
-    const codsworth3 = pUnits.find(u => u.id === 'codsworth' && u.stars >= 3 && u.currentHp > 0);
-    if (codsworth3) {
-      codsworth3._handyTick = (codsworth3._handyTick || 0) + 1;
-      if (codsworth3._handyTick >= 8) {
-        codsworth3._handyTick = 0;
-        const injured = pUnits.filter(a => a.currentHp > 0 && a.currentHp < a.maxHp).sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp))[0];
-        if (injured) { const h = injured.maxHp * 0.03; injured.currentHp = Math.min(injured.maxHp, injured.currentHp + h); }
-      }
-    }
     // Nick 3★: Synth Detective — mark lowest HP enemy for +20% damage
     const nick3Marking = pUnits.some(u => u && u.id === 'nick' && u.stars >= 3 && u.currentHp > 0);
     if (nick3Marking) {

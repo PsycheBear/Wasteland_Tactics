@@ -82,9 +82,23 @@ export const getBossId = (boss) => {
   return boss.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 };
 
+// Bosses have a mix of .png and .webp portrait files. Map the boss id to the
+// correct extension so callers don't 404.
+const BOSS_PORTRAIT_EXT = {
+  'swan': 'webp',
+  'synth-courser': 'webp',
+  'atom-theil': 'webp',
+  'lorenzo-cabot': 'png',
+  // Round 7 & 28 bosses (Radscorpion, Deathclaw) don't have a PNG portrait
+  // yet — they fall through to the SVG iconImg.
+};
+
 export const getBossPortrait = (boss) => {
   const id = getBossId(boss);
-  return id ? `${BASE}/images/bosses/${id}.png` : null;
+  if (!id) return null;
+  const ext = BOSS_PORTRAIT_EXT[id];
+  if (!ext) return null;
+  return `${BASE}/images/bosses/${id}.${ext}`;
 };
 
 // Stamp portrait + id + round on each boss entry for the UI fallback path.
