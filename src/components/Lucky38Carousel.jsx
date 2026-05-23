@@ -6,21 +6,61 @@ import { UNIT_KEYS, getRandomCost, makeUid } from '../data/constants.js';
 import { BASE } from '../baseUrl.js';
 
 /* ─── Wheel Slice Definitions ─── */
-// `icon` is a short ASCII label shown on the wheel. Emoji glyphs (radioactive
-// symbol, chess pieces, etc.) were retired in favor of plain text/symbol
-// characters that match the retro Pip-Boy aesthetic.
-const WHEEL_SLICES = [
-  { id: 'caps_small', label: 'Caps +2', icon: '¢', color: '#b8860b', colorEnd: '#8b6914', weight: 18, rarity: 'common' },
-  { id: 'caps_large', label: 'Caps +5', icon: '$', color: '#daa520', colorEnd: '#b8860b', weight: 10, rarity: 'uncommon' },
-  { id: 'unit_common', label: 'Free Unit', icon: 'U', color: '#2244aa', colorEnd: '#1a3388', weight: 16, rarity: 'common' },
-  { id: 'unit_rare', label: 'Rare Unit', icon: 'R', color: '#6622aa', colorEnd: '#4a1880', weight: 10, rarity: 'uncommon' },
-  { id: 'item_component', label: 'Item Part', icon: 'I', color: '#606878', colorEnd: '#484e58', weight: 14, rarity: 'common' },
-  { id: 'full_item', label: 'Full Item', icon: 'F', color: '#1a8844', colorEnd: '#126633', weight: 6, rarity: 'rare' },
-  { id: 'augment', label: 'Augment', icon: 'A', color: '#8822cc', colorEnd: '#661aa0', weight: 8, rarity: 'uncommon' },
-  { id: 'hp_restore', label: 'HP +15', icon: '+', color: '#cc2222', colorEnd: '#991a1a', weight: 8, rarity: 'uncommon' },
-  { id: 'jackpot', label: 'JACKPOT', icon: '7', color: '#cc0000', colorEnd: '#880000', weight: 3, rarity: 'legendary' },
-  { id: 'nuka_bust', label: 'Nuka-Cola', icon: 'N', color: '#8b2500', colorEnd: '#5a1800', weight: 7, rarity: 'common' },
+// All 10 possible slices. Stage-scaled pools (see getWheelSlices) tweak the
+// WEIGHT per round so early carousels lean components, late carousels lean
+// power. The wheel display itself always shows all 10 slices for consistency.
+const ALL_SLICES = [
+  { id: 'caps_small', label: 'Caps +2', icon: '¢', color: '#b8860b', colorEnd: '#8b6914', rarity: 'common' },
+  { id: 'caps_large', label: 'Caps +5', icon: '$', color: '#daa520', colorEnd: '#b8860b', rarity: 'uncommon' },
+  { id: 'unit_common', label: 'Free Unit', icon: 'U', color: '#2244aa', colorEnd: '#1a3388', rarity: 'common' },
+  { id: 'unit_rare', label: 'Rare Unit', icon: 'R', color: '#6622aa', colorEnd: '#4a1880', rarity: 'uncommon' },
+  { id: 'item_component', label: 'Item Part', icon: 'I', color: '#606878', colorEnd: '#484e58', rarity: 'common' },
+  { id: 'full_item', label: 'Full Item', icon: 'F', color: '#1a8844', colorEnd: '#126633', rarity: 'rare' },
+  { id: 'augment', label: 'Augment', icon: 'A', color: '#8822cc', colorEnd: '#661aa0', rarity: 'uncommon' },
+  { id: 'hp_restore', label: 'HP +15', icon: '+', color: '#cc2222', colorEnd: '#991a1a', rarity: 'uncommon' },
+  { id: 'jackpot', label: 'JACKPOT', icon: '7', color: '#cc0000', colorEnd: '#880000', rarity: 'legendary' },
+  { id: 'nuka_bust', label: 'Nuka-Cola', icon: 'N', color: '#8b2500', colorEnd: '#5a1800', rarity: 'common' },
 ];
+
+// Stage-scaled weights. Stage 1 (rounds 3-9): components and units, no augment.
+// Stage 2 (rounds 12-21): completed items + augments rise. Stage 3 (round 24+):
+// jackpot, augments, big caps dominate. Sum doesn't need to be 100 — calculateSpin
+// normalises against the totals.
+const STAGE_WEIGHTS = {
+  1: { caps_small: 16, caps_large: 6,  unit_common: 18, unit_rare: 8,  item_component: 20, full_item: 2,  augment: 0,  hp_restore: 12, jackpot: 2, nuka_bust: 6 },
+  2: { caps_small: 8,  caps_large: 12, unit_common: 12, unit_rare: 14, item_component: 10, full_item: 12, augment: 12, hp_restore: 8,  jackpot: 5, nuka_bust: 7 },
+  3: { caps_small: 2,  caps_large: 18, unit_common: 4,  unit_rare: 12, item_component: 4,  full_item: 18, augment: 16, hp_restore: 4,  jackpot: 10, nuka_bust: 7 },
+};
+
+function stageForRound(round) {
+  if (round <= 9) return 1;
+  if (round <= 21) return 2;
+  return 3;
+}
+
+function getWheelSlices(round) {
+  const weights = STAGE_WEIGHTS[stageForRound(round)] || STAGE_WEIGHTS[1];
+  return ALL_SLICES.map(s => ({ ...s, weight: weights[s.id] ?? 1 }));
+}
+
+// Build the 3-card choice that follows the spin: the spin's winner + 2 alternates
+// drawn from the same stage pool. Excludes duplicates and demotes nuka_bust if the
+// winner wasn't a bust (so the player isn't tempted by a strictly-worse pick).
+function buildChoiceOptions(winner, slices) {
+  const alternatives = slices.filter(s => s.id !== winner.id && (winner.id === 'nuka_bust' || s.id !== 'nuka_bust'));
+  // Weighted random pick without replacement
+  const picks = [];
+  const pool = [...alternatives];
+  for (let i = 0; i < 2 && pool.length > 0; i++) {
+    const totalW = pool.reduce((sum, s) => sum + (s.weight || 1), 0);
+    let r = Math.random() * totalW;
+    let idx = 0;
+    for (; idx < pool.length; idx++) { r -= (pool[idx].weight || 1); if (r <= 0) break; }
+    picks.push(pool[idx]); pool.splice(idx, 1);
+  }
+  // Always-include the spun winner first, then alternates. Shuffle for display order.
+  return [winner, ...picks].sort(() => Math.random() - 0.5);
+}
 
 const RARITY_GLOW = {
   common: 'none',
@@ -73,10 +113,16 @@ export default function Lucky38Carousel({
   augments, setAugmentChoice, poolRef, ghostPlayersRef,
   hasHighRoller, setLog, sound, onComplete,
 }) {
-  const [stage, setStage] = useState('elevator');
-  const [elevatorFloor, setElevatorFloor] = useState(1);
-  const [doorsOpen, setDoorsOpen] = useState(false);
-  const [neonLit, setNeonLit] = useState([]);
+  // Skip the elevator entrance after the first carousel of the run. round=3 is
+  // the first visit; later carousel rounds skip straight to the ready state so
+  // the player isn't watching the same 4-second sequence every 4 rounds.
+  const isFirstCarousel = round <= 3;
+  const [stage, setStage] = useState(isFirstCarousel ? 'elevator' : 'ready');
+  const [elevatorFloor, setElevatorFloor] = useState(isFirstCarousel ? 1 : 38);
+  const [doorsOpen, setDoorsOpen] = useState(!isFirstCarousel);
+  const [neonLit, setNeonLit] = useState(isFirstCarousel ? [] : [0,1,2,3,4,5,6,7]);
+  // Choice picker state — after the spin lands, the player picks from 3 reward cards.
+  const [choiceOptions, setChoiceOptions] = useState(null);
   const [wheelAngle, setWheelAngle] = useState(0);
   const [spinning, setSpinning] = useState(false);
   const [winResult, setWinResult] = useState(null);
@@ -93,6 +139,16 @@ export default function Lucky38Carousel({
   const totalAngleRef = useRef(0);
   const spinTimersRef = useRef([]);
   useEffect(() => () => spinTimersRef.current.forEach(clearTimeout), []);
+
+  // When skipping elevator (repeat carousels), kick off the casino music
+  // immediately so the player lands on the ready state with audio + ambience.
+  useEffect(() => {
+    if (!isFirstCarousel) {
+      try { sound?.startCasinoMusic?.(); } catch(_) {}
+    }
+  // run-once on mount; isFirstCarousel is derived from round, also static for this carousel instance
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   /* ─── Elevator Entrance Sequence ─── */
   useEffect(() => {
@@ -149,15 +205,21 @@ export default function Lucky38Carousel({
     return unit;
   }, [poolRef, setBench]);
 
-  /* ─── Add jackpot 2-star unit ─── */
+  /* ─── Add jackpot unit — scales by round.
+        Round ≤ 9  : 2★ unit at cost ≤ level
+        Round 10-21: 2★ unit at cost = level+1 (legacy behaviour)
+        Round 22+  : 3★ unit at cost ≤ level (huge endgame swing) ─── */
   const addJackpotUnit = useCallback(() => {
-    const cost = Math.min(level + 1, 5);
-    const available = UNIT_KEYS.filter(k => UNIT_DATABASE[k].cost >= cost && (poolRef?.current?.[k] || 0) >= 3);
-    const candidates = available.length > 0 ? available : UNIT_KEYS.filter(k => (poolRef?.current?.[k] || 0) >= 3);
+    const tier3 = round >= 22;
+    const targetCost = tier3 ? Math.min(level, 5) : Math.min(level + 1, 5);
+    const copiesNeeded = tier3 ? 9 : 3;
+    const targetStars = tier3 ? 3 : 2;
+    const available = UNIT_KEYS.filter(k => UNIT_DATABASE[k].cost >= targetCost && (poolRef?.current?.[k] || 0) >= copiesNeeded);
+    const candidates = available.length > 0 ? available : UNIT_KEYS.filter(k => (poolRef?.current?.[k] || 0) >= Math.min(copiesNeeded, 3));
     if (candidates.length === 0) return addRandomUnit(level);
     const pick = candidates[Math.floor(Math.random() * candidates.length)];
-    if (poolRef?.current) poolRef.current[pick] = Math.max(0, (poolRef.current[pick] || 0) - 3);
-    const unit = { ...UNIT_DATABASE[pick], id: pick, stars: 2, uid: makeUid(), items: [] };
+    if (poolRef?.current) poolRef.current[pick] = Math.max(0, (poolRef.current[pick] || 0) - copiesNeeded);
+    const unit = { ...UNIT_DATABASE[pick], id: pick, stars: targetStars, uid: makeUid(), items: [] };
     setBench(prev => {
       const idx = prev.findIndex(s => s === null);
       if (idx === -1) return prev;
@@ -166,7 +228,7 @@ export default function Lucky38Carousel({
       return next;
     });
     return unit;
-  }, [level, poolRef, setBench, addRandomUnit]);
+  }, [level, poolRef, setBench, addRandomUnit, round]);
 
   /* ─── Add random completed item ─── */
   const addRandomCompletedItem = useCallback(() => {
@@ -198,7 +260,7 @@ export default function Lucky38Carousel({
       case 'augment': triggerAugmentChoice(); desc = 'Choose an augment!'; break;
       case 'hp_restore': setHp(h => Math.min(100, h + 15)); desc = '+15 HP restored'; break;
       case 'jackpot': { const u = addJackpotUnit(); desc = u ? `JACKPOT! 2-star ${u.name}!` : 'JACKPOT! Bonus unit!'; break; }
-      case 'nuka_bust': setGold(g => g + 1); desc = '+1 Cap... better luck next time'; break;
+      case 'nuka_bust': setGold(g => Math.max(0, g - 5)); desc = '−5 Caps... house wins this round'; break;
       default: break;
     }
     setLog(prev => [`[LUCKY] Lucky 38: ${desc}`, ...prev.slice(0, 9)]);
@@ -239,8 +301,12 @@ export default function Lucky38Carousel({
     setStage('spinning');
     try { sound?.leverPull?.(); } catch(_) {}
 
-    const { winnerIndex, totalAngle } = calculateSpin(WHEEL_SLICES);
-    const winner = WHEEL_SLICES[winnerIndex];
+    // Use stage-scaled weights so the same wheel visual yields different odds
+    // by round. ALL_SLICES + getWheelSlices have the same length/order so the
+    // winnerIndex maps cleanly back to the display slice.
+    const stagedSlices = getWheelSlices(round);
+    const { winnerIndex, totalAngle } = calculateSpin(stagedSlices);
+    const winner = ALL_SLICES[winnerIndex];
     totalAngleRef.current = totalAngle;
 
     // Near-miss logic: ~20% chance if not jackpot/full_item
@@ -248,8 +314,8 @@ export default function Lucky38Carousel({
     let doNearMiss = false;
     if (winner.id !== 'jackpot' && winner.id !== 'full_item' && Math.random() < 0.2) {
       doNearMiss = true;
-      const jackpotIdx = WHEEL_SLICES.findIndex(s => s.id === 'jackpot');
-      const sliceAngle = 360 / WHEEL_SLICES.length;
+      const jackpotIdx = ALL_SLICES.findIndex(s => s.id === 'jackpot');
+      const sliceAngle = 360 / ALL_SLICES.length;
       const jackpotCenter = jackpotIdx * sliceAngle + sliceAngle / 2;
       const nearTarget = 360 - jackpotCenter + 5 + Math.random() * 5;
       finalAngle = nearTarget + 360 * (4 + Math.floor(Math.random() * 2));
@@ -271,10 +337,10 @@ export default function Lucky38Carousel({
           const slippedAngle = finalAngle + 15;
           setWheelAngle(slippedAngle);
           // Calculate actual winner from final wheel position
-          const sliceAngle = 360 / WHEEL_SLICES.length;
+          const sliceAngle = 360 / ALL_SLICES.length;
           const normalAngle = ((slippedAngle % 360) + 360) % 360;
-          const pointerSliceIdx = Math.floor(((360 - normalAngle) % 360 + 360) % 360 / sliceAngle) % WHEEL_SLICES.length;
-          const actualWinner = WHEEL_SLICES[pointerSliceIdx];
+          const pointerSliceIdx = Math.floor(((360 - normalAngle) % 360 + 360) % 360 / sliceAngle) % ALL_SLICES.length;
+          const actualWinner = ALL_SLICES[pointerSliceIdx];
           trackTimer(() => finishSpinRef.current?.(actualWinner), 1500);
         }, 300);
       }, 7500);
@@ -329,20 +395,34 @@ export default function Lucky38Carousel({
         }
       }, 2000);
     } else {
-      setStage('result');
+      // Normal (non-jackpot, non-bust) spin: open the CHOICE PICKER. Player picks
+      // 1 of 3 reward cards (the spun winner + 2 alternates from the same stage pool).
+      // This is the TFT-style agency restore that the bold redesign aims for.
       try { sound?.[winner.rarity === 'uncommon' || winner.rarity === 'rare' ? 'winUncommon' : 'winCommon']?.(); } catch(_) {}
-      const desc = applyReward(winner);
-      setRewardText(desc);
-      track(() => {
-        if (hasHighRoller && !hasUsedRespin) {
-          setStage('respin');
-        } else {
-          setStage('claim');
-        }
-      }, 1500);
+      const options = buildChoiceOptions(winner, getWheelSlices(round));
+      setChoiceOptions(options);
+      setStage('choice');
     }
-  }, [applyReward, hasHighRoller, hasUsedRespin]);
+  }, [applyReward, hasHighRoller, hasUsedRespin, round]);
   finishSpinRef.current = finishSpin;
+
+  /* ─── Pick from the 3-card choice ─── */
+  const pickChoice = useCallback((slice) => {
+    setChoiceOptions(null);
+    setWinResult(slice);
+    setStage('result');
+    try { sound?.[slice.rarity === 'uncommon' || slice.rarity === 'rare' ? 'winUncommon' : 'winCommon']?.(); } catch(_) {}
+    const desc = applyReward(slice);
+    setRewardText(desc);
+    const track = (fn, ms) => { spinTimersRef.current.push(setTimeout(fn, ms)); };
+    track(() => {
+      if (hasHighRoller && !hasUsedRespin) {
+        setStage('respin');
+      } else {
+        setStage('claim');
+      }
+    }, 1500);
+  }, [applyReward, hasHighRoller, hasUsedRespin]);
 
   /* ─── Re-spin (High Roller augment) ─── */
   const doRespin = useCallback(() => {
@@ -361,11 +441,20 @@ export default function Lucky38Carousel({
     try { sound?.claimClick?.(); } catch(_) {}
     try { sound?.rewardFlyaway?.(); } catch(_) {}
     setTimeout(() => {
-      // Generate ghost rewards for summary
-      const ghosts = (ghostPlayersRef?.current || []).slice(0, 5).map((g, i) => ({
-        name: g?.name || `Ghost ${i + 1}`,
-        reward: GHOST_REWARDS[Math.floor(Math.random() * GHOST_REWARDS.length)],
-      }));
+      // Generate REAL ghost rewards by running calculateSpin per ghost against
+      // the same stage-scaled pool the player faced. No more hardcoded labels.
+      const stagedSlices = getWheelSlices(round);
+      const ghosts = (ghostPlayersRef?.current || []).slice(0, 5).map((g, i) => {
+        const { winnerIndex } = calculateSpin(stagedSlices);
+        const ghostWin = ALL_SLICES[winnerIndex];
+        return {
+          name: g?.name || `Ghost ${i + 1}`,
+          reward: ghostWin.label,
+          color: ghostWin.color,
+          rarity: ghostWin.rarity,
+          icon: ghostWin.icon,
+        };
+      });
       setGhostRewards(ghosts);
       setStage('summary');
     }, 800);
@@ -386,11 +475,12 @@ export default function Lucky38Carousel({
   }, []);
 
   /* ─── Conic gradient for wheel ─── */
-  const sliceAngle = 360 / WHEEL_SLICES.length;
+  const sliceAngle = 360 / ALL_SLICES.length;
 
-  /* ─── Find luckiest ghost ─── */
+  /* ─── Find luckiest ghost — prefer legendary, then rare, then uncommon ─── */
+  const RARITY_RANK = { legendary: 4, rare: 3, uncommon: 2, common: 1 };
   const luckiest = ghostRewards.length > 0
-    ? ghostRewards.reduce((best, g) => (g.reward === 'Augment' || g.reward === 'Free Unit') ? g : best, ghostRewards[0])
+    ? ghostRewards.reduce((best, g) => (RARITY_RANK[g.rarity] || 0) > (RARITY_RANK[best.rarity] || 0) ? g : best, ghostRewards[0])
     : null;
 
   return (
@@ -419,7 +509,7 @@ export default function Lucky38Carousel({
       )}
 
       {/* ─── WHEEL PHASE (ready / spinning / result / respin / claim) ─── */}
-      {(stage === 'ready' || stage === 'spinning' || stage === 'result' || stage === 'respin' || stage === 'claim') && (
+      {(stage === 'ready' || stage === 'spinning' || stage === 'choice' || stage === 'result' || stage === 'respin' || stage === 'claim') && (
         <div className={`lucky38-casino ${showBust ? 'lucky38-bust-dim' : ''} ${showJackpot ? 'lucky38-shake' : ''}`}>
           {/* Neon border frame */}
           <div className="lucky38-neon-frame" />
@@ -475,7 +565,7 @@ export default function Lucky38Carousel({
             />
 
             {/* Label ring outside the wheel — pushed outward */}
-            {WHEEL_SLICES.map((s, i) => {
+            {ALL_SLICES.map((s, i) => {
               const angle = i * sliceAngle + sliceAngle / 2 + wheelAngle;
               const rad = (angle - 90) * Math.PI / 180;
               const r = 210;
@@ -521,6 +611,61 @@ export default function Lucky38Carousel({
           {/* Bust message */}
           {showBust && (
             <div className="lucky38-bust-msg">...better luck next time, wastelander</div>
+          )}
+
+          {/* CHOICE PICKER — TFT-style 3-card pick after the spin lands.
+              Player sees the spun winner + 2 alternates from the same stage pool
+              and chooses one. Restores agency without losing the spin theater. */}
+          {stage === 'choice' && choiceOptions && (
+            <div className="lucky38-choice-panel" style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14, padding: 18,
+              animation: 'lucky38-choice-in 280ms ease-out',
+            }}>
+              <div style={{ fontSize: 18, fontWeight: 'bold', color: '#ffd700', letterSpacing: 3, textShadow: '0 0 12px rgba(255,215,0,0.6)' }}>
+                CHOOSE YOUR REWARD
+              </div>
+              <div style={{ fontSize: 11, color: '#cc9900', opacity: 0.85 }}>
+                Pick one. The wheel landed on <span style={{ color: '#ffd700', fontWeight: 'bold' }}>{winResult?.label}</span> — but you call the shot.
+              </div>
+              <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {choiceOptions.map((opt, i) => {
+                  const isWinner = winResult && opt.id === winResult.id;
+                  return (
+                    <button
+                      key={`${opt.id}_${i}`}
+                      onClick={() => pickChoice(opt)}
+                      className="lucky38-choice-card"
+                      style={{
+                        width: 140, padding: '14px 10px',
+                        background: `linear-gradient(180deg, ${opt.color}88 0%, ${opt.colorEnd || opt.color}aa 100%)`,
+                        border: `2px solid ${opt.color}`,
+                        borderRadius: 8, cursor: 'pointer',
+                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6,
+                        color: '#fff', fontFamily: "'Share Tech Mono', monospace",
+                        boxShadow: `0 0 14px ${opt.color}66, inset 0 1px 0 rgba(255,255,255,0.08)`,
+                        transition: 'transform 0.15s, box-shadow 0.15s, background 0.15s',
+                        position: 'relative',
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px) scale(1.04)'; e.currentTarget.style.boxShadow = `0 0 24px ${opt.color}, inset 0 1px 0 rgba(255,255,255,0.12)`; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = `0 0 14px ${opt.color}66, inset 0 1px 0 rgba(255,255,255,0.08)`; }}
+                    >
+                      {isWinner && (
+                        <span style={{
+                          position: 'absolute', top: -10, left: '50%', transform: 'translateX(-50%)',
+                          fontSize: 8, fontWeight: 'bold', letterSpacing: 1.2,
+                          background: '#ffd700', color: '#0a0a0a',
+                          padding: '2px 7px', borderRadius: 3, textTransform: 'uppercase',
+                          boxShadow: '0 0 6px rgba(255,215,0,0.8)',
+                        }}>SPIN PICK</span>
+                      )}
+                      <div style={{ fontSize: 32, lineHeight: 1, fontWeight: 'bold', textShadow: '0 0 8px rgba(0,0,0,0.8)' }}>{opt.icon}</div>
+                      <div style={{ fontSize: 13, fontWeight: 'bold', textAlign: 'center' }}>{opt.label}</div>
+                      <div style={{ fontSize: 8, opacity: 0.75, textTransform: 'uppercase', letterSpacing: 1 }}>{opt.rarity}</div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
           )}
 
           {/* Result display — styled reward card */}

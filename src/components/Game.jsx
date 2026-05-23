@@ -2759,6 +2759,28 @@ function WastelandTactics() {
               <div className={`wt-phase-badge ${phase === 'carousel' ? 'wt-phase-carousel' : phase === 'combat' ? (isBoss ? 'wt-phase-boss' : 'wt-phase-combat') : phase === 'gameover' ? 'wt-phase-dead' : 'wt-phase-prep'}`}>
                 {phase === 'carousel' ? 'LUCKY 38' : phase === 'combat' ? (isBoss ? 'BOSS FIGHT' : currentOpponent ? `vs ${currentOpponent}` : 'COMBAT') : phase === 'gameover' ? 'DEAD' : 'PREP'}
               </div>
+              {/* Difficulty badge — small pill showing active difficulty + its
+                  HP/ATK multiplier so streamers and the player both know the
+                  modifier in play without diving into menus. */}
+              {(() => {
+                const diffColors = { easy: '#44cc88', normal: '#888', hard: '#ff9944', survival: '#ff4444' };
+                const diffLabels = { easy: 'EASY 0.75×', normal: 'NORMAL', hard: 'HARD 1.2×', survival: 'SURVIVAL 1.5×' };
+                const color = diffColors[difficultyId] || '#888';
+                const label = diffLabels[difficultyId] || difficultyId?.toUpperCase() || 'NORMAL';
+                if (!difficultyId || difficultyId === 'normal') return null;
+                return (
+                  <div
+                    title={`Difficulty: ${label}`}
+                    style={{
+                      fontSize: 9, fontWeight: 'bold', fontFamily: "'Share Tech Mono', monospace",
+                      letterSpacing: 1.2,
+                      color, border: `1px solid ${color}`, background: `${color}22`,
+                      padding: '2px 7px', borderRadius: 3,
+                      textShadow: `0 0 6px ${color}66`,
+                    }}
+                  >{label}</div>
+                );
+              })()}
               </div>{/* end pointerEvents inner */}
             </div>
 
@@ -2946,12 +2968,31 @@ function WastelandTactics() {
                       const hasNew = uDef.portraitBase && (hasPortrait(uDef.portraitBase) || u.id === 'sole-survivor' || u.id === 'robot-dog');
                       const unitImg = getUnitImage(u.id, u.stars);
                       return (
-                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 3, background: 'rgba(255,100,0,0.1)', border: `1px solid ${COST_COLORS[uDef.cost] || '#666'}44`, borderRadius: 3, width: 52 }}>
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 3, background: 'rgba(255,100,0,0.1)', border: `1px solid ${COST_COLORS[uDef.cost] || '#666'}66`, borderRadius: 3, width: 56, position: 'relative' }}>
+                          {/* Cost badge — top-left so scout-at-a-glance reads tier without
+                              having to recognise the portrait colour. */}
+                          <span style={{
+                            position: 'absolute', top: -3, left: -3, zIndex: 2,
+                            minWidth: 12, height: 12, padding: '0 3px',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            fontSize: 9, fontWeight: 'bold', fontFamily: "'Share Tech Mono', monospace",
+                            background: COST_COLORS[uDef.cost] || '#666', color: '#0a0a0a',
+                            border: '1px solid rgba(0,0,0,0.6)', borderRadius: 2,
+                          }}>{uDef.cost || '?'}</span>
                           {(hasNew || unitImg || uDef.portrait)
                             ? <PortraitImg unit={u} unitDef={uDef} size={32} alt={uDef.name} />
                             : <UnitPlaceholder name={uDef.name} size={32} />}
                           <div style={{ fontSize: 8, color: COST_COLORS[uDef.cost] || '#888' }}>{uDef.name?.split(' ')[0]}</div>
                           <div style={{ fontSize: 8 }}>{stars(u.stars)}</div>
+                          {/* Trait icon row — show the unit's faction + role at a glance. */}
+                          {Array.isArray(uDef.traits) && uDef.traits.length > 0 && (
+                            <div style={{ display: 'flex', gap: 1, marginTop: 1, justifyContent: 'center' }}>
+                              {uDef.traits.slice(0, 2).map(t => {
+                                const trait = TRAITS[t];
+                                return trait ? <GameIcon key={t} iconImg={trait.iconImg} icon={trait.icon} size={8} /> : null;
+                              })}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

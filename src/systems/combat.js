@@ -2578,6 +2578,14 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           const base = Math.round(baseRaw * goldMult);
           const bonus = won ? extraGold : 0;
           setIncomeBreakdown?.({ base: baseIncome, interest, streak: streakBonus, augment: augScavenger, total: base + bonus });
+          // Surface the income breakdown into the combat log so the player sees
+          // it alongside DEFEAT/VICTORY without having to dig into Economy Intel.
+          const parts = [`${baseIncome} base`];
+          if (interest > 0) parts.push(`+${interest} int`);
+          if (streakBonus > 0) parts.push(`+${streakBonus} streak`);
+          if (won && extraGold > 0) parts.push(`+${extraGold} bonus`);
+          if (augScavenger > 0) parts.push(`+${augScavenger} aug`);
+          setLog?.(prev => [`[CAPS] Earned +${base + bonus} gold — ${parts.join(', ')}`, ...prev.slice(0, 9)]);
           return g + base + bonus;
         });
 

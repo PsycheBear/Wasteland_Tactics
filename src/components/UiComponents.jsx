@@ -410,6 +410,35 @@ export function UnitTooltip({ unitTooltip, onClose }) {
                 </div>
               ) : null;
             })}
+            {/* Recipe hints — for each EQUIPPED COMPONENT, surface up to 3 possible
+                completed items it can combine into. Helps players see what their
+                next pairing should be without memorising the 25-item recipe table. */}
+            {(() => {
+              const hintsByComponent = equippedItems.reduce((acc, itemKey) => {
+                if (!ITEM_COMPONENTS[itemKey] || COMPLETED_ITEMS[itemKey]) return acc;
+                const recipes = Object.values(COMPLETED_ITEMS).filter(it => Array.isArray(it.recipe) && it.recipe.includes(itemKey));
+                if (recipes.length === 0) return acc;
+                acc[itemKey] = recipes.slice(0, 3);
+                return acc;
+              }, {});
+              const keys = Object.keys(hintsByComponent);
+              if (keys.length === 0) return null;
+              return (
+                <div style={{ marginTop: 6, paddingTop: 4, borderTop: '1px dashed rgba(255,170,0,0.25)' }}>
+                  <div style={{ fontSize: 9, color: '#aa7700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 2 }}>Combines into…</div>
+                  {keys.map(compKey => {
+                    const comp = ITEM_COMPONENTS[compKey];
+                    return (
+                      <div key={compKey} style={{ fontSize: 9, color: '#ccaa66', lineHeight: 1.4 }}>
+                        <span style={{ color: '#ffaa00' }}>{comp?.name}</span> + ? → {hintsByComponent[compKey].map((r, i) => (
+                          <span key={i}><span style={{ color: '#ffcc00' }}>{r.name}</span>{i < hintsByComponent[compKey].length - 1 ? ', ' : ''}</span>
+                        ))}
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
         )}
 

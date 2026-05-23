@@ -61,12 +61,12 @@ export const BOSS_DATABASE = {
   },
   42: {
     name: 'Lorenzo Cabot',
-    hp: 18000, atk: 150, def: 60,
-    // Crimson stasis: freeze 1 enemy unit per cast for 4s. We re-use
-    // 'spawn' mechanic plumbing (it has a mechanicInterval but no dmg)
-    // and add a stasis flag for the engine to read.
+    // Endgame tuning: was 18000 HP / 8s stasis (too brutal, <5% clear rate).
+    // Trimmed to 14000 HP / 4s stasis targeting ~25-30% clear rate so the final
+    // boss actually serves as a satisfying capstone instead of a wall.
+    hp: 14000, atk: 145, def: 55,
     mechanic: 'spawn', mechanicInterval: 14,
-    crimsonStasis: true, stasisDuration: 8,
+    crimsonStasis: true, stasisDuration: 4,
     icon: '', iconImg: `${BASE}/images/icons/boss-lorenzo-cabot.svg`,
   },
 };

@@ -49,10 +49,12 @@ export function makeUid() {
   return Math.random().toString(36).slice(2, 11);
 }
 
-// Carousel triggers after the last round of each stage (every 3 rounds), starting after stage 1
-// Stage 1 ends at round 3, stage 2 at round 6, etc. First carousel after round 3 (end of stage 1).
-export const ROUNDS_PER_STAGE = 3;
-export const isCarouselRound = (round) => round >= 3 && round % ROUNDS_PER_STAGE === 0;
-// Keep array export for backward compat (used in pip rendering). 14 covers the
-// full 42-round game (carousel every 3 rounds: 3, 6, 9, ..., 42).
-export const CAROUSEL_ROUNDS = Array.from({ length: 14 }, (_, i) => (i + 1) * ROUNDS_PER_STAGE);
+// Carousel triggers after stage breaks. We changed from every-3 to every-4
+// rounds to reduce decision fatigue across the 42-round game. Schedule is now:
+// 4, 8, 12, 16, 20, 24, 28, 32, 36, 40 = 10 carousels total (was 14 at every-3).
+// Combined with augment offers (rounds 3,8,13,18,24,30,36) and boss rounds
+// (7,14,21,28,35,42), the pacing is now: PvE-PvE-PvE-AUG-CAR-PvP-BOSS-PvE...
+export const ROUNDS_PER_STAGE = 4;
+export const isCarouselRound = (round) => round >= 4 && round % ROUNDS_PER_STAGE === 0;
+// Backward-compat array used by the top-bar pip rendering.
+export const CAROUSEL_ROUNDS = Array.from({ length: 10 }, (_, i) => (i + 1) * ROUNDS_PER_STAGE);

@@ -97,11 +97,15 @@ export default function BossIntro({ boss, frames, durationMs = 2000, onDone }) {
   }
 
   // Single-frame: prefer the boss's portrait art (PNG/webp under public/images/bosses/)
-  // as a static banner. Falls back to spotlight+title when no portrait exists.
+  // as a static banner. Falls back to SVG iconImg + glow ring when no portrait
+  // exists (Radscorpion, Deathclaw). The animated ring + dramatic spotlight
+  // makes the SVG-only path feel intentional instead of placeholder-y.
+  const hasPortrait = !!boss.portrait;
+  const fallbackIcon = boss.iconImg;
   return (
     <>
       <div className="wt-boss-spotlight" />
-      {boss.portrait && (
+      {hasPortrait && (
         <img
           src={boss.portrait}
           alt={boss.name}
@@ -114,6 +118,38 @@ export default function BossIntro({ boss, frames, durationMs = 2000, onDone }) {
             zIndex: 51, pointerEvents: 'none',
           }}
         />
+      )}
+      {!hasPortrait && fallbackIcon && (
+        <div style={{
+          position: 'absolute', left: '50%', top: '40%', transform: 'translate(-50%, -50%)',
+          width: 280, height: 280, zIndex: 51, pointerEvents: 'none',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'wt-boss-frame-fade 1800ms ease-in-out',
+        }}>
+          {/* Pulsing red glow ring behind the SVG icon */}
+          <div style={{
+            position: 'absolute', inset: 0, borderRadius: '50%',
+            background: 'radial-gradient(circle, rgba(255,40,40,0.45) 0%, rgba(120,0,0,0.25) 40%, transparent 70%)',
+            animation: 'wt-boss-pulse-ring 2s ease-in-out infinite',
+            filter: 'blur(8px)',
+          }} />
+          {/* Rotating outer rune ring */}
+          <div style={{
+            position: 'absolute', inset: '-20px', borderRadius: '50%',
+            border: '2px dashed rgba(255,80,80,0.6)', boxShadow: '0 0 24px rgba(255,40,40,0.4)',
+            animation: 'wt-boss-rune-spin 8s linear infinite',
+          }} />
+          <img
+            src={fallbackIcon}
+            alt={boss.name}
+            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+            style={{
+              width: 160, height: 160, objectFit: 'contain',
+              filter: 'drop-shadow(0 0 12px rgba(255,80,80,0.9)) drop-shadow(0 0 30px rgba(120,0,0,0.7))',
+              position: 'relative', zIndex: 1,
+            }}
+          />
+        </div>
       )}
       <div className="wt-boss-title">
         <div className="wt-boss-title-name">{boss.name}</div>

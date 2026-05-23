@@ -1585,15 +1585,33 @@ body {
   50% { filter: sepia(0.3) hue-rotate(-30deg) brightness(0.85); }
 }
 
-/* --- Poison/Burn DOT indicator --- */
+/* --- Poison/Burn DOT indicator ---
+   Each status uses BOTH color AND a distinct shape pattern so colorblind
+   players can read the state. Poison = green radiation trefoil dots.
+   Burn = orange flame (defined below). Stun = animated dashed outline ring.
+   Each indicator also adds a unique BORDER pattern to the unit cell. */
 .wt-poisoned::after {
-  content: '☢';
+  /* SVG radiation trefoil dot (no emoji). */
+  content: '';
+  background-image: url("data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='2' fill='%2300aa00'/%3E%3Cpath d='M8 8 L 4 2 A 6 6 0 0 1 12 2 Z' fill='%2344ff44'/%3E%3Cpath d='M8 8 L 14 6 A 6 6 0 0 1 10 14 Z' fill='%2344ff44'/%3E%3Cpath d='M8 8 L 6 14 A 6 6 0 0 1 2 6 Z' fill='%2344ff44'/%3E%3C/svg%3E");
+  background-size: contain;
+  background-repeat: no-repeat;
   position: absolute;
   top: -4px; right: -2px;
-  font-size: 8px;
-  color: #44ff44;
+  width: 10px; height: 10px;
   animation: wt-dot-pulse 1s ease-in-out infinite;
   z-index: 10;
+  filter: drop-shadow(0 0 3px rgba(0,200,0,0.7));
+}
+/* Poison also gets a dotted green border pattern on the cell for shape redundancy. */
+.wt-poisoned {
+  box-shadow: inset 0 0 0 2px rgba(0,200,0,0.4), inset 0 0 12px rgba(0,200,0,0.18);
+  outline: 1px dashed rgba(68,255,68,0.55);
+  outline-offset: -1px;
+}
+/* Burn gets a solid orange border pattern (distinct from poison's dashed). */
+.wt-burning {
+  box-shadow: inset 0 0 0 2px rgba(255,120,0,0.5), inset 0 0 12px rgba(255,80,0,0.2);
 }
 .wt-burning::after {
   /* SVG flame (no emoji per project no-emoji rule). */
@@ -2319,6 +2337,32 @@ body {
   background-clip: text;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
 }
+/* Boss SVG-fallback intro effects (Radscorpion, Deathclaw — no portrait art). */
+@keyframes wt-boss-pulse-ring {
+  0%, 100% { opacity: 0.7; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.15); }
+}
+@keyframes wt-boss-rune-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Choice picker entrance animation (3-card reward pick after the spin lands). */
+@keyframes lucky38-choice-in {
+  0% { opacity: 0; transform: translateY(14px) scale(0.95); }
+  60% { opacity: 1; transform: translateY(-2px) scale(1.02); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* Wheel vibration during the last 1.5s of spin — adds tension before the lock-in. */
+@keyframes lucky38-wheel-vibrate {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-2px); }
+  40% { transform: translateX(2px); }
+  60% { transform: translateX(-1px); }
+  80% { transform: translateX(1px); }
+}
+
 /* Bust message */
 .lucky38-bust-msg {
   position: absolute; bottom: 22%; left: 0; right: 0;
