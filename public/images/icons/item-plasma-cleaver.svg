@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0a1a18" stroke="#44ddaa" stroke-width="2"/>
+  <!-- Crossed cleavers -->
+  <path d="M14 14 L24 26 L20 30 L10 18 Z" fill="#7aeac8" stroke="#44ddaa" stroke-width="1.4"/>
+  <path d="M24 26 L34 38 L40 50 L36 54 L24 42 L20 30 Z" fill="none" stroke="#44ddaa" stroke-width="1.6"/>
+  <path d="M50 14 L40 26 L44 30 L54 18 Z" fill="#7aeac8" stroke="#44ddaa" stroke-width="1.4"/>
+  <path d="M40 26 L30 38 L24 50 L28 54 L40 42 L44 30 Z" fill="none" stroke="#44ddaa" stroke-width="1.6"/>
+  <!-- Plasma glow -->
+  <circle cx="32" cy="38" r="3" fill="#44ddaa" opacity="0.5"/>
+</svg>

@@ -10,13 +10,15 @@
 // extras below now claim four of those new slots — no collisions with the
 // original 21. The `_replaces` hint field from Wave 1 was dropped because
 // Wave 2 added a new component rather than swapping a recipe.
+//
+// Icon field is intentionally empty; GameIcon falls through to iconImg.
 import { BASE } from '../baseUrl.js';
 
 export const extraItems = [
   {
     // Crit-damage carry item built from a stacked plasma core.
     name: 'Plasma Cleaver',
-    icon: '⚔️', // crossed swords
+    icon: '',
     iconImg: `${BASE}/images/icons/item-plasma-cleaver.svg`,
     recipe: ['plasma_core', 'plasma_core'],
     effects: { atk: 30, critChance: 0.2, critMult: 0.5 },
@@ -25,7 +27,7 @@ export const extraItems = [
   {
     // AoE-on-death payload, built from plasma + fusion (high-energy).
     name: 'Bottle Cap Mine',
-    icon: '💣', // bomb
+    icon: '',
     iconImg: `${BASE}/images/icons/item-bottle-cap-mine.svg`,
     recipe: ['plasma_core', 'fusion_cell'],
     effects: { aoeOnDeath: 250, abilityPower: 0.15 },
@@ -34,7 +36,7 @@ export const extraItems = [
   {
     // Defensive sustain item built from plasma + scrap (rad-hardened plating).
     name: 'Rad-Hardened Plating',
-    icon: '☢️', // radioactive
+    icon: '',
     iconImg: `${BASE}/images/icons/item-rad-hardened-plating.svg`,
     recipe: ['plasma_core', 'scrap_metal'],
     effects: { hp: 150, def: 25, poisonImmune: true, regenPerTick: 0.02 },
@@ -43,7 +45,7 @@ export const extraItems = [
   {
     // Tanky utility helm: stun immunity is the headliner.
     name: 'T-60 Power Helmet',
-    icon: '⛑️', // rescue helmet
+    icon: '',
     iconImg: `${BASE}/images/icons/item-t60-power-helmet.svg`,
     recipe: ['plasma_core', 'targeting_module'],
     effects: { hp: 150, def: 15, apGain: 0.1, stunResist: true },

@@ -617,7 +617,15 @@ export default function DevTools({ externalActivate, onActivateConsumed }) {
           <Section title={`HISTORY (${history.length})`}>
             {history.map((entry, idx) => (
               <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '3px 0', borderBottom: '1px solid #222' }}>
-                <span style={{ flex: 1, fontSize: 9, color: entry.locked ? '#44ff88' : '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{entry.locked ? '🔒 ' : ''}{entry.elId}</span>
+                <span style={{ flex: 1, fontSize: 9, color: entry.locked ? '#44ff88' : '#aaa', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  {entry.locked && (
+                    <svg viewBox="0 0 24 24" width="9" height="9" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 3 }}>
+                      <rect x="6" y="11" width="12" height="10" rx="1.2" fill="none" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M8 11 V8 A4 4 0 0 1 16 8 V11" fill="none" stroke="currentColor" strokeWidth="2"/>
+                      <circle cx="12" cy="16" r="1.4"/>
+                    </svg>
+                  )}{entry.elId}
+                </span>
                 <button onClick={() => toggleLock(idx)} style={{ ...btnStyle, padding: '2px 6px', color: entry.locked ? '#44ff88' : '#888', borderColor: entry.locked ? '#44ff8866' : '#44ff8833' }}>{entry.locked ? 'Unlock' : 'Lock'}</button>
                 <button onClick={() => reselect(entry)} style={{ ...btnStyle, padding: '2px 6px' }}>Select</button>
                 <button onClick={() => restoreFromHistory(idx)} style={{ ...btnStyle, padding: '2px 6px', color: '#ff6644', borderColor: '#ff664444' }}>Restore</button>

@@ -22,10 +22,35 @@ export { getPortraitUrl, getHeaderUrl, getAugmentUrl, hasPortrait };
  * Lookup tables keyed off the new unit-database fields Agent B is adding. Centralised
  * here so UnitCard + UnitTooltip share one source of truth. Colors mirror typical
  * Fallout faction palettes where possible. */
+// Inline SVG range icons (replaced legacy emoji glyphs).
+const RangeIconMelee = (
+  <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle' }}>
+    <path d="M3 5 L5 3 L15 13 L13 15 Z"/>
+    <path d="M21 5 L19 3 L9 13 L11 15 Z"/>
+    <path d="M2 18 L4 16 L8 20 L6 22 Z"/>
+    <path d="M22 18 L20 16 L16 20 L18 22 Z"/>
+  </svg>
+);
+const RangeIconRanged = (
+  <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true" style={{ verticalAlign: 'middle' }}>
+    <circle cx="12" cy="12" r="9"/>
+    <circle cx="12" cy="12" r="5"/>
+    <circle cx="12" cy="12" r="1.6" fill="currentColor"/>
+  </svg>
+);
+const RangeIconDual = (
+  <svg viewBox="0 0 28 24" width="14" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle' }}>
+    <path d="M3 5 L5 3 L11 9 L9 11 Z"/>
+    <path d="M2 18 L4 16 L8 20 L6 22 Z"/>
+    <path d="M14 12 L20 12 M16 9 L14 12 L16 15" fill="none" stroke="currentColor" strokeWidth="1.6"/>
+    <circle cx="24" cy="12" r="2.5" fill="none" stroke="currentColor" strokeWidth="1.6"/>
+    <circle cx="24" cy="12" r="0.8"/>
+  </svg>
+);
 const RANGE_META = {
-  melee: { icon: '⚔️', label: 'Melee', color: '#ff8855', desc: 'Strikes from the front rows.' },
-  ranged: { icon: '🎯', label: 'Ranged', color: '#88bbff', desc: 'Attacks from the back rows.' },
-  dual: { icon: '⚔️↔️🎯', label: 'Dual', color: '#ffd700', desc: 'Dual range — melee in front rows, ranged in back rows.' },
+  melee: { icon: '', svg: RangeIconMelee, label: 'Melee', color: '#ff8855', desc: 'Strikes from the front rows.' },
+  ranged: { icon: '', svg: RangeIconRanged, label: 'Ranged', color: '#88bbff', desc: 'Attacks from the back rows.' },
+  dual: { icon: '', svg: RangeIconDual, label: 'Dual', color: '#ffd700', desc: 'Dual range — melee in front rows, ranged in back rows.' },
 };
 const FACTION_COLORS = {
   Minutemen: '#4A90D9', Brotherhood: '#3366CC', Railroad: '#cc4488', Institute: '#88ccff',
@@ -307,7 +332,7 @@ export function UnitTooltip({ unitTooltip, onClose }) {
                   display: 'inline-flex', alignItems: 'center', gap: 3,
                 }}
               >
-                <span aria-hidden="true">{rangeMeta.icon}</span> {rangeMeta.label}
+                <span aria-hidden="true">{rangeMeta.svg || rangeMeta.icon}</span> {rangeMeta.label}
               </span>
             )}
             {faction && (

@@ -20,7 +20,7 @@ export const BOSS_DATABASE = {
     name: 'Legendary Radscorpion',
     hp: 3000, atk: 60, def: 30,
     mechanic: 'poison', mechanicInterval: 30, mechanicDmg: 80,
-    icon: '🦂', iconImg: `${BASE}/images/icons/boss-radscorpion.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-radscorpion.svg`,
   },
   14: {
     name: 'Swan',
@@ -30,7 +30,7 @@ export const BOSS_DATABASE = {
     // mechanic but layered on a stomp boss — the engine reads both flags).
     mechanic: 'stomp', mechanicInterval: 16, mechanicDmg: 110,
     enrageThreshold: 0.3, enrageAtkMult: 1.5,
-    icon: '🦢', iconImg: `${BASE}/images/icons/boss-swan.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-swan.svg`,
   },
   21: {
     name: 'Synth Courser',
@@ -40,13 +40,13 @@ export const BOSS_DATABASE = {
     // current combat plumbing renders the windup the same way.
     mechanic: 'stomp', mechanicInterval: 10, mechanicDmg: 300,
     courserTeleport: true,
-    icon: '🤖', iconImg: `${BASE}/images/icons/boss-synth-courser.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-synth-courser.svg`,
   },
   28: {
     name: 'Mythic Deathclaw',
     hp: 10000, atk: 110, def: 45,
     mechanic: 'stomp', mechanicInterval: 40, mechanicDmg: 100,
-    icon: '🐲', iconImg: `${BASE}/images/icons/boss-deathclaw.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-deathclaw.svg`,
   },
   35: {
     name: 'Atom Theil',
@@ -57,7 +57,7 @@ export const BOSS_DATABASE = {
     mechanic: 'poison', mechanicInterval: 12, mechanicDmg: 60,
     glowBurst: true,           // signals combat.js to stack the DoT
     deathHealAllies: 0.5,      // on boss death, heal allies 50% HP
-    icon: '☢️', iconImg: `${BASE}/images/icons/boss-atom-theil.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-atom-theil.svg`,
   },
   42: {
     name: 'Lorenzo Cabot',
@@ -67,7 +67,7 @@ export const BOSS_DATABASE = {
     // and add a stasis flag for the engine to read.
     mechanic: 'spawn', mechanicInterval: 14,
     crimsonStasis: true, stasisDuration: 8,
-    icon: '🔴', iconImg: `${BASE}/images/icons/boss-lorenzo-cabot.svg`,
+    icon: '', iconImg: `${BASE}/images/icons/boss-lorenzo-cabot.svg`,
   },
 };
 

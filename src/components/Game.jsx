@@ -22,57 +22,69 @@ import { BASE } from '../baseUrl.js';
 import { saveReplay } from '../hooks/useSave.js';
 import { logError } from '../lib/logger.js';
 
-/* ─── Combat log emoji → colored badge parser ─── */
+/* === Combat log tag => colored badge parser =================================
+ *
+ * Combat log lines emitted from combat.js (and a handful of UI helpers
+ * below) start with a bracketed tag token like `[VICTORY]` or `[GOLD]`.
+ * Each key here maps to a terminal-style prefix label + a badge color so
+ * the line is parsed and rendered with a colored monospace prefix.
+ *
+ * The previous emoji-keyed map has been replaced with bracket tokens;
+ * the project no longer renders emoji glyphs anywhere.
+ *
+ * The export name is preserved (LOG_EMOJI_MAP) so future search&replace
+ * stays easy to grep, but the keys are deliberately ASCII-only now.
+ * ============================================================================ */
 const LOG_EMOJI_MAP = {
-  '\u2B50': { label: 'UP', color: '#ffd700' },        // ⭐ upgrade
-  '\uD83D\uDEE1\uFE0F': { label: 'DEF', color: '#6688ff' }, // 🛡️
-  '\u2699\uFE0F': { label: 'TECH', color: '#708090' }, // ⚙️
-  '\uD83D\uDC8A': { label: 'MED', color: '#ff6666' },  // 💊
-  '\uD83D\uDC15': { label: 'DOG', color: '#cc8844' },  // 🐕
-  '\uD83D\uDD0D': { label: 'DET', color: '#aaaaff' },  // 🔍
-  '\uD83E\uDDE0': { label: 'PSI', color: '#cc66ff' },  // 🧠
-  '\uD83D\uDD25': { label: 'FIRE', color: '#ff6600' },  // 🔥
-  '\uD83D\uDCAA': { label: 'STR', color: '#ff6644' },  // 💪
-  '\u26A1': { label: 'ZAP', color: '#ffff44' },         // ⚡
-  '\uD83E\uDD8E': { label: 'CLAW', color: '#66cc66' },  // 🦎
-  '\uD83E\uDDEA': { label: 'LAB', color: '#44ff88' },   // 🧪
-  '\uD83D\uDCF0': { label: 'NEWS', color: '#ffcc44' },  // 📰
-  '\u2622\uFE0F': { label: 'RAD', color: '#44ff44' },   // ☢️
-  '\uD83C\uDFAF': { label: 'AIM', color: '#ffaa00' },   // 🎯
-  '\uD83D\uDE24': { label: 'RAGE', color: '#ff4444' },  // 😤
-  '\uD83D\uDC89': { label: 'HEAL', color: '#ff4444' },  // 💉
-  '\uD83D\uDD75\uFE0F': { label: 'SPY', color: '#aa88cc' }, // 🕵️
-  '\u2623\uFE0F': { label: 'BIO', color: '#669933' },   // ☣️
-  '\uD83E\uDD16': { label: 'BOT', color: '#aaaaaa' },   // 🤖
-  '\uD83D\uDC80': { label: 'KILL', color: '#ff4444' },  // 💀
-  '\uD83D\uDC9A': { label: 'HEAL', color: '#2E8B57' },  // 💚
-  '\uD83D\uDDFD': { label: 'USA', color: '#4488ff' },   // 🗽
-  '\uD83E\uDD82': { label: 'BOSS', color: '#ff4444' },  // 🦂
-  '\uD83E\uDD80': { label: 'BOSS', color: '#44aaff' },  // 🦀
-  '\uD83D\uDC79': { label: 'BOSS', color: '#ffaa44' },  // 👹
-  '\uD83D\uDC09': { label: 'BOSS', color: '#ff44ff' },  // 🐉
-  '\uD83D\uDCA8': { label: 'JET', color: '#aaccff' },   // 💨
-  '\uD83D\uDCA3': { label: 'BOOM', color: '#ffaa44' },  // 💣
-  '\uD83C\uDF00': { label: 'VOID', color: '#cc66ff' },  // 🌀
-  '\uD83E\uDE7A': { label: 'MED', color: '#66ffaa' },   // 🩺
-  '\uD83D\uDD2D': { label: 'SCOPE', color: '#44ccff' }, // 🔭
-  '\uD83D\uDD26': { label: 'LASER', color: '#ff4444' }, // 🔦
-  '\uD83D\uDCA5': { label: 'CRIT', color: '#ff8844' },  // 💥
-  '\uD83D\uDD2B': { label: 'GUN', color: '#aaaaaa' },   // 🔫
-  '\uD83D\uDDE1\uFE0F': { label: 'BLADE', color: '#ff8844' }, // 🗡️
-  '\u2694\uFE0F': { label: 'BLADE', color: '#ffaa00' }, // ⚔️
-  '\uD83E\uDDF5': { label: 'WEAVE', color: '#cccccc' }, // 🧵
-  '\uD83D\uDD27': { label: 'FIX', color: '#aaaaaa' },   // 🔧
-  '\uD83D\uDC7B': { label: 'DODGE', color: '#aa66ff' }, // 👻
-  '\uD83D\uDCAB': { label: 'HEAL', color: '#cc88ff' },  // 💫
-  '\uD83C\uDFE5': { label: 'MED', color: '#44ff88' },   // 🏥
-  '\uD83C\uDF89': { label: 'WIN', color: '#ffd700' },    // 🎉
-  '\uD83E\uDDB4': { label: 'DOG', color: '#cc8844' },   // 🦴
-  '\uD83C\uDF81': { label: 'ITEM', color: '#ffaa00' },   // 🎁
-  '\uD83D\uDD29': { label: 'ITEM', color: '#aaaaaa' },   // 🔩
-  '\uD83D\uDCB0': { label: 'CAPS', color: '#ffd700' },   // 💰
-  '\u26A0\uFE0F': { label: 'WARN', color: '#ffaa00' },   // ⚠️
-  '\uD83D\uDCBE': { label: 'SAVE', color: '#44aaff' },   // 💾
+  '[UP]':      { label: 'UP',    color: '#ffd700' },
+  '[DEF]':     { label: 'DEF',   color: '#6688ff' },
+  '[TECH]':    { label: 'TECH',  color: '#708090' },
+  '[MED]':     { label: 'MED',   color: '#ff6666' },
+  '[STIM]':    { label: 'MED',   color: '#ff8888' },
+  '[DOG]':     { label: 'DOG',   color: '#cc8844' },
+  '[DET]':     { label: 'DET',   color: '#aaaaff' },
+  '[PSI]':     { label: 'PSI',   color: '#cc66ff' },
+  '[FIRE]':    { label: 'FIRE',  color: '#ff6600' },
+  '[STR]':     { label: 'STR',   color: '#ff6644' },
+  '[ZAP]':     { label: 'ZAP',   color: '#ffff44' },
+  '[CLAW]':    { label: 'CLAW',  color: '#66cc66' },
+  '[LAB]':     { label: 'LAB',   color: '#44ff88' },
+  '[NEWS]':    { label: 'NEWS',  color: '#ffcc44' },
+  '[RAD]':     { label: 'RAD',   color: '#44ff44' },
+  '[AIM]':     { label: 'AIM',   color: '#ffaa00' },
+  '[RAGE]':    { label: 'RAGE',  color: '#ff4444' },
+  '[HEAL]':    { label: 'HEAL',  color: '#2E8B57' },
+  '[SPY]':     { label: 'SPY',   color: '#aa88cc' },
+  '[BIO]':     { label: 'BIO',   color: '#669933' },
+  '[GLOW]':    { label: 'BIO',   color: '#88cc44' },
+  '[BOT]':     { label: 'BOT',   color: '#aaaaaa' },
+  '[KILL]':    { label: 'KILL',  color: '#ff4444' },
+  '[DEFEAT]':  { label: 'KILL',  color: '#ff4444' },
+  '[USA]':     { label: 'USA',   color: '#4488ff' },
+  '[BOSS]':    { label: 'BOSS',  color: '#ff4444' },
+  '[PVE]':     { label: 'BOSS',  color: '#ff9966' },
+  '[JET]':     { label: 'JET',   color: '#aaccff' },
+  '[BOOM]':    { label: 'BOOM',  color: '#ffaa44' },
+  '[VOID]':    { label: 'VOID',  color: '#cc66ff' },
+  '[SHROUD]':  { label: 'VOID',  color: '#aa99cc' },
+  '[SCOPE]':   { label: 'SCOPE', color: '#44ccff' },
+  '[LASER]':   { label: 'LASER', color: '#ff4444' },
+  '[CRIT]':    { label: 'CRIT',  color: '#ff8844' },
+  '[GUN]':     { label: 'GUN',   color: '#aaaaaa' },
+  '[BLADE]':   { label: 'BLADE', color: '#ff8844' },
+  '[WEAVE]':   { label: 'WEAVE', color: '#cccccc' },
+  '[FIX]':     { label: 'FIX',   color: '#aaaaaa' },
+  '[DODGE]':   { label: 'DODGE', color: '#aa66ff' },
+  '[WIN]':     { label: 'WIN',   color: '#ffd700' },
+  '[VICTORY]': { label: 'WIN',   color: '#ffd700' },
+  '[LUCKY]':   { label: 'WIN',   color: '#ffd700' },
+  '[ITEM]':    { label: 'ITEM',  color: '#ffaa00' },
+  '[GIFT]':    { label: 'ITEM',  color: '#ffaa00' },
+  '[CAPS]':    { label: 'CAPS',  color: '#ffd700' },
+  '[GOLD]':    { label: 'CAPS',  color: '#ffd700' },
+  '[XP]':      { label: 'UP',    color: '#88ff88' },
+  '[WARN]':    { label: 'WARN',  color: '#ffaa00' },
+  '[SAVE]':    { label: 'SAVE',  color: '#44aaff' },
 };
 
 /* Terminal-style log prefixes based on emoji category */
@@ -120,6 +132,11 @@ const LABEL_TO_TERMINAL = {};
 for (const [, v] of Object.entries(LOG_EMOJI_MAP)) {
   LABEL_TO_TERMINAL[v.label] = TERMINAL_PREFIX[v.label] || { prefix: '>', color: '#33ff33' };
 }
+// Sort tokens by length descending so `[DEFEAT]` is tried before `[DEF]`
+// (otherwise the shorter prefix would shadow the longer token).
+const LOG_EMOJI_ENTRIES = Object.entries(LOG_EMOJI_MAP).sort(
+  ([a], [b]) => b.length - a.length,
+);
 
 let logActionCounter = 0;
 function formatLogEntry(text, roundNum) {
@@ -127,9 +144,9 @@ function formatLogEntry(text, roundNum) {
   logActionCounter++;
   const ts = `[R${roundNum || '?'}-${String(logActionCounter % 100).padStart(2, '0')}]`;
 
-  for (const [emoji, style] of Object.entries(LOG_EMOJI_MAP)) {
-    if (text.startsWith(emoji)) {
-      const rest = text.slice(emoji.length).trimStart();
+  for (const [token, style] of LOG_EMOJI_ENTRIES) {
+    if (text.startsWith(token)) {
+      const rest = text.slice(token.length).trimStart();
       const tp = LABEL_TO_TERMINAL[style.label] || { prefix: '>', color: 'var(--ui-primary)' };
       return React.createElement('span', { style: { fontFamily: "'Share Tech Mono', monospace" } },
         React.createElement('span', { style: { color: 'var(--ui-text-dim)', fontSize: 8, marginRight: 4, opacity: 0.5 } }, ts),
@@ -585,7 +602,7 @@ function WastelandTactics() {
         const freeSlot = newBench.findIndex(slot => slot === null);
         if (freeSlot === -1) return;
         newBench[freeSlot] = { ...unit, stars: 2, uid: makeUid() };
-        setLog(prev => [`⭐ ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
+        setLog(prev => [`[UP] ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
         sound.upgrade();
         setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${newBench[freeSlot]?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
         setBench(newBench);
@@ -609,7 +626,7 @@ function WastelandTactics() {
             });
             const upgradeSlot = newBench.findIndex(slot => slot === null);
             if (upgradeSlot !== -1) newBench[upgradeSlot] = upgraded;
-            setLog(prev => [`⭐ ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
+            setLog(prev => [`[UP] ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
             sound.upgrade();
             setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
             didUpgrade = true;
@@ -657,7 +674,7 @@ function WastelandTactics() {
       } else {
         newBench[freeSlot] = upgraded;
       }
-      setLog(prev => [`⭐ ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
+      setLog(prev => [`[UP] ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
       sound.upgrade();
       setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
       setBench(newBench);
@@ -703,7 +720,7 @@ function WastelandTactics() {
             if (upgradeSlot !== -1) newBench[upgradeSlot] = upgraded;
           }
 
-          setLog(prev => [`⭐ ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
+          setLog(prev => [`[UP] ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
           sound.upgrade();
           setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
           didUpgrade = true;
@@ -765,12 +782,12 @@ function WastelandTactics() {
     // Return equipped items to inventory
     if (unit.items && unit.items.length > 0) {
       setItemInventory(prev => [...prev, ...unit.items]);
-      setLog(prev => [`🔩 Recovered ${unit.items.length} item(s)`, ...prev.slice(0, 9)]);
+      setLog(prev => [`[ITEM] Recovered ${unit.items.length} item(s)`, ...prev.slice(0, 9)]);
     }
     if (location === 'bench') { const newBench = [...bench]; newBench[index] = null; setBench(newBench); }
     else { const newBoard = [...board]; newBoard[index] = null; setBoard(newBoard); }
     setSelected(null);
-    setLog(prev => [`💰 Sold ${unit.name} for ${sellValue} caps`, ...prev.slice(0, 9)]);
+    setLog(prev => [`[CAPS] Sold ${unit.name} for ${sellValue} caps`, ...prev.slice(0, 9)]);
     sound.sell();
   };
 
@@ -783,7 +800,7 @@ function WastelandTactics() {
     // Clone the unit to avoid direct state mutation
     const unit = { ...original, items: [...(original.items || [])] };
     if (unit.items.length >= 3) {
-      setLog(prev => ['⚠️ Unit already has 3 items!', ...prev.slice(0, 9)]);
+      setLog(prev => ['[WARN] Unit already has 3 items!', ...prev.slice(0, 9)]);
       try { sound.invalidAction?.(); } catch(_) {}
       return;
     }
@@ -800,7 +817,7 @@ function WastelandTactics() {
         newItems.push(match[0]);
         unit.items = newItems;
         combined = true;
-        setLog(prev => [`⚙️ Combined into ${match[1].name}!`, ...prev.slice(0, 9)]);
+        setLog(prev => [`[TECH] Combined into ${match[1].name}!`, ...prev.slice(0, 9)]);
         sound.upgrade();
         try { sound.craftItem?.(); } catch(_) {}
         break;
@@ -809,7 +826,7 @@ function WastelandTactics() {
     if (!combined) {
       unit.items = [...unit.items, itemKey];
       const itemName = ITEM_COMPONENTS[itemKey]?.name || COMPLETED_ITEMS[itemKey]?.name || itemKey;
-      setLog(prev => [`🔩 Equipped ${itemName} on ${unit.name}`, ...prev.slice(0, 9)]);
+      setLog(prev => [`[ITEM] Equipped ${itemName} on ${unit.name}`, ...prev.slice(0, 9)]);
       sound.click();
       try { sound.equipItem?.(); } catch(_) {}
     }
@@ -1051,7 +1068,7 @@ function WastelandTactics() {
       };
     });
     if (boardUnits.length === 0) {
-      setLog(prev => ['⚠️ No units on board!', ...prev.slice(0, 9)]);
+      setLog(prev => ['[WARN] No units on board!', ...prev.slice(0, 9)]);
       setNoBoardFlash(true);
       setTimeout(() => setNoBoardFlash(false), 600);
       return;
@@ -1196,7 +1213,7 @@ function WastelandTactics() {
     };
     localStorage.setItem('wt_save', JSON.stringify(state));
     setHasSave(true);
-    setLog(prev => ['💾 Game saved!', ...prev.slice(0, 9)]);
+    setLog(prev => ['[SAVE] Game saved!', ...prev.slice(0, 9)]);
   };
   saveGameRef.current = saveGame;
 
@@ -1230,8 +1247,8 @@ function WastelandTactics() {
       setTimer(settings.prepTimer || 30);
       setCombatUnits([]); setCombatEnemies([]); setBonusGold(0);
       setUnitTooltip(null); setItemSelection(null); setAugmentChoice(null);
-      setLog(['💾 Game loaded!']);
-    } catch (e) { setLog(prev => ['⚠️ Failed to load save', ...prev.slice(0, 9)]); }
+      setLog(['[SAVE] Game loaded!']);
+    } catch (e) { setLog(prev => ['[WARN] Failed to load save', ...prev.slice(0, 9)]); }
   };
 
   const getColor = (cost) => ({ 1: '#888', 2: '#4CAF50', 3: '#2196F3', 4: '#9C27B0', 5: '#FF9800' }[cost] || '#888');
@@ -2690,7 +2707,31 @@ function WastelandTactics() {
                           const isCarousel = isCarouselRound(absRound);
                           const pipType = isCarousel ? 'carousel' : isPvE ? 'pve' : isRoundBoss ? 'boss' : 'pvp';
                           const pipTypeLabel = isCarousel ? 'Lucky 38 Carousel' : isPvE ? 'PvE Encounter' : isRoundBoss ? 'Boss Fight' : 'PvP Skirmish';
-                          const pipIcon = isCarousel ? '$' : isPvE ? '☢' : isRoundBoss ? '☠' : '⚔';
+                          // SVG glyph used in the tooltip label. One-off inline path per pip
+                          // type — kept tiny so it sits inline with the text comfortably.
+                          const pipIconSvg = isCarousel ? (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+                              <text x="12" y="18" textAnchor="middle" fontSize="18" fontFamily="monospace" fontWeight="bold" fill="currentColor">$</text>
+                            </svg>
+                          ) : isPvE ? (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+                              <circle cx="12" cy="12" r="2.4"/>
+                              <path d="M12 2 A10 10 0 0 1 20.66 7 L13.5 11.13 A2 2 0 0 0 12 10 Z"/>
+                              <path d="M20.66 17 A10 10 0 0 1 3.34 17 L10.5 12.87 A2 2 0 0 0 13.5 12.87 Z"/>
+                              <path d="M3.34 7 A10 10 0 0 1 12 2 L12 10 A2 2 0 0 0 10.5 11.13 Z"/>
+                            </svg>
+                          ) : isRoundBoss ? (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+                              <path d="M12 2 C7 2 4 5 4 10 C4 13 5 14 6 15 L6 18 L8 18 L8 20 L10 20 L10 18 L14 18 L14 20 L16 20 L16 18 L18 18 L18 15 C19 14 20 13 20 10 C20 5 17 2 12 2 Z M9 10 A1.5 1.5 0 1 1 9 10.001 Z M15 10 A1.5 1.5 0 1 1 15 10.001 Z"/>
+                            </svg>
+                          ) : (
+                            <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" style={{ verticalAlign: 'middle', marginRight: 4 }}>
+                              <path d="M3 5 L5 3 L13 11 L11 13 Z"/>
+                              <path d="M21 5 L19 3 L11 11 L13 13 Z"/>
+                              <path d="M3 21 L5 19 L9 23 L7 25 Z" transform="translate(-1,-3)"/>
+                              <path d="M21 21 L19 19 L15 23 L17 25 Z" transform="translate(-1,-3)"/>
+                            </svg>
+                          );
                           const pipStatus = isRoundPast ? 'Completed' : isCurrentRound ? 'Current' : 'Upcoming';
                           return (
                             <div key={ri} className={`wt-pip wt-pip-${pipType} ${isCurrentRound ? 'wt-pip-current' : ''} wt-pip-hover`} style={{
@@ -2700,7 +2741,7 @@ function WastelandTactics() {
                               opacity: isRoundPast ? 0.35 : isCurrentRound ? 1 : 0.6,
                             }}>
                               <div className="wt-pip-tooltip">
-                                <div style={{ fontWeight: 'bold', color: 'var(--ui-primary)' }}>{pipIcon} Round {absRound}</div>
+                                <div style={{ fontWeight: 'bold', color: 'var(--ui-primary)' }}>{pipIconSvg}Round {absRound}</div>
                                 <div style={{ color: pipType === 'boss' ? '#ff4444' : pipType === 'carousel' ? '#ffd700' : pipType === 'pve' ? '#ff9900' : 'var(--ui-text-dim)' }}>{pipTypeLabel}</div>
                                 <div style={{ opacity: 0.5 }}>Stage {stageNum} \u2022 {pipStatus}</div>
                               </div>
@@ -2966,8 +3007,14 @@ function WastelandTactics() {
             </div>
             {/* Divider */}
             <div className="wt-board-divider">
-              <span className="wt-board-divider-text">
-                {'☢ THE WASTELAND '}
+              <span className="wt-board-divider-text" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true">
+                  <circle cx="12" cy="12" r="2.4"/>
+                  <path d="M12 2 A10 10 0 0 1 20.66 7 L13.5 11.13 A2 2 0 0 0 12 10 Z"/>
+                  <path d="M20.66 17 A10 10 0 0 1 3.34 17 L10.5 12.87 A2 2 0 0 0 13.5 12.87 Z"/>
+                  <path d="M3.34 7 A10 10 0 0 1 12 2 L12 10 A2 2 0 0 0 10.5 11.13 Z"/>
+                </svg>
+                {'THE WASTELAND '}
                 <span style={{ color: board.filter(u => u).length >= level ? '#ff4444' : 'var(--ui-primary)', fontWeight: 'bold' }}>
                   {board.filter(u => u).length}/{level}
                 </span>
@@ -3616,12 +3663,30 @@ function WastelandTactics() {
                   <div style={{ marginTop: 12, padding: 8, background: 'rgba(0,20,0,0.4)', borderRadius: 3, border: '1px solid var(--ui-border-dim)' }}>
                     <div style={{ fontSize: 10, color: 'var(--ui-secondary)', marginBottom: 4, letterSpacing: 1 }}>{'>'} ECONOMY INTEL:</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, fontSize: 9, color: '#00cc00' }}>
-                      <div>💰 <span style={{ color: 'var(--ui-primary)' }}>Interest:</span> +1g per 10g saved (max 5)</div>
-                      <div>🔄 <span style={{ color: 'var(--ui-primary)' }}>Reroll:</span> 2g to refresh shop</div>
-                      <div>📈 <span style={{ color: 'var(--ui-primary)' }}>Buy XP:</span> 4g for 4 XP</div>
-                      <div>🔥 <span style={{ color: 'var(--ui-primary)' }}>Win streak:</span> +1/2/3g at 2/4/6+ wins</div>
-                      <div>💀 <span style={{ color: 'var(--ui-primary)' }}>Loss streak:</span> +1/2/3g at 2/4/6+ losses</div>
-                      <div>⭐ <span style={{ color: 'var(--ui-primary)' }}>3-star:</span> 3x of 2★ (9 copies total)</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="#ffd700" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="#ffd700" strokeWidth="2"/><text x="12" y="16" textAnchor="middle" fontSize="11" fontFamily="monospace" fontWeight="bold" fill="#ffd700">$</text></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>Interest:</span> +1g per 10g saved (max 5)</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#88ddff" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 12 A8 8 0 0 1 18 7 L18 4 L22 8 L18 12 L18 9"/><path d="M20 12 A8 8 0 0 1 6 17 L6 20 L2 16 L6 12 L6 15"/></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>Reroll:</span> 2g to refresh shop</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="#88ff88" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M3 18 L9 12 L13 16 L21 6"/><path d="M16 6 L21 6 L21 11"/></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>Buy XP:</span> 4g for 4 XP</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="#ff6600" aria-hidden="true"><path d="M12 2 C8 8 6 10 6 14 A6 6 0 0 0 18 14 C18 11 16 9 14 6 C14 9 13 10 12 10 C13 7 13 5 12 2 Z"/></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>Win streak:</span> +1/2/3g at 2/4/6+ wins</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="#ff4444" aria-hidden="true"><path d="M12 2 C7 2 4 5 4 10 C4 13 5 14 6 15 L6 18 L8 18 L8 20 L10 20 L10 18 L14 18 L14 20 L16 20 L16 18 L18 18 L18 15 C19 14 20 13 20 10 C20 5 17 2 12 2 Z M9 10 A1.5 1.5 0 1 1 9 10.001 Z M15 10 A1.5 1.5 0 1 1 15 10.001 Z"/></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>Loss streak:</span> +1/2/3g at 2/4/6+ losses</span>
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <svg viewBox="0 0 24 24" width="11" height="11" fill="#ffd700" aria-hidden="true"><path d="M12 2 L14 9 L21 9 L15 13 L17 20 L12 16 L7 20 L9 13 L3 9 L10 9 Z"/></svg>
+                        <span><span style={{ color: 'var(--ui-primary)' }}>3-star:</span> 3x of 2-star (9 copies total)</span>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -4279,7 +4344,7 @@ function WastelandTactics() {
                     onClick={() => {
                       setItemInventory(prev => [...prev, itemKey]);
                       setItemSelection(null);
-                      setLog(prev => [`🔩 Acquired ${comp.name}!`, ...prev.slice(0, 9)]);
+                      setLog(prev => [`[ITEM] Acquired ${comp.name}!`, ...prev.slice(0, 9)]);
                       sound.upgrade();
                     }}
                     style={{
@@ -4339,7 +4404,14 @@ function WastelandTactics() {
       {showContinuePrompt && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100 }}>
           <div style={{ background: 'linear-gradient(180deg, #001a00 0%, #0a0a00 100%)', border: '3px solid var(--ui-border)', borderRadius: 8, padding: 30, textAlign: 'center', boxShadow: '0 0 50px var(--ui-glow)' }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>☢️</div>
+            <div style={{ marginBottom: 12, display: 'flex', justifyContent: 'center' }} aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="var(--ui-primary, #33ff33)">
+                <circle cx="12" cy="12" r="2.4"/>
+                <path d="M12 2 A10 10 0 0 1 20.66 7 L13.5 11.13 A2 2 0 0 0 12 10 Z"/>
+                <path d="M20.66 17 A10 10 0 0 1 3.34 17 L10.5 12.87 A2 2 0 0 0 13.5 12.87 Z"/>
+                <path d="M3.34 7 A10 10 0 0 1 12 2 L12 10 A2 2 0 0 0 10.5 11.13 Z"/>
+              </svg>
+            </div>
             <div style={{ fontSize: 20, fontWeight: 'bold', color: 'var(--ui-primary)', marginBottom: 16 }}>Save Found!</div>
             <div style={{ fontSize: 14, color: '#aaffaa', marginBottom: 20 }}>Continue your previous run?</div>
             <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -4352,18 +4424,56 @@ function WastelandTactics() {
 
       {/* Tutorial Overlay */}
       {showTutorial && (() => {
+        // Inline SVG glyphs for each tutorial step. The previous emoji icons
+        // (rad/cart/clipboard/star/sparkles/bolt) were replaced with simple
+        // monochrome silhouettes that inherit the panel's primary color.
+        const svgRad = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--ui-primary)" aria-hidden="true">
+            <circle cx="12" cy="12" r="2.4"/>
+            <path d="M12 2 A10 10 0 0 1 20.66 7 L13.5 11.13 A2 2 0 0 0 12 10 Z"/>
+            <path d="M20.66 17 A10 10 0 0 1 3.34 17 L10.5 12.87 A2 2 0 0 0 13.5 12.87 Z"/>
+            <path d="M3.34 7 A10 10 0 0 1 12 2 L12 10 A2 2 0 0 0 10.5 11.13 Z"/>
+          </svg>
+        );
+        const svgCart = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--ui-primary)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M3 4 L6 4 L8 16 L20 16 L22 8 L7 8"/><circle cx="9" cy="20" r="1.6"/><circle cx="18" cy="20" r="1.6"/>
+          </svg>
+        );
+        const svgClipboard = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="var(--ui-primary)" strokeWidth="1.6" strokeLinejoin="round" aria-hidden="true">
+            <rect x="6" y="4" width="12" height="18" rx="1.5"/><rect x="9" y="2" width="6" height="3" rx="0.6" fill="var(--ui-primary)"/>
+            <line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="15" y2="14"/><line x1="9" y1="18" x2="13" y2="18"/>
+          </svg>
+        );
+        const svgStar = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--ui-primary)" aria-hidden="true">
+            <path d="M12 2 L14.5 8.5 L21 9 L16 13.5 L17.5 20 L12 16.5 L6.5 20 L8 13.5 L3 9 L9.5 8.5 Z"/>
+          </svg>
+        );
+        const svgSparkle = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--ui-primary)" aria-hidden="true">
+            <path d="M12 2 L13 9 L20 10 L13 11 L12 18 L11 11 L4 10 L11 9 Z"/>
+            <path d="M19 14 L19.6 17 L22 17.5 L19.6 18 L19 21 L18.4 18 L16 17.5 L18.4 17 Z"/>
+          </svg>
+        );
+        const svgBolt = (
+          <svg viewBox="0 0 24 24" width="48" height="48" fill="var(--ui-primary)" aria-hidden="true">
+            <path d="M13 2 L5 14 L11 14 L9 22 L19 9 L13 9 Z"/>
+          </svg>
+        );
         const steps = [
-          { title: 'Welcome to Wasteland Tactics!', text: 'A Fallout-themed auto-battler. Build a team, fight enemies, survive as long as you can!', icon: '☢️' },
-          { title: 'Buy Units', text: 'Spend Caps in the shop to recruit Wasteland companions. Reroll the shop for 2 caps.', icon: '🛒' },
-          { title: 'Place Your Team', text: 'Drag units from your bench onto the battlefield. Your level determines how many units can fight.', icon: '📋' },
-          { title: 'Synergies Matter', text: 'Match unit traits (Minutemen, Wasteland, Scout, etc.) for powerful team bonuses!', icon: '⭐' },
-          { title: 'Upgrade Stars', text: 'Buy 3 copies of the same unit to upgrade to 2★, then 3 copies of 2★ for 3★!', icon: '✨' },
-          { title: 'Items & Augments', text: 'Win PvE rounds for item components. Combine 2 components on a unit for powerful completed items. Choose augments at key rounds!', icon: '🔩' },
+          { title: 'Welcome to Wasteland Tactics!', text: 'A Fallout-themed auto-battler. Build a team, fight enemies, survive as long as you can!', svg: svgRad },
+          { title: 'Buy Units', text: 'Spend Caps in the shop to recruit Wasteland companions. Reroll the shop for 2 caps.', svg: svgCart },
+          { title: 'Place Your Team', text: 'Drag units from your bench onto the battlefield. Your level determines how many units can fight.', svg: svgClipboard },
+          { title: 'Synergies Matter', text: 'Match unit traits (Minutemen, Wasteland, Scout, etc.) for powerful team bonuses!', svg: svgStar },
+          { title: 'Upgrade Stars', text: 'Buy 3 copies of the same unit to upgrade to 2-star, then 3 copies of 2-star for 3-star!', svg: svgSparkle },
+          { title: 'Items & Augments', text: 'Win PvE rounds for item components. Combine 2 components on a unit for powerful completed items. Choose augments at key rounds!', svg: svgBolt },
         ];
         const step = steps[tutorialStep];
         return React.createElement('div', { style: { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3000 } },
           React.createElement('div', { style: { background: 'linear-gradient(180deg, #001a00 0%, #0a0a00 100%)', border: '3px solid var(--ui-border)', borderRadius: 8, padding: 30, textAlign: 'center', maxWidth: 400, boxShadow: '0 0 50px var(--ui-glow)' } },
-            React.createElement('div', { style: { fontSize: 48, marginBottom: 12 } }, step.iconImg ? createGameIcon(step.iconImg, step.icon, 48) : step.icon),
+            React.createElement('div', { style: { marginBottom: 12, display: 'flex', justifyContent: 'center' } }, step.svg),
             React.createElement('div', { style: { fontSize: 20, fontWeight: 'bold', color: 'var(--ui-primary)', marginBottom: 8 } }, step.title),
             React.createElement('div', { style: { fontSize: 14, color: '#aaffaa', marginBottom: 20, lineHeight: 1.5 } }, step.text),
             React.createElement('div', { style: { fontSize: 10, color: '#666', marginBottom: 12 } }, `${tutorialStep + 1} / ${steps.length}`),
@@ -4437,7 +4547,7 @@ function WastelandTactics() {
               if (Array.isArray(payload.bench)) setBench(payload.bench);
               if (Array.isArray(payload.augments)) setAugments(payload.augments);
               if (Array.isArray(payload.items)) setItemInventory(payload.items);
-              setLog(prev => [`💾 Build imported from code`, ...prev.slice(0, 9)]);
+              setLog(prev => [`[SAVE] Build imported from code`, ...prev.slice(0, 9)]);
             } catch (e) { logError(e, { source: 'ProfilePanel.onImport' }); }
           }}
         />
@@ -4498,7 +4608,7 @@ function WastelandTactics() {
             {augments.length > 0 && <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}>Augments: {augments.map(id => { const a = AUGMENT_POOL.find(a => a.id === id); return a ? <GameIcon key={id} iconImg={a.iconImg} icon={a.icon} size={12} /> : null; })}</div>}
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
               <button onClick={restart} style={{ padding: '12px 32px', fontSize: 16, background: 'rgba(0,100,0,0.6)', border: '2px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}>RESTART</button>
-              <button onClick={() => { navigator.clipboard?.writeText(`☢️ Wasteland Tactics - Survived ${round} rounds! Level ${level}, ${augments.length} augments.`); }} style={{ padding: '12px 16px', fontSize: 12, background: 'rgba(0,0,100,0.4)', border: '1px solid #6666ff', borderRadius: 4, color: '#6666ff', cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
+              <button onClick={() => { navigator.clipboard?.writeText(`Wasteland Tactics - Survived ${round} rounds! Level ${level}, ${augments.length} augments.`); }} style={{ padding: '12px 16px', fontSize: 12, background: 'rgba(0,0,100,0.4)', border: '1px solid #6666ff', borderRadius: 4, color: '#6666ff', cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
             </div>
           </div>
         </div>

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <polygon points="32,2 58,17 58,47 32,62 6,47 6,17" fill="#04061a" stroke="#88aaff" stroke-width="2"/>
+  <!-- Heavy shield -->
+  <path d="M32 12 L48 18 L48 36 Q48 50 32 56 Q16 50 16 36 L16 18 Z" fill="#2a3e66" stroke="#88aaff" stroke-width="1.6"/>
+  <!-- Inner panel -->
+  <path d="M32 18 L42 22 L42 36 Q42 46 32 50 Q22 46 22 36 L22 22 Z" fill="none" stroke="#aac4ff" stroke-width="1.2" opacity="0.7"/>
+  <!-- Rivets -->
+  <circle cx="22" cy="22" r="1.4" fill="#aac4ff"/>
+  <circle cx="42" cy="22" r="1.4" fill="#aac4ff"/>
+  <circle cx="22" cy="42" r="1.4" fill="#aac4ff"/>
+  <circle cx="42" cy="42" r="1.4" fill="#aac4ff"/>
+  <!-- Center boss -->
+  <circle cx="32" cy="34" r="4" fill="#aac4ff"/>
+</svg>

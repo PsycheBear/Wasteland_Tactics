@@ -516,7 +516,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
           ally.buffDuration = 8;
         }
       });
-      logs.unshift(`⭐ ${unit.name} rallies! +${Math.round(buffAmount * 100)}% ATK!`);
+      logs.unshift(`[UP] ${unit.name} rallies! +${Math.round(buffAmount * 100)}% ATK!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
       try { sound.bobbleheadWobble?.(); } catch(_) {}
@@ -537,9 +537,9 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
           healTarget.scrapArmorDef = 10;
           healTarget.scrapArmorDuration = 8;
           healTarget.def = (healTarget.baseDef ?? healTarget.def) + 10;
-          logs.unshift(`🛡️ Scrap Armor: ${healTarget.name} gains +10 DEF!`);
+          logs.unshift(`[DEF] Scrap Armor: ${healTarget.name} gains +10 DEF!`);
         }
-        logs.unshift(`⚙️ ${unit.name}'s Repair Bot heals ${healTarget.name} for ${Math.round(healAmount)}!`);
+        logs.unshift(`[TECH] ${unit.name}'s Repair Bot heals ${healTarget.name} for ${Math.round(healAmount)}!`);
         abilityUnits.push(unit.uid);
         try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
         return true;
@@ -553,7 +553,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       unit.buffAtkMult = 1 + atkBuff;
       unit.buffDuration = 10;
       unit.def = Math.max(0, (unit.baseDef ?? unit.def) * 0.9);
-      logs.unshift(`💊 ${unit.name} uses Psycho! +${Math.round(atkBuff * 100)}% ATK!`);
+      logs.unshift(`[STIM] ${unit.name} uses Psycho! +${Math.round(atkBuff * 100)}% ATK!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
       { const buffEl = document.querySelector(`[data-unit-uid="${unit.uid}"]`); if (buffEl) buffEl.classList.add('wt-buff-aura'); }
@@ -575,7 +575,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         t.stunDuration = Math.round(stunTicks);
         const stunEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (stunEl) stunEl.classList.add('wt-stunned');
       });
-      logs.unshift(`🐕 ${unit.name} pounces on ${stunTargets.map(t => t.name).join(' & ')}! Stunned for ${Math.round(stunTicks / 2)}s!`);
+      logs.unshift(`[DOG] ${unit.name} pounces on ${stunTargets.map(t => t.name).join(' & ')}! Stunned for ${Math.round(stunTicks / 2)}s!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -590,7 +590,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const silenceTicks = (8 + starMult * 4) * abilityMult; // 12/16/20 ticks at 1/2/3 stars
       silenceTarget.suppressedDuration = Math.round(silenceTicks);
       silenceTarget.suppressed = true;
-      logs.unshift(`🔍 ${unit.name} suppresses ${silenceTarget.name}! Silenced for ${Math.round(silenceTicks / 2)}s!`);
+      logs.unshift(`[DET] ${unit.name} suppresses ${silenceTarget.name}! Silenced for ${Math.round(silenceTicks / 2)}s!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       return true;
@@ -608,7 +608,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         const reviveTarget = deadAllies[ri];
         reviveTarget.currentHp = Math.max(1, Math.floor(reviveTarget.maxHp * revivePct));
         if (unit.stars >= 3) reviveTarget.mana = reviveTarget.manaMax;
-        logs.unshift(`🧠 ${unit.name} recalls ${reviveTarget.name}! Revived with ${Math.round(reviveTarget.currentHp)} HP${unit.stars >= 3 ? ' + full AP!' : '!'}`);
+        logs.unshift(`[PSI] ${unit.name} recalls ${reviveTarget.name}! Revived with ${Math.round(reviveTarget.currentHp)} HP${unit.stars >= 3 ? ' + full AP!' : '!'}`);
       }
       abilityUnits.push(unit.uid);
       try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
@@ -626,7 +626,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         shuffled[i].currentHp -= applyShroudMultiplier(shuffled[i], baseDmg, true);
         targets.push(shuffled[i].name);
       }
-      logs.unshift(`🔥 ${unit.name}'s Flamer scorches ${targets.join(' & ')} for ${Math.round(baseDmg)} each!`);
+      logs.unshift(`[FIRE] ${unit.name}'s Flamer scorches ${targets.join(' & ')} for ${Math.round(baseDmg)} each!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -639,7 +639,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       unit.buffDuration = 12;
       const shieldAmt = 200 * starMult * abilityMult;
       unit.currentHp = Math.min(unit.maxHp + shieldAmt, unit.currentHp + shieldAmt);
-      logs.unshift(`💪 ${unit.name} RAGES! +${Math.round(rageBuff * 100)}% ATK, +${Math.round(shieldAmt)} HP shield!`);
+      logs.unshift(`[STR] ${unit.name} RAGES! +${Math.round(rageBuff * 100)}% ATK, +${Math.round(shieldAmt)} HP shield!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
       try { sound.bobbleheadWobble?.(); } catch(_) {}
@@ -656,7 +656,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         const dmg = laserDmg * (0.85 + Math.random() * 0.3);
         e.currentHp -= applyShroudMultiplier(e, dmg, true);
       });
-      logs.unshift(`⚡ ${unit.name}: AD VICTORIAM! Laser blast hits ${aliveEnemies.length} enemies for ~${Math.round(laserDmg)} each!`);
+      logs.unshift(`[ZAP] ${unit.name}: AD VICTORIAM! Laser blast hits ${aliveEnemies.length} enemies for ~${Math.round(laserDmg)} each!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -670,7 +670,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const prey = aliveEnemies[0];
       const strikeDmg = unit.atk * 3 * abilityMult;
       prey.currentHp -= strikeDmg;
-      logs.unshift(`🦎 ${unit.name} SAVAGE STRIKE on ${prey.name}! ${Math.round(strikeDmg)} true damage!`);
+      logs.unshift(`[CLAW] ${unit.name} SAVAGE STRIKE on ${prey.name}! ${Math.round(strikeDmg)} true damage!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -686,7 +686,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         t.poisonTicks = 8;
         const poisonEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (poisonEl) poisonEl.classList.add('wt-poisoned');
       });
-      logs.unshift(`🧪 ${unit.name}'s Serum poisons ${poisonTargets.map(t => t.name).join(' & ')}! ${Math.round(poisonDmg)} over 4s!`);
+      logs.unshift(`[LAB] ${unit.name}'s Serum poisons ${poisonTargets.map(t => t.name).join(' & ')}! ${Math.round(poisonDmg)} over 4s!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       return true;
@@ -701,7 +701,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       exposeTarget.defShredPct = 0.5 * abilityMult;
       exposeTarget.defShredDuration = 10;
       exposeTarget.def = (exposeTarget.baseDef ?? exposeTarget.def) * (1 - exposeTarget.defShredPct);
-      logs.unshift(`📰 ${unit.name}'s Exposé shreds ${exposeTarget.name}'s DEF by ${Math.round(exposeTarget.defShredPct * 100)}%!`);
+      logs.unshift(`[NEWS] ${unit.name}'s Exposé shreds ${exposeTarget.name}'s DEF by ${Math.round(exposeTarget.defShredPct * 100)}%!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       return true;
@@ -715,7 +715,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       aliveEnemies.forEach(e => {
         e.currentHp -= applyShroudMultiplier(e, radDmg * (0.85 + Math.random() * 0.3), true);
       });
-      logs.unshift(`☢️ ${unit.name}'s Ghoulish Fury! ${Math.round(radDmg)} radiation damage to ${aliveEnemies.length} enemies!`);
+      logs.unshift(`[RAD] ${unit.name}'s Ghoulish Fury! ${Math.round(radDmg)} radiation damage to ${aliveEnemies.length} enemies!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       try { sound.geigerTick?.(); } catch(_) {}
@@ -730,7 +730,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const executeTarget = aliveEnemies[0];
       const execDmg = unit.atk * 4 * abilityMult;
       executeTarget.currentHp -= execDmg;
-      logs.unshift(`🎯 ${unit.name} HEADSHOT on ${executeTarget.name}! ${Math.round(execDmg)} damage!`);
+      logs.unshift(`[AIM] ${unit.name} HEADSHOT on ${executeTarget.name}! ${Math.round(execDmg)} damage!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -745,7 +745,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       const debuffPct = 0.25 * abilityMult;
       debuffTarget.buffAtkMult = 1 - debuffPct;
       debuffTarget.buffDuration = 8;
-      logs.unshift(`😤 ${unit.name} complains bitterly! ${debuffTarget.name} -${Math.round(debuffPct * 100)}% ATK!`);
+      logs.unshift(`[RAGE] ${unit.name} complains bitterly! ${debuffTarget.name} -${Math.round(debuffPct * 100)}% ATK!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       return true;
@@ -765,7 +765,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         t.burnTicks = 6;
         const burnEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (burnEl) burnEl.classList.add('wt-burning');
       });
-      logs.unshift(`🔥 ${unit.name}'s Incendiary Strike! ${targets.map(t => t.name).join(', ')} for ${Math.round(baseDmg)} + burn!`);
+      logs.unshift(`[FIRE] ${unit.name}'s Incendiary Strike! ${targets.map(t => t.name).join(', ')} for ${Math.round(baseDmg)} + burn!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -788,7 +788,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         }
       });
       if (healed === 0) return false;
-      logs.unshift(`💉 ${unit.name}'s Emergency Protocol heals ${healed} allies for ${Math.round(healAmount)}!${unit.stars >= 3 ? ' +15% AS!' : ''}`);
+      logs.unshift(`[HEAL] ${unit.name}'s Emergency Protocol heals ${healed} allies for ${Math.round(healAmount)}!${unit.stars >= 3 ? ' +15% AS!' : ''}`);
       abilityUnits.push(unit.uid);
       try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
       return true;
@@ -803,7 +803,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         const strikeDmg = unit.atk * 2 * abilityMult;
         // Apply damage immediately
         if (strikeTarget.currentHp > 0) strikeTarget.currentHp -= strikeDmg;
-        logs.unshift(`🕵️ ${unit.name} vanishes! Strikes ${strikeTarget.name} for ${Math.round(strikeDmg)} on return!`);
+        logs.unshift(`[SPY] ${unit.name} vanishes! Strikes ${strikeTarget.name} for ${Math.round(strikeDmg)} on return!`);
       }
       abilityUnits.push(unit.uid);
       try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
@@ -819,7 +819,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         e.buffAtkMult = 1 - debuffPct;
         e.buffDuration = 8;
       });
-      logs.unshift(`☣️ ${unit.name}'s Ghoul's Wisdom! All enemies -${Math.round(debuffPct * 100)}% ATK!`);
+      logs.unshift(`[BIO] ${unit.name}'s Ghoul's Wisdom! All enemies -${Math.round(debuffPct * 100)}% ATK!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       try { sound.geigerTick?.(); } catch(_) {}
@@ -835,7 +835,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       targets.forEach(t => {
         t.currentHp -= applyShroudMultiplier(t, laserDmg * (0.85 + Math.random() * 0.3), true);
       });
-      logs.unshift(`⚡ ${unit.name}: FINAL JUDGMENT! Gatling laser hits ${targets.map(t => t.name).join(', ')} for ~${Math.round(laserDmg)} each!`);
+      logs.unshift(`[ZAP] ${unit.name}: FINAL JUDGMENT! Gatling laser hits ${targets.map(t => t.name).join(', ')} for ~${Math.round(laserDmg)} each!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -853,7 +853,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
         t.currentHp -= applyShroudMultiplier(t, stunDmg, true);
         const stunEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (stunEl) stunEl.classList.add('wt-stunned');
       });
-      logs.unshift(`🤖 ${unit.name}'s Cybernetic Override! Stuns & deals ${Math.round(stunDmg)} to ${targets.map(t => t.name).join(' & ')}!`);
+      logs.unshift(`[BOT] ${unit.name}'s Cybernetic Override! Stuns & deals ${Math.round(stunDmg)} to ${targets.map(t => t.name).join(' & ')}!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
       return true;
@@ -867,7 +867,7 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       aliveEnemies.forEach(e => {
         e.currentHp -= applyShroudMultiplier(e, nukeDmg * (0.9 + Math.random() * 0.2), true);
       });
-      logs.unshift(`☢️ ${unit.name}: NUCLEAR FOOTBALL! ${Math.round(nukeDmg)} damage to ${aliveEnemies.length} enemies! DEMOCRACY IS NON-NEGOTIABLE!`);
+      logs.unshift(`[RAD] ${unit.name}: NUCLEAR FOOTBALL! ${Math.round(nukeDmg)} damage to ${aliveEnemies.length} enemies! DEMOCRACY IS NON-NEGOTIABLE!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -1474,7 +1474,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           const healAmount = unit.maxHp * healTick * augHealMult;
           unit.currentHp = Math.min(unit.maxHp, unit.currentHp + healAmount);
           spawnVFX('heal', { targetUid: unit.uid }, rectMap);
-          logs.unshift(`💚 Support heals ${unit.name} for ${Math.round(healAmount)}`);
+          logs.unshift(`[HEAL] Support heals ${unit.name} for ${Math.round(healAmount)}`);
         }
       });
     }
@@ -1486,7 +1486,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (unit.isGhoul && unit.ghoulRegen > 0 && unit.currentHp > 0 && unit.currentHp < unit.maxHp) {
           const regenAmt = unit.maxHp * unit.ghoulRegen;
           unit.currentHp = Math.min(unit.maxHp, unit.currentHp + regenAmt);
-          logs.unshift(`☣️ Ghoul regen: ${unit.name} heals ${Math.round(regenAmt)}`);
+          logs.unshift(`[BIO] Ghoul regen: ${unit.name} heals ${Math.round(regenAmt)}`);
           ghoulRegenTriggered = true;
         }
       });
@@ -1516,7 +1516,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (hasDebuff) {
           u.stunDuration = 0; u.suppressed = false; u.suppressedDuration = 0; u.poisonTicks = 0; u.poisonDmg = 0; u.burnTicks = 0; u.burnDmg = 0;
           u._libertyImmunityUsed = true;
-          logs.unshift(`🗽 ${u.name} cleanses all debuffs! (once per combat)`);
+          logs.unshift(`[USA] ${u.name} cleanses all debuffs! (once per combat)`);
         }
       }
     });
@@ -1530,7 +1530,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         const healAmt = u.maxHp * u.itemEmergencyHeal;
         u.currentHp = Math.min(u.maxHp, u.currentHp + healAmt);
         u._emergencyHealUsed = true;
-        logs.unshift(`💊 Super Stimpak! ${u.name} heals ${Math.round(healAmt)} HP!`);
+        logs.unshift(`[STIM] Super Stimpak! ${u.name} heals ${Math.round(healAmt)} HP!`);
       }
     });
 
@@ -1621,7 +1621,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         // Radscorpion: poison 2 random player units
         const targets = pUnits.filter(p => p.currentHp > 0).sort(() => Math.random() - 0.5).slice(0, 2);
         targets.forEach(t => { t.poisonDmg = (t.poisonDmg || 0) + u.bossDmg / 8; t.poisonTicks = 8; const poisonEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (poisonEl) poisonEl.classList.add('wt-poisoned'); });
-        if (targets.length > 0) logs.unshift(`🦂 ${u.name} stings ${targets.map(t => t.name).join(' & ')}! Poisoned!`);
+        if (targets.length > 0) logs.unshift(`[BOSS] ${u.name} stings ${targets.map(t => t.name).join(' & ')}! Poisoned!`);
       }
       if (u.bossMechanic === 'spawn' && u._bossTickCounter % u.bossInterval === 0) {
         // Mirelurk Queen: spawn a creep add
@@ -1630,26 +1630,26 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           const add = { name: 'Mirelurk Hatchling', id: 'boss_add', stars: 1, uid: `boss_add_${tick}`, currentHp: 200, maxHp: 200, atk: 30, baseAtk: 30, baseDef: 10, def: 10, position: freeSlot, isEnemy: true, stunDuration: 0, mana: 0, manaMax: 0, apGain: 0, apOnHit: 0, abilityUsed: true, buffDuration: 0, buffAtkMult: 1, attackSpeed: 0.8, attackCooldown: 8, traits: [], cost: 1, items: [] };
           enemySlots[freeSlot] = add;
           eUnits.push(add);
-          logs.unshift(`🦀 ${u.name} spawns a Hatchling!`);
+          logs.unshift(`[BOSS] ${u.name} spawns a Hatchling!`);
         }
       }
       if (u.bossMechanic === 'enrage' && !u._enraged && u.currentHp / u.maxHp <= u.bossEnrageThreshold) {
         // Behemoth: enrage at 50% HP
         u.atk = u.baseAtk * (u.enrageAtkMult || 2);
         u._enraged = true;
-        logs.unshift(`👹 ${u.name} ENRAGES! ATK doubled!`);
+        logs.unshift(`[BOSS] ${u.name} ENRAGES! ATK doubled!`);
       }
       // Swan (round 14): enrage at <30% HP layered on a stomp boss.
       if (u.bossMechanic === 'stomp' && u.bossEnrageThreshold && !u._enraged && u.currentHp / u.maxHp <= u.bossEnrageThreshold) {
         u.atk = u.baseAtk * (u.enrageAtkMult || 1.5);
         u._enraged = true;
-        logs.unshift(`👹 ${u.name} ENRAGES! ATK +${Math.round(((u.enrageAtkMult || 1.5) - 1) * 100)}%!`);
+        logs.unshift(`[BOSS] ${u.name} ENRAGES! ATK +${Math.round(((u.enrageAtkMult || 1.5) - 1) * 100)}%!`);
       }
       if (u.bossMechanic === 'stomp' && u._bossTickCounter % u.bossInterval === 0) {
         // Mythic Deathclaw: AoE stomp
         const stompDmg = u.bossDmg;
         pUnits.filter(p => p.currentHp > 0).forEach(p => { p.currentHp -= stompDmg; });
-        logs.unshift(`🐉 ${u.name} STOMPS! ${Math.round(stompDmg)} damage to all!`);
+        logs.unshift(`[BOSS] ${u.name} STOMPS! ${Math.round(stompDmg)} damage to all!`);
       }
       // Mothman 'darkness_shroud' — phase alternates between 'thick' and
       // 'thin' every SHROUD_PHASE_TICKS ticks. Damage taken by the boss is
@@ -1660,9 +1660,9 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (u._bossTickCounter > 0 && u._bossTickCounter % SHROUD_PHASE_TICKS === 0) {
           u._shroudPhaseIdx = (u._shroudPhaseIdx + 1) % u.shroudPhases.length;
           const phaseName = u.shroudPhases[u._shroudPhaseIdx];
-          if (phaseName === 'thick') logs.unshift(`🌑 The shroud thickens...`);
-          else if (phaseName === 'thin') logs.unshift(`🌫️ The shroud thins...`);
-          else logs.unshift(`🌑 The shroud shifts to ${phaseName}...`);
+          if (phaseName === 'thick') logs.unshift(`[SHROUD] The shroud thickens...`);
+          else if (phaseName === 'thin') logs.unshift(`[SHROUD] The shroud thins...`);
+          else logs.unshift(`[SHROUD] The shroud shifts to ${phaseName}...`);
         }
       }
 
@@ -1680,7 +1680,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             victim.currentHp -= strikeDmg;
             spawnVFX('impact', { targetUid: victim.uid, isCrit: true, unitId: 'boss' }, rectMap);
             spawnFloat(strikeDmg, true, victim.uid, true, setFloatingNumbers);
-            logs.unshift(`⚡ ${u.name} teleport-strikes ${victim.name} for ${Math.round(strikeDmg)}!`);
+            logs.unshift(`[ZAP] ${u.name} teleport-strikes ${victim.name} for ${Math.round(strikeDmg)}!`);
             try { sound.criticalHit?.(); } catch(_) {}
           }
         }
@@ -1717,7 +1717,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             victim.stunDuration = Math.max(victim.stunDuration || 0, ticks);
             victim.deaconUntargetable = Math.max(victim.deaconUntargetable || 0, ticks);
             const el = document.querySelector(`[data-unit-uid="${victim.uid}"]`); if (el) el.classList.add('wt-stunned');
-            logs.unshift(`❄️ ${u.name} freezes ${victim.name}!`);
+            logs.unshift(`[FIX] ${u.name} freezes ${victim.name}!`);
           }
         }
         u._lorenzoActive = pUnits.some(p => (p._frozenDuration || 0) > 0);
@@ -1781,19 +1781,19 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           if (unit.itemAbilityHeal > 0) {
             const healAmt = unit.maxHp * unit.itemAbilityHeal;
             unit.currentHp = Math.min(unit.maxHp, unit.currentHp + healAmt);
-            logs.unshift(`💨 Jet Injector: ${unit.name} heals ${Math.round(healAmt)}!`);
+            logs.unshift(`[JET] Jet Injector: ${unit.name} heals ${Math.round(healAmt)}!`);
           }
           // Item: Nuka Grenade — ability deals 25% bonus AoE splash
           if (unit.itemAbilitySplash > 0) {
             const splashDmg = unit.atk * unit.itemAbilitySplash;
             eUnits.filter(e => e.currentHp > 0).forEach(e => { e.currentHp -= splashDmg; });
-            logs.unshift(`💣 Nuka Grenade splash: ${Math.round(splashDmg)} to all enemies!`);
+            logs.unshift(`[BOOM] Nuka Grenade splash: ${Math.round(splashDmg)} to all enemies!`);
           }
           // Item: Nuka-Nuke — burn on ability
           if (unit.itemBurnOnAbility > 0) {
             const burnPerTick = unit.itemBurnOnAbility / 6;
             eUnits.filter(e => e.currentHp > 0).forEach(e => { e.burnDmg = (e.burnDmg || 0) + burnPerTick; e.burnTicks = Math.max(e.burnTicks || 0, 6); });
-            logs.unshift(`☢️ Nuka-Nuke burns all enemies for ${Math.round(unit.itemBurnOnAbility)}!`);
+            logs.unshift(`[RAD] Nuka-Nuke burns all enemies for ${Math.round(unit.itemBurnOnAbility)}!`);
           }
           // Item: Quantum Scope — crit on ability (applies to next attack)
           if (unit.itemCritOnAbility > 0) {
@@ -1802,14 +1802,14 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           // Item: Phantom Device — invisible after ability
           if (unit.itemInvisOnAbility > 0) {
             unit._invisibleTimer = Math.max(unit._invisibleTimer || 0, unit.itemInvisOnAbility);
-            logs.unshift(`🌀 ${unit.name} vanishes after ability!`);
+            logs.unshift(`[VOID] ${unit.name} vanishes after ability!`);
           }
           // Item: Combat Medic Kit — heal lowest ally on ability
           if (unit.itemHealAllyOnAbility > 0) {
             const lowestAlly = pUnits.filter(a => a.currentHp > 0 && a.uid !== unit.uid).sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp))[0];
             if (lowestAlly) {
               lowestAlly.currentHp = Math.min(lowestAlly.maxHp, lowestAlly.currentHp + unit.itemHealAllyOnAbility);
-              logs.unshift(`🩺 Combat Medic: ${lowestAlly.name} heals ${unit.itemHealAllyOnAbility}!`);
+              logs.unshift(`[MED] Combat Medic: ${lowestAlly.name} heals ${unit.itemHealAllyOnAbility}!`);
             }
           }
         }
@@ -1827,39 +1827,39 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         damage *= (unit.critMult || 1.5);
         isCrit = true;
         unit._abilityCritReady = false;
-        logs.unshift(`🔭 ${unit.name}'s Quantum Scope crit!`);
+        logs.unshift(`[SCOPE] ${unit.name}'s Quantum Scope crit!`);
       }
       // Augment: Guerrilla Tactics — first strike deals bonus damage
       else if (augFirstStrikeMult > 1 && unit.firstAttack) {
         damage *= augFirstStrikeMult;
         isCrit = true;
         unit.firstAttack = false;
-        logs.unshift(`⚔️ ${unit.name} Guerrilla first strike! ${augFirstStrikeMult}x damage!`);
+        logs.unshift(`[BLADE] ${unit.name} Guerrilla first strike! ${augFirstStrikeMult}x damage!`);
       }
       // 3★ Deathclaw: Apex Predator — first attack is auto-crit
       else if (unit.id === 'deathclaw' && unit.stars >= 3 && unit.firstAttack) {
         damage *= 2;
         isCrit = true;
         unit.firstAttack = false;
-        logs.unshift(`🦎 ${unit.name} APEX STRIKE! Auto-crit!`);
+        logs.unshift(`[CLAW] ${unit.name} APEX STRIKE! Auto-crit!`);
       }
       // 3★ MacCready: Killshot — 20% chance for 2x crit on normal attacks
       else if (unit.id === 'maccready' && unit.stars >= 3 && Math.random() < 0.2) {
         damage *= 2;
         isCrit = true;
-        logs.unshift(`🎯 ${unit.name} KILLSHOT! 2x damage!`);
+        logs.unshift(`[AIM] ${unit.name} KILLSHOT! 2x damage!`);
       }
       // Item: Laser Sight Barrel crit chance
       else if (unit.itemCritChance > 0 && Math.random() < unit.itemCritChance) {
         damage *= (unit.critMult || 1.5);
         isCrit = true;
-        logs.unshift(`🔦 ${unit.name} crits (Laser Sight)!`);
+        logs.unshift(`[LASER] ${unit.name} crits (Laser Sight)!`);
       }
       // Crit check: Piper 3★ + Raider synergy crit chance
       else if (unit.critBonus > 0 && Math.random() < unit.critBonus) {
         damage *= (unit.critMult || 1.5);
         isCrit = true;
-        logs.unshift(`💥 ${unit.name} crits!`);
+        logs.unshift(`[CRIT] ${unit.name} crits!`);
       }
       // 3★ Nick: Synth Detective — marked enemy takes +20% damage
       if (target.marked) damage *= 1.2;
@@ -1872,12 +1872,12 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       // Item: Combat Rifle triple hit
       if (unit.itemTripleHit > 0) {
         unit._tripleHitCounter = (unit._tripleHitCounter || 0) + 1;
-        if (unit._tripleHitCounter >= unit.itemTripleHit) { damage *= 2; unit._tripleHitCounter = 0; logs.unshift(`🔫 ${unit.name}'s Combat Rifle: double damage!`); }
+        if (unit._tripleHitCounter >= unit.itemTripleHit) { damage *= 2; unit._tripleHitCounter = 0; logs.unshift(`[GUN] ${unit.name}'s Combat Rifle: double damage!`); }
       }
       // Item: Infiltrator's Kit bonus damage from stealth
       if (unit.itemBonusDmgFromStealth > 0 && (unit._invisibleTimer || 0) > 0) {
         damage *= (1 + unit.itemBonusDmgFromStealth);
-        logs.unshift(`🗡️ ${unit.name} strikes from stealth! +${Math.round(unit.itemBonusDmgFromStealth * 100)}% damage!`);
+        logs.unshift(`[BLADE] ${unit.name} strikes from stealth! +${Math.round(unit.itemBonusDmgFromStealth * 100)}% damage!`);
         { const stealthEl = document.querySelector(`[data-unit-uid="${unit.uid}"]`); if (stealthEl) { stealthEl.classList.add('wt-stealth-attack'); setTimeout(() => stealthEl.classList.remove('wt-stealth-attack'), 400); } }
       }
       // Mothman: single-target auto-attacks are doubled in 'thin' phase.
@@ -1906,7 +1906,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           if (ct.currentHp <= 0) dyingUnits.push(ct.uid);
         });
         if (cleaveTargets.length) {
-          logs.unshift(`🤖 ${unit.name} cleaves ${cleaveTargets.map(t => t.name).join(' & ')}!`);
+          logs.unshift(`[BOT] ${unit.name} cleaves ${cleaveTargets.map(t => t.name).join(' & ')}!`);
         }
       }
 
@@ -1937,14 +1937,14 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         target.burnDmg = (target.burnDmg || 0) + 50 / 6;
         target.burnTicks = 6;
         { const burnEl = document.querySelector(`[data-unit-uid="${target.uid}"]`); if (burnEl) burnEl.classList.add('wt-burning'); }
-        logs.unshift(`🔥 ${target.name} is burning!`);
+        logs.unshift(`[FIRE] ${target.name} is burning!`);
       }
       // Item: Irradiated Blade — poison on hit
       if (unit.itemPoisonOnHit > 0) {
         target.poisonDmg = (target.poisonDmg || 0) + unit.itemPoisonOnHit / 6;
         target.poisonTicks = Math.max(target.poisonTicks || 0, 6);
         { const poisonEl = document.querySelector(`[data-unit-uid="${target.uid}"]`); if (poisonEl) poisonEl.classList.add('wt-poisoned'); }
-        logs.unshift(`⚔️ ${target.name} poisoned by Irradiated Blade!`);
+        logs.unshift(`[BLADE] ${target.name} poisoned by Irradiated Blade!`);
       }
       // Item: Ballistic Weave — reflect damage to attacker (handled on enemy side)
 
@@ -1953,7 +1953,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         spawnKillNotify(unit.name, target.name);
         try { sound.killConfirm?.(); } catch(_) {}
         sound.death();
-        logs.unshift(`💀 ${target.name} defeated!`);
+        logs.unshift(`[KILL] ${target.name} defeated!`);
         dyingUnits.push(target.uid);
         // V.A.T.S. kill cam on last enemy kill
         const aliveEnemiesAfterKill = eUnits.filter(e => e.currentHp > 0 && e.uid !== target.uid);
@@ -1979,13 +1979,13 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             }
           });
           spawnVFX('ability', { unitId: 'hancock', fromUid: target.uid, allyUids: livingAllies.map(a => a.uid) }, rectMap);
-          logs.unshift(`💚 ${unit.name}'s Of the People heals team!`);
+          logs.unshift(`[HEAL] ${unit.name}'s Of the People heals team!`);
           abilityUnits.push(unit.uid);
         }
         // 3★ Deathclaw: Apex Predator — +25% ATK permanently per kill (cap +100%)
         if (unit.id === 'deathclaw' && unit.stars >= 3) {
           unit.killBonusAtk = Math.min((unit.killBonusAtk || 0) + 0.25, 1.0);
-          logs.unshift(`🦎 Apex Predator! ${unit.name} ATK +25%! (total +${Math.round(unit.killBonusAtk * 100)}%)`);
+          logs.unshift(`[CLAW] Apex Predator! ${unit.name} ATK +25%! (total +${Math.round(unit.killBonusAtk * 100)}%)`);
         }
         // 3★ Strong: Unstoppable — +5% max HP permanently per kill (cap +50%)
         if (unit.id === 'strong' && unit.stars >= 3) {
@@ -1995,13 +1995,13 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             unit.maxHp += hpGain;
             unit.currentHp += hpGain;
             unit.killHpBonus = killHpBonus + 0.05;
-            logs.unshift(`💪 Unstoppable! ${unit.name} gains +${Math.round(hpGain)} max HP!`);
+            logs.unshift(`[STR] Unstoppable! ${unit.name} gains +${Math.round(hpGain)} max HP!`);
           }
         }
         // Item: Medic's Rifle — heal on kill
         if (unit.itemHealOnKill > 0) {
           unit.currentHp = Math.min(unit.maxHp, unit.currentHp + unit.itemHealOnKill);
-          logs.unshift(`🏥 ${unit.name} heals ${unit.itemHealOnKill} HP on kill!`);
+          logs.unshift(`[MED] ${unit.name} heals ${unit.itemHealOnKill} HP on kill!`);
         }
         // Atom Theil (glowBurst boss): on death, restore N% maxHp to all
         // remaining ally enemies (default 50%, configurable via `deathHealAllies`).
@@ -2014,7 +2014,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
             ally.currentHp = Math.min(ally.maxHp, ally.currentHp + heal);
             spawnVFX('heal', { targetUid: ally.uid }, rectMap);
           });
-          logs.unshift(`☢️ ${target.name} blooms on death — allies restored ${Math.round(healPct * 100)}% HP!`);
+          logs.unshift(`[RAD] ${target.name} blooms on death — allies restored ${Math.round(healPct * 100)}% HP!`);
         }
       }
     });
@@ -2067,7 +2067,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       }
       // Item: dodge check (player unit dodges enemy attack)
       if ((target.dodge || 0) > 0 && Math.random() < target.dodge) {
-        logs.unshift(`👻 ${target.name} dodges ${unit.name}'s attack!`);
+        logs.unshift(`[DODGE] ${target.name} dodges ${unit.name}'s attack!`);
         // Dodge animation
         const dodgeEl = document.querySelector(`[data-unit-uid="${target.uid}"]`);
         if (dodgeEl) {
@@ -2078,7 +2078,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         // Item: Cloaked Stimpak — heal on dodge
         if (target.itemHealOnDodge > 0) {
           target.currentHp = Math.min(target.maxHp, target.currentHp + target.itemHealOnDodge);
-          logs.unshift(`💫 ${target.name} heals ${target.itemHealOnDodge} HP on dodge!`);
+          logs.unshift(`[HEAL] ${target.name} heals ${target.itemHealOnDodge} HP on dodge!`);
         }
         return;
       }
@@ -2092,7 +2092,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       if (target.itemReflectDamage > 0) {
         const reflectDmg = damage * target.itemReflectDamage;
         unit.currentHp -= reflectDmg;
-        logs.unshift(`🧵 ${target.name} reflects ${Math.round(reflectDmg)} damage!`);
+        logs.unshift(`[WEAVE] ${target.name} reflects ${Math.round(reflectDmg)} damage!`);
       }
       const eIsMelee = isMeleeUnit(unit.id);
       spawnVFX('lunge', { attackerUid: unit.uid, targetUid: target.uid, unitId: unit.id, isAbilityAttack: eAbilityTriggered && unit.id === 'dogmeat' }, rectMap);
@@ -2118,7 +2118,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         spawnKillNotify(unit.name, target.name);
         try { sound.killConfirm?.(); } catch(_) {}
         sound.death();
-        logs.unshift(`💀 ${target.name} defeated!`); dyingUnits.push(target.uid);
+        logs.unshift(`[KILL] ${target.name} defeated!`); dyingUnits.push(target.uid);
         // 3★ Danse: Brotherhood Shield — on death, 400 AoE + allies gain +25% DEF
         if (target.id === 'danse' && target.stars >= 3) {
           const explosionDmg = 400 * abilityMult;
@@ -2126,20 +2126,20 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           pUnits.filter(a => a.currentHp > 0).forEach(a => {
             a.def = (a.baseDef ?? a.def) * 1.25;
           });
-          logs.unshift(`⚡ Brotherhood Shield! Power armor explodes for ${Math.round(explosionDmg)}! Allies +25% DEF!`);
+          logs.unshift(`[ZAP] Brotherhood Shield! Power armor explodes for ${Math.round(explosionDmg)}! Allies +25% DEF!`);
         }
         // Kellogg 3★: Immortal Synth — revive with 30% HP once
         if (target.id === 'kellogg' && target.stars >= 3 && !target.kelloggRevived) {
           target.currentHp = target.maxHp * 0.3;
           target.kelloggRevived = true;
           dyingUnits = dyingUnits.filter(uid => uid !== target.uid);
-          logs.unshift(`🔧 ${target.name}'s Immortal Synth! Revived with 30% HP!`);
+          logs.unshift(`[FIX] ${target.name}'s Immortal Synth! Revived with 30% HP!`);
         }
         // Ghoul death radiation: deal 20% max HP to all enemies on death
         if (target.isGhoul && target.ghoulDeathRadiation) {
           const radDmg = target.maxHp * 0.2;
           eUnits.filter(e => e.currentHp > 0).forEach(e => { e.currentHp -= radDmg; });
-          logs.unshift(`☣️ ${target.name} radiates on death! ${Math.round(radDmg)} damage to all enemies!`);
+          logs.unshift(`[BIO] ${target.name} radiates on death! ${Math.round(radDmg)} damage to all enemies!`);
         }
       }
     });
@@ -2161,7 +2161,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         const reviveTarget = deadUnits[0];
         reviveTarget.currentHp = reviveTarget.maxHp * 0.3;
         reviveUsed = true;
-        logs.unshift(`💚 Support revives ${reviveTarget.name} at 30% HP!`);
+        logs.unshift(`[HEAL] Support revives ${reviveTarget.name} at 30% HP!`);
         sound.ability();
       }
     }
@@ -2238,7 +2238,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       callbacks.setLastDamageBreakdown?.({ won, total: dmg, base: baseDmg, survivors: survivors.length, fromUnits: unitDmg, stage: currentStage });
       let nextStreak = 0;
       if (won) {
-        logs.unshift('🎉 VICTORY!');
+        logs.unshift('[VICTORY] You stand victorious!');
         setStreak(s => {
           nextStreak = Math.max(s + 1, 1);
           return nextStreak;
@@ -2246,7 +2246,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         sound.victory();
         spawnRoundText('VICTORY', 'victory');
       } else {
-        logs.unshift(`💀 DEFEAT! -${dmg} HP  ·  ${baseDmg} stage + ${unitDmg} from ${survivors.length} survivor${survivors.length === 1 ? '' : 's'}`);
+        logs.unshift(`[DEFEAT] -${dmg} HP  ·  ${baseDmg} stage + ${unitDmg} from ${survivors.length} survivor${survivors.length === 1 ? '' : 's'}`);
         setStreak(s => {
           nextStreak = Math.min(s - 1, -1);
           return nextStreak;
@@ -2257,7 +2257,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
 
       // Add Dogmeat bonus gold to log
       if (extraGold > 0 && won) {
-        logs.unshift(`🦴 Dogmeat fetched ${extraGold} bonus caps!`);
+        logs.unshift(`[DOG] Dogmeat fetched ${extraGold} bonus caps!`);
       }
 
       setLog(logs.slice(0, 10));
@@ -2334,7 +2334,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (won && (isPvE || isBossRound)) {
           const drops = [getRandomComponent(), getRandomComponent(), getRandomComponent()];
           setItemSelection({ items: drops });
-          setLog(prev => [`🎁 Choose an item component!`, ...prev.slice(0, 9)]);
+          setLog(prev => [`[GIFT] Choose an item component!`, ...prev.slice(0, 9)]);
         }
 
         // Augment choice at rounds 3, 8, 13, 18

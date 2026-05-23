@@ -6,17 +6,20 @@ import { UNIT_KEYS, getRandomCost, makeUid } from '../data/constants.js';
 import { BASE } from '../baseUrl.js';
 
 /* ─── Wheel Slice Definitions ─── */
+// `icon` is a short ASCII label shown on the wheel. Emoji glyphs (radioactive
+// symbol, chess pieces, etc.) were retired in favor of plain text/symbol
+// characters that match the retro Pip-Boy aesthetic.
 const WHEEL_SLICES = [
   { id: 'caps_small', label: 'Caps +2', icon: '¢', color: '#b8860b', colorEnd: '#8b6914', weight: 18, rarity: 'common' },
   { id: 'caps_large', label: 'Caps +5', icon: '$', color: '#daa520', colorEnd: '#b8860b', weight: 10, rarity: 'uncommon' },
-  { id: 'unit_common', label: 'Free Unit', icon: '♟', color: '#2244aa', colorEnd: '#1a3388', weight: 16, rarity: 'common' },
-  { id: 'unit_rare', label: 'Rare Unit', icon: '♛', color: '#6622aa', colorEnd: '#4a1880', weight: 10, rarity: 'uncommon' },
-  { id: 'item_component', label: 'Item Part', icon: '⚙', color: '#606878', colorEnd: '#484e58', weight: 14, rarity: 'common' },
-  { id: 'full_item', label: 'Full Item', icon: '◆', color: '#1a8844', colorEnd: '#126633', weight: 6, rarity: 'rare' },
-  { id: 'augment', label: 'Augment', icon: '★', color: '#8822cc', colorEnd: '#661aa0', weight: 8, rarity: 'uncommon' },
+  { id: 'unit_common', label: 'Free Unit', icon: 'U', color: '#2244aa', colorEnd: '#1a3388', weight: 16, rarity: 'common' },
+  { id: 'unit_rare', label: 'Rare Unit', icon: 'R', color: '#6622aa', colorEnd: '#4a1880', weight: 10, rarity: 'uncommon' },
+  { id: 'item_component', label: 'Item Part', icon: 'I', color: '#606878', colorEnd: '#484e58', weight: 14, rarity: 'common' },
+  { id: 'full_item', label: 'Full Item', icon: 'F', color: '#1a8844', colorEnd: '#126633', weight: 6, rarity: 'rare' },
+  { id: 'augment', label: 'Augment', icon: 'A', color: '#8822cc', colorEnd: '#661aa0', weight: 8, rarity: 'uncommon' },
   { id: 'hp_restore', label: 'HP +15', icon: '+', color: '#cc2222', colorEnd: '#991a1a', weight: 8, rarity: 'uncommon' },
   { id: 'jackpot', label: 'JACKPOT', icon: '7', color: '#cc0000', colorEnd: '#880000', weight: 3, rarity: 'legendary' },
-  { id: 'nuka_bust', label: 'Nuka-Cola', icon: '☢', color: '#8b2500', colorEnd: '#5a1800', weight: 7, rarity: 'common' },
+  { id: 'nuka_bust', label: 'Nuka-Cola', icon: 'N', color: '#8b2500', colorEnd: '#5a1800', weight: 7, rarity: 'common' },
 ];
 
 const RARITY_GLOW = {
@@ -198,7 +201,7 @@ export default function Lucky38Carousel({
       case 'nuka_bust': setGold(g => g + 1); desc = '+1 Cap... better luck next time'; break;
       default: break;
     }
-    setLog(prev => [`\uD83C\uDFB0 Lucky 38: ${desc}`, ...prev.slice(0, 9)]);
+    setLog(prev => [`[LUCKY] Lucky 38: ${desc}`, ...prev.slice(0, 9)]);
     return desc;
   }, [setGold, setHp, setItemInventory, setLog, level, addRandomUnit, addJackpotUnit, addRandomCompletedItem, triggerAugmentChoice]);
 

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0a1414" stroke="#66ccaa" stroke-width="2"/>
+  <!-- Helmet outline -->
+  <path d="M20 26 Q20 14 32 12 Q44 14 44 26 L44 38 L20 38 Z"
+        fill="none" stroke="#9ee0c6" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Visor band -->
+  <path d="M22 26 L42 26 L40 32 L24 32 Z" fill="none" stroke="#9ee0c6" stroke-width="2"/>
+  <!-- Glowing visor slit -->
+  <line x1="24" y1="29" x2="40" y2="29" stroke="#9ee0c6" stroke-width="2" opacity="0.7"/>
+  <!-- Jaw -->
+  <path d="M22 38 L26 46 L38 46 L42 38" fill="none" stroke="#9ee0c6" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Coat collar -->
+  <path d="M14 54 Q14 48 22 46 L42 46 Q50 48 50 54" fill="none" stroke="#9ee0c6" stroke-width="2" stroke-linejoin="round"/>
+</svg>
