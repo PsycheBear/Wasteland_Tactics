@@ -937,15 +937,18 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
     }
 
     case 'tom': {
-      // Conspiracy Shot: mark highest-ATK enemy — +30% incoming damage for 5s (10 ticks)
+      // Conspiracy Wrench: melee bash highest-ATK enemy for 2.5x ATK and mark
+      // them with +30% incoming damage for 5s (10 ticks).
       const aliveEnemies = targetable;
       if (aliveEnemies.length === 0) return false;
       const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      const dmg = unit.atk * 2.5 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
       target.markedDmgMult = 1.3;
       target.markedDuration = Math.round(10 * abilityMult);
-      logs.unshift(`[DEF] ${unit.name} marks ${target.name}: +30% damage taken!`);
+      logs.unshift(`[ATK] ${unit.name} bashes ${target.name} for ${Math.round(dmg)} and marks them!`);
       abilityUnits.push(unit.uid);
-      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
       return true;
     }
 
@@ -1184,6 +1187,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
     setTimer,
     setBonusGold,
     setItemSelection,
+    setItemInventory,
     setAugmentChoice,
     setCombatTick,
     setIncomeBreakdown,
@@ -2594,7 +2598,25 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         // Item drops: any PvE round (themed creep waves) and boss rounds drop components.
         const isPvE = isPveRound(round);
         const isBossRound = round > 3 && round % 7 === 0;
-        if (won && (isPvE || isBossRound)) {
+        if (won && isPvE) {
+          // PvE creeps drop items directly — TFT krug/wolf/raptor style. No picker.
+          // Wave 36 (Sentry Bots) drops a fully-completed item per pveWaves.js dropTier.
+          const wave = getPveWave(round);
+          const dropTier = wave?.dropTier || 'component';
+          if (dropTier === 'completed') {
+            const completedKeys = Object.keys(COMPLETED_ITEMS);
+            const drop = completedKeys[Math.floor(Math.random() * completedKeys.length)];
+            setItemInventory?.(prev => [...prev, drop]);
+            const dropName = COMPLETED_ITEMS[drop]?.name || drop;
+            setLog(prev => [`[ITEM] ${wave?.name || 'PvE wave'} dropped ${dropName}!`, ...prev.slice(0, 9)]);
+          } else {
+            const drop = getRandomComponent();
+            setItemInventory?.(prev => [...prev, drop]);
+            const dropName = ITEM_COMPONENTS[drop]?.name || drop;
+            setLog(prev => [`[ITEM] ${wave?.name || 'PvE wave'} dropped ${dropName}!`, ...prev.slice(0, 9)]);
+          }
+        } else if (won && isBossRound) {
+          // Bosses still offer a CHOICE — they're milestone rewards.
           const drops = [getRandomComponent(), getRandomComponent(), getRandomComponent()];
           setItemSelection({ items: drops });
           setLog(prev => [`[GIFT] Choose an item component!`, ...prev.slice(0, 9)]);

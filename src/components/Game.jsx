@@ -1135,6 +1135,7 @@ function WastelandTactics() {
       setTimer,
       setBonusGold,
       setItemSelection,
+      setItemInventory,
       setAugmentChoice,
       setCombatTick,
       setIncomeBreakdown,
@@ -3261,30 +3262,56 @@ function WastelandTactics() {
               ];
               // Sort: alive first by HP desc, then dead last
               const sorted = [...all].sort((a, b) => (b.alive - a.alive) || (b.hp - a.hp));
+              // Clicking a ghost in the PLAYERS list scouts their board (jumps the
+              // scout preview to that ghost). Available during prep on non-PvE,
+              // non-boss rounds — same gate as the scout preview itself.
+              const aliveGhosts = (ghostPlayersRef.current || []).filter(g => g.alive);
+              const canScout = phase === 'prep' && round > 3 && !isPveRound(round) && !(round % 7 === 0 && BOSS_DATABASE[round]);
               return sorted.map((p, rank) => {
                 const rankStr = String(rank + 1).padStart(2, '0');
                 const initial = (p.name || '?').trim().charAt(0).toUpperCase();
                 const hpColor = !p.alive ? '#444' : p.hp > 60 ? '#44ff44' : p.hp > 25 ? '#ffaa00' : '#ff4444';
                 const isCurrentOpp = currentOpponent && p.name === currentOpponent;
+                const ghostIdx = !p.isMe ? aliveGhosts.findIndex(g => g.name === p.name) : -1;
+                const isClickable = canScout && !p.isMe && p.alive && ghostIdx !== -1;
+                const isScoutSelected = !p.isMe && aliveGhosts.length > 0 && p.name === aliveGhosts[scoutIndex % aliveGhosts.length]?.name;
                 return (
-                  <div key={p.id} style={{
-                    display: 'flex', alignItems: 'center', gap: 6,
-                    padding: '4px 5px', marginBottom: 3,
-                    background: p.isMe ? 'rgba(78,255,78,0.08)' : isCurrentOpp ? 'rgba(255,80,80,0.10)' : 'transparent',
-                    border: p.isMe ? '1px solid rgba(78,255,78,0.35)' : isCurrentOpp ? '1px solid rgba(255,80,80,0.5)' : '1px solid var(--ui-border-dim)',
-                    borderRadius: 3,
-                    opacity: p.alive ? 1 : 0.4,
-                  }}>
+                  <div
+                    key={p.id}
+                    onClick={isClickable ? () => setScoutIndex(ghostIdx) : undefined}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '4px 5px', marginBottom: 3,
+                      background: isScoutSelected && canScout
+                        ? 'rgba(255,170,0,0.15)'
+                        : p.isMe ? 'rgba(78,255,78,0.08)' : isCurrentOpp ? 'rgba(255,80,80,0.10)' : 'transparent',
+                      border: isScoutSelected && canScout
+                        ? '1px solid #ffaa00'
+                        : p.isMe ? '1px solid rgba(78,255,78,0.35)' : isCurrentOpp ? '1px solid rgba(255,80,80,0.5)' : '1px solid var(--ui-border-dim)',
+                      borderRadius: 3,
+                      opacity: p.alive ? 1 : 0.4,
+                      cursor: isClickable ? 'pointer' : 'default',
+                      transition: 'background 0.15s, border-color 0.15s',
+                    }}
+                    onMouseEnter={(e) => { if (isClickable) e.currentTarget.style.background = 'rgba(255,170,0,0.10)'; }}
+                    onMouseLeave={(e) => {
+                      if (!isClickable) return;
+                      e.currentTarget.style.background = isScoutSelected && canScout
+                        ? 'rgba(255,170,0,0.15)'
+                        : isCurrentOpp ? 'rgba(255,80,80,0.10)' : 'transparent';
+                    }}
+                    title={isClickable ? `Click to scout ${p.name}` : `${p.name} — LV.${p.level} · ${p.hp} HP${!p.alive ? ' · DEAD' : ''}${isCurrentOpp ? ' · current opponent' : ''}`}
+                  >
                     <span style={{ fontSize: 9, color: 'var(--ui-text-dim)', fontFamily: "'Share Tech Mono', monospace", minWidth: 18 }}>{rankStr}</span>
                     <span style={{ fontSize: 11, fontWeight: 'bold', color: hpColor, fontFamily: "'Share Tech Mono', monospace", minWidth: 26, textAlign: 'right' }}>{Math.max(0, p.hp)}</span>
                     <div style={{
                       width: 22, height: 22, borderRadius: '50%',
                       background: p.isMe ? 'linear-gradient(135deg, #4eff4e, #008800)' : 'linear-gradient(135deg, #886644, #442200)',
-                      border: `1.5px solid ${p.isMe ? '#4eff4e' : isCurrentOpp ? '#ff5050' : '#555'}`,
+                      border: `1.5px solid ${isScoutSelected && canScout ? '#ffaa00' : p.isMe ? '#4eff4e' : isCurrentOpp ? '#ff5050' : '#555'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
                       fontSize: 10, fontWeight: 'bold', color: '#0a0a0a', textShadow: '0 1px 0 rgba(255,255,255,0.3)',
                       flexShrink: 0,
-                    }} title={`${p.name} — LV.${p.level} · ${p.hp} HP${!p.alive ? ' · DEAD' : ''}${isCurrentOpp ? ' · current opponent' : ''}`}>{initial}</div>
+                    }}>{initial}</div>
                     <span style={{ fontSize: 9, color: p.isMe ? '#aaffaa' : 'var(--ui-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
                       {p.name}{!p.alive && <span style={{ color: '#ff4444', marginLeft: 4 }}>×</span>}
                     </span>
