@@ -238,6 +238,10 @@ function WastelandTactics() {
   const [bench, setBench] = useState(Array(9).fill(null));
   const [board, setBoard] = useState(Array(14).fill(null));
   const [shop, setShop] = useState([]);
+  // Per-slot lock state — when true, that slot survives `refreshShop` rerolls.
+  // Auto-cleared on round end / phase change so the player doesn't waste a lock
+  // across combat boundaries.
+  const [shopLocked, setShopLocked] = useState([false, false, false, false, false]);
   const [selected, setSelected] = useState(null);
   const [log, setLog] = useState([]);
   const [combatUnits, setCombatUnits] = useState([]);
@@ -477,13 +481,22 @@ function WastelandTactics() {
 
   const levelRef = useRef(level);
   useEffect(() => { levelRef.current = level; }, [level]);
+  // Mirror shopLocked into a ref so generateShop (which has no deps) can read
+  // the latest lock state without re-creating its useCallback identity.
+  const shopLockedRef = useRef(shopLocked);
+  useEffect(() => { shopLockedRef.current = shopLocked; }, [shopLocked]);
   const generateShop = useCallback((prevShop) => {
-    // Return previous shop units to pool before rolling
+    // Return UNLOCKED previous shop units to pool before rolling. Locked slots
+    // keep their unit (it never leaves the bench-bound pool) so the player gets
+    // exactly what they paid the reroll cost to keep.
+    const locks = shopLockedRef.current || [false, false, false, false, false];
     if (prevShop) {
-      prevShop.forEach(u => { if (u) poolRef.current[u.id] = (poolRef.current[u.id] || 0) + 1; });
+      prevShop.forEach((u, i) => { if (u && !locks[i]) poolRef.current[u.id] = (poolRef.current[u.id] || 0) + 1; });
     }
     const currentLevel = levelRef.current;
-    return Array(5).fill(null).map(() => {
+    return Array(5).fill(null).map((_, i) => {
+      // Preserve locked slots verbatim.
+      if (locks[i] && prevShop && prevShop[i]) return prevShop[i];
       const cost = getRandomCost(currentLevel);
       const avail = UNIT_KEYS.filter(k => UNIT_DATABASE[k].cost === cost && poolRef.current[k] > 0);
       const candidates = avail.length > 0 ? avail : UNIT_KEYS.filter(k => poolRef.current[k] > 0);
@@ -493,7 +506,8 @@ function WastelandTactics() {
       const unit = UNIT_DATABASE[unitKey];
       return { ...unit, id: unitKey, stars: 1, uid: makeUid(), items: [] };
     });
-  }, []); // No level dependency — reads levelRef.current to avoid free shop refresh on level-up
+  }, []); // reads levelRef.current + shopLockedRef.current — no deps so a free
+          // refresh isn't triggered when level or locks change.
 
   useEffect(() => () => { if (combatRef.current) clearInterval(combatRef.current); }, []);
 
@@ -2848,6 +2862,7 @@ function WastelandTactics() {
                     <React.Fragment key={t}>
                       <span
                         title={`${t}: ${s.bonuses[t]}`}
+                        className={isActive ? 'wt-synergy-tier-active' : ''}
                         style={{
                           fontSize: 10, fontWeight: 'bold',
                           color: reached ? s.color : `${s.color}55`,
@@ -2856,6 +2871,7 @@ function WastelandTactics() {
                           background: isActive ? `${s.color}22` : 'transparent',
                           borderRadius: 2,
                           minWidth: 10, textAlign: 'center',
+                          // animation's box-shadow uses currentColor — that's `color` above.
                         }}
                       >{t}</span>
                       {idx < tiers.length - 1 && (
@@ -2932,20 +2948,34 @@ function WastelandTactics() {
                 </div>
               );
             })()}
-            {/* Combat progress bar */}
-            {phase === 'combat' && (
-              <div style={{ maxWidth: 780, width: '100%', margin: '0 auto 8px', position: 'relative', height: 18, background: '#111', border: '1px solid var(--ui-secondary)', borderRadius: 3, overflow: 'hidden' }}>
-                <div style={{
-                  width: `${Math.max(0, (1 - combatTick / 150) * 100)}%`,
-                  height: '100%',
-                  background: `linear-gradient(90deg, #00ff00 ${Math.max(0, 100 - combatTick / 1.5)}%, #ff0000)`,
-                  transition: 'width 0.1s linear',
-                }} />
-                <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: 'monospace', fontSize: 10, color: 'var(--ui-primary)', textShadow: '0 0 4px var(--ui-primary)' }}>
-                  COMBAT {combatTick}/150
+            {/* Combat progress bar — TFT-style slim drain bar with text ABOVE the bar
+                instead of overlaid (was unreadable against the gradient). Color
+                shifts in three discrete bands (green / amber / red) for clarity. */}
+            {phase === 'combat' && (() => {
+              const remainingPct = Math.max(0, (1 - combatTick / 150) * 100);
+              const remainingSec = Math.max(0, Math.ceil((150 - combatTick) / 10)); // 10 ticks ≈ 1 second
+              const fillColor = remainingPct > 50 ? '#4eff4e' : remainingPct > 25 ? '#ffaa00' : '#ff4444';
+              const glow = remainingPct > 50 ? 'rgba(78,255,78,0.4)' : remainingPct > 25 ? 'rgba(255,170,0,0.55)' : 'rgba(255,68,68,0.7)';
+              return (
+                <div style={{ maxWidth: 780, width: '100%', margin: '0 auto 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  {/* Timer text above */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Share Tech Mono', monospace", fontSize: 10, letterSpacing: 1.5, color: fillColor, textShadow: `0 0 6px ${glow}` }}>
+                    <span style={{ opacity: 0.7 }}>COMBAT</span>
+                    <span style={{ fontWeight: 'bold', fontSize: 12 }}>{remainingSec}s</span>
+                  </div>
+                  {/* Slim drain bar */}
+                  <div style={{ width: '100%', height: 6, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.6)' }}>
+                    <div style={{
+                      width: `${remainingPct}%`,
+                      height: '100%',
+                      background: `linear-gradient(180deg, ${fillColor} 0%, ${fillColor}cc 100%)`,
+                      boxShadow: `0 0 8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.18)`,
+                      transition: 'width 0.1s linear, background 0.3s, box-shadow 0.3s',
+                    }} />
+                  </div>
                 </div>
-              </div>
-            )}
+              );
+            })()}
             {/* Enemy board / Scout preview — only for ghost PvP rounds (not PvE creep waves, not bosses) */}
             {phase === 'prep' && round > 3 && !isPveRound(round) && !(round % 7 === 0 && BOSS_DATABASE[round]) && (() => {
               const aliveGhosts = ghostPlayersRef.current.filter(g => g.alive);
@@ -3216,30 +3246,52 @@ function WastelandTactics() {
                     setUnitTooltip(prev => (prev?.unit?.uid === unit.uid ? null : { unit, x: e.clientX, y: e.clientY, sticky: true }));
                   }}
                   onMouseEnter={() => { if (unit) { try { sound.hover?.(); } catch(_) {} } }}
-                  className={`wt-shop-card ${shopFlipping ? 'wt-shop-flip' : 'wt-shop-deal'}`}
+                  className={`wt-shop-card ${shopFlipping ? 'wt-shop-flip' : 'wt-shop-deal'} ${shopLocked[i] ? 'wt-shop-card-locked' : ''}`}
                   style={{
                     flex: 1, minWidth: 110, height: 100,
                     animationDelay: `${i * 0.08}s`,
                     background: unit ? `linear-gradient(180deg, ${getColor(unit.cost)}44 0%, rgba(15,15,15,0.85) 60%)` : 'rgba(30,30,30,0.5)',
-                    border: `2px solid ${unit ? getColor(unit.cost) : '#333'}`,
+                    border: `2px solid ${shopLocked[i] ? '#ffaa00' : (unit ? getColor(unit.cost) : '#333')}`,
                     borderRadius: 4,
                     display: 'flex', flexDirection: 'column',
                     cursor: unit && gold >= unit.cost ? 'pointer' : 'not-allowed',
                     opacity: unit ? (gold >= unit.cost ? 1 : 0.55) : 0.3,
                     '--shop-glow-color': unit ? getColor(unit.cost) : 'transparent',
                     position: 'relative', overflow: 'hidden',
+                    boxShadow: shopLocked[i] ? '0 0 10px rgba(255,170,0,0.55), inset 0 0 8px rgba(255,170,0,0.18)' : undefined,
                   }}>
                   {unit ? (<>
-                    {/* Cost badge top-left (TFT style — colored number) */}
-                    <span style={{
-                      position: 'absolute', top: 2, left: 2, zIndex: 2,
-                      minWidth: 16, padding: '0 4px', height: 14,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 11, fontWeight: 'bold', fontFamily: "'Share Tech Mono', monospace",
-                      background: getColor(unit.cost), color: '#0a0a0a',
-                      border: '1px solid rgba(0,0,0,0.6)', borderRadius: 3,
-                      textShadow: '0 1px 0 rgba(255,255,255,0.25)',
-                    }}>{unit.cost}</span>
+                    {/* Lock toggle — small padlock button top-right. Locked slots
+                        survive `refreshShop` rerolls. Cleared automatically when
+                        the player buys the locked unit or advances combat phase. */}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setShopLocked(prev => { const next = [...prev]; next[i] = !next[i]; return next; }); }}
+                      className={`wt-shop-lock-btn ${shopLocked[i] ? 'wt-shop-lock-active' : ''}`}
+                      title={shopLocked[i] ? 'Locked — slot keeps this unit across rerolls (click to unlock)' : 'Lock this slot so reroll keeps the unit'}
+                      aria-label={shopLocked[i] ? 'Unlock slot' : 'Lock slot'}
+                    >
+                      {/* Inline padlock SVG — open or closed shackle based on state. */}
+                      <svg width="10" height="11" viewBox="0 0 10 11" fill="none" stroke={shopLocked[i] ? '#ffaa00' : '#aa8044'} strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                        {shopLocked[i] ? (
+                          <path d="M2 5 v -1.5 a 3 3 0 0 1 6 0 V 5" />
+                        ) : (
+                          <path d="M2 5 v -1.5 a 3 3 0 0 1 6 0 V 3" />
+                        )}
+                        <rect x="1.5" y="5" width="7" height="5" rx="1" fill={shopLocked[i] ? 'rgba(255,170,0,0.18)' : 'rgba(0,0,0,0.25)'} />
+                        <circle cx="5" cy="7.5" r="0.7" fill={shopLocked[i] ? '#ffaa00' : '#aa8044'} stroke="none" />
+                      </svg>
+                    </button>
+                    {/* Big padlock overlay when locked — fades in via CSS animation. */}
+                    {shopLocked[i] && (
+                      <svg className="wt-shop-lock-icon" viewBox="0 0 24 24" fill="none" stroke="#ffaa00" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="5" y="11" width="14" height="10" rx="2" fill="rgba(255,170,0,0.15)" />
+                        <path d="M8 11 V 7 a 4 4 0 0 1 8 0 V 11" />
+                        <circle cx="12" cy="16" r="1.2" fill="#ffaa00" stroke="none" />
+                        <line x1="12" y1="16" x2="12" y2="18.5" />
+                      </svg>
+                    )}
+                    {/* Cost badge removed — the colored border conveys the tier
+                        cleanly and the redundant number was visual noise. */}
 
                     {/* Big portrait fills the upper portion — uses the new
                         public/images/units/<id>/1.png (1-star variant) with
@@ -3291,10 +3343,12 @@ function WastelandTactics() {
           </div>
         </div>
 
-        {/* Right panel — Players · Unit Info · Combat Log */}
+        {/* Right panel — Unit Info · Players · Combat Log (reordered per user feedback;
+            UNIT INFO sits ABOVE PLAYERS now). flex `order` keeps the JSX structure
+            intact while flipping the visual stack. */}
         <div className="wt-info-panel" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           {/* PLAYERS — TFT-style vertical roster: current player + ghost opponents */}
-          <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 6 }}>
+          <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 6, order: 2 }}>
             <div className="wt-panel-header">PLAYERS</div>
             {(() => {
               const all = [
@@ -3362,8 +3416,8 @@ function WastelandTactics() {
             })()}
           </div>
 
-          {/* Unit Info */}
-          <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 8 }}>
+          {/* Unit Info (ordered FIRST in the right panel per user feedback) */}
+          <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 8, order: 1 }}>
             <div className="wt-panel-header">UNIT INFO</div>
             {selected ? (
               <div>
@@ -4565,6 +4619,7 @@ function WastelandTactics() {
       {/* Augment Choice Overlay — extracted to AugmentPicker.jsx */}
       <AugmentPicker
         choice={augmentChoice}
+        availableAugments={AUGMENT_POOL.filter(a => !augments.includes(a.id))}
         onPick={(aug) => {
           setAugments(prev => [...prev, aug.id]);
           setAugmentChoice(null);

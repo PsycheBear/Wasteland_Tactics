@@ -2337,6 +2337,51 @@ body {
   background-clip: text;
   filter: drop-shadow(0 1px 1px rgba(0,0,0,0.5));
 }
+/* Synergy active-tier pulse — subtle always-on glow so the player's eye is
+   drawn to which tier is currently live in each trait ladder. */
+@keyframes wt-synergy-tier-pulse {
+  0%, 100% { box-shadow: 0 0 4px currentColor; }
+  50%      { box-shadow: 0 0 10px currentColor, 0 0 16px currentColor; }
+}
+.wt-synergy-tier-active {
+  animation: wt-synergy-tier-pulse 2.4s ease-in-out infinite;
+}
+
+/* Shop slot lock — animated padlock that sits over the slot when locked. */
+@keyframes wt-shop-lock-bounce {
+  0% { transform: translate(-50%, -50%) scale(0.4); opacity: 0; }
+  60% { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+}
+.wt-shop-lock-icon {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 28px; height: 28px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 6px rgba(255,170,0,0.7));
+  animation: wt-shop-lock-bounce 240ms ease-out;
+}
+.wt-shop-lock-btn {
+  position: absolute; top: 2px; right: 2px; z-index: 3;
+  width: 16px; height: 16px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,170,0,0.4);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  padding: 0;
+}
+.wt-shop-lock-btn:hover {
+  background: rgba(60,20,0,0.85);
+  border-color: rgba(255,170,0,0.8);
+}
+.wt-shop-lock-btn.wt-shop-lock-active {
+  background: rgba(120,60,0,0.85);
+  border-color: #ffaa00;
+  box-shadow: 0 0 8px rgba(255,170,0,0.5);
+}
+
 /* Boss SVG-fallback intro effects (Radscorpion, Deathclaw — no portrait art). */
 @keyframes wt-boss-pulse-ring {
   0%, 100% { opacity: 0.7; transform: scale(1); }
