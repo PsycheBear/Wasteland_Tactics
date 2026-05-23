@@ -4186,10 +4186,14 @@ function WastelandTactics() {
           overflow: 'hidden',
         }}>
           <div style={{ position: 'relative', width: '100%', height: 54, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <UnitPlaceholder name={pointerDrag.unit.name} size={48} />
-            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <PortraitImg unit={pointerDrag.unit} unitDef={UNIT_DATABASE[pointerDrag.unit.id]} size={132} alt={pointerDrag.unit.name} forceHeader />
-            </div>
+            {(() => {
+              const dDef = UNIT_DATABASE[pointerDrag.unit.id] || {};
+              const hasNew = dDef.portraitBase && (hasPortrait(dDef.portraitBase) || pointerDrag.unit.id === 'sole-survivor' || pointerDrag.unit.id === 'robot-dog');
+              const hasLegacy = !!dDef.portrait || !!getUnitImage(pointerDrag.unit.id, pointerDrag.unit.stars);
+              return (hasNew || hasLegacy)
+                ? <PortraitImg unit={pointerDrag.unit} unitDef={dDef} size={132} alt={pointerDrag.unit.name} forceHeader />
+                : <UnitPlaceholder name={pointerDrag.unit.name} size={48} />;
+            })()}
           </div>
           <div style={{ fontSize: 9, lineHeight: 1, marginTop: 1 }}>{stars(pointerDrag.unit.stars)}</div>
         </div>
