@@ -4256,8 +4256,9 @@ function WastelandTactics() {
         />
       )}
 
-      {/* Income Breakdown Overlay */}
-      {showIncome && incomeBreakdown && (
+      {/* Income Breakdown Overlay — suppressed if a higher-priority modal is open
+          (item picker carousel, augment offer, boss intro, Lucky 38) to prevent stacking. */}
+      {showIncome && incomeBreakdown && !itemSelection && !augmentChoice && !bossIntro && !carouselActive && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500 }} onClick={() => setShowIncome(false)}>
           <div style={{ background: 'var(--ui-panel)', border: '2px solid var(--ui-border)', borderRadius: 8, padding: 24, minWidth: 260, fontFamily: "'Share Tech Mono', monospace", boxShadow: '0 0 30px var(--ui-glow)' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 14, fontWeight: 'bold', color: 'var(--ui-primary)', letterSpacing: 2, marginBottom: 12, textAlign: 'center' }}>INCOME</div>

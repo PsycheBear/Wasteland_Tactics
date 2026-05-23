@@ -440,9 +440,9 @@ export default function Lucky38Carousel({
             10 rewards mapped to 36° each starting from 12 o'clock clockwise.
             Pointer is a separate SVG arrow fixed at top center.
           */}
-          <div className="lucky38-wheel-wrap" style={{ width: 340, height: 340, position: 'relative', marginTop: 8 }}>
-            {/* Fixed golden pointer at top */}
-            <div className="lucky38-img-pointer">
+          <div className="lucky38-wheel-wrap" style={{ width: 480, height: 480, position: 'relative', marginTop: 8, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {/* Fixed golden pointer at top — relative to inner wheel, not wrap */}
+            <div className="lucky38-img-pointer" style={{ top: 52 }}>
               <svg width="36" height="48" viewBox="0 0 36 48">
                 <defs>
                   <linearGradient id="ptrG" x1="0" y1="0" x2="1" y2="1">
@@ -464,7 +464,7 @@ export default function Lucky38Carousel({
               className={`lucky38-wheel-img ${nearMiss ? 'lucky38-near-miss' : ''}`}
               draggable={false}
               style={{
-                width: '100%', height: '100%', objectFit: 'contain',
+                width: 340, height: 340, objectFit: 'contain', flexShrink: 0,
                 transform: `rotate(${wheelAngle}deg)`,
                 transition: spinning ? 'transform 8s cubic-bezier(0.15, 0.85, 0.25, 1)' : (nearMiss ? 'transform 0.3s ease-out' : 'none'),
                 filter: 'drop-shadow(0 0 12px rgba(200,148,42,0.4))',
