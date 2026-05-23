@@ -2816,24 +2816,29 @@ function WastelandTactics() {
                 <span style={{ color: s.color, fontWeight: 'bold', fontSize: 11 }}>{s.name}</span>
                 <span style={{ marginLeft: 'auto', fontSize: 11, color: s.count >= 2 ? s.color : 'var(--ui-text-dim)' }}>{s.count}</span>
               </div>
-              {/* Tier ladder pills — reached tiers get the trait colour, unreached are dim. */}
-              <div style={{ display: 'flex', gap: 3, marginTop: 3 }}>
-                {tiers.map(t => {
+              {/* TFT-style tier ladder: 2 › 4 › 6 with reached tiers bright + active tier outlined. */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3, fontFamily: "'Share Tech Mono', monospace" }}>
+                {tiers.map((t, idx) => {
                   const reached = s.count >= t;
                   const isActive = t === activeTier;
                   return (
-                    <span
-                      key={t}
-                      title={`${t}: ${s.bonuses[t]}`}
-                      style={{
-                        fontSize: 8, fontWeight: 'bold', padding: '1px 5px', borderRadius: 2,
-                        background: reached ? s.color : 'transparent',
-                        color: reached ? '#0a0a0a' : `${s.color}88`,
-                        border: `1px solid ${reached ? s.color : `${s.color}44`}`,
-                        outline: isActive ? `1px solid ${s.color}` : 'none',
-                        outlineOffset: 1,
-                      }}
-                    >{t}</span>
+                    <React.Fragment key={t}>
+                      <span
+                        title={`${t}: ${s.bonuses[t]}`}
+                        style={{
+                          fontSize: 10, fontWeight: 'bold',
+                          color: reached ? s.color : `${s.color}55`,
+                          textShadow: isActive ? `0 0 6px ${s.color}88` : 'none',
+                          padding: isActive ? '0 3px' : 0,
+                          background: isActive ? `${s.color}22` : 'transparent',
+                          borderRadius: 2,
+                          minWidth: 10, textAlign: 'center',
+                        }}
+                      >{t}</span>
+                      {idx < tiers.length - 1 && (
+                        <span style={{ fontSize: 9, color: s.color, opacity: s.count >= tiers[idx + 1] ? 0.7 : 0.25 }}>{'›'}</span>
+                      )}
+                    </React.Fragment>
                   );
                 })}
               </div>
@@ -2936,15 +2941,15 @@ function WastelandTactics() {
                   </div>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
                     {scouted.board.map((u, idx) => {
+                      const uDef = UNIT_DATABASE[u.id] || {};
+                      const hasNew = uDef.portraitBase && (hasPortrait(uDef.portraitBase) || u.id === 'sole-survivor' || u.id === 'robot-dog');
                       const unitImg = getUnitImage(u.id, u.stars);
                       return (
-                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 3, background: 'rgba(255,100,0,0.1)', border: `1px solid ${COST_COLORS[UNIT_DATABASE[u.id]?.cost] || '#666'}44`, borderRadius: 3, width: 52 }}>
-                          {unitImg ? (
-                            <img src={unitImg} alt={UNIT_DATABASE[u.id]?.name} style={{ width: 32, height: 32, objectFit: 'contain' }} />
-                          ) : (
-                            <UnitPlaceholder name={UNIT_DATABASE[u.id]?.name} size={32} />
-                          )}
-                          <div style={{ fontSize: 8, color: COST_COLORS[UNIT_DATABASE[u.id]?.cost] || '#888' }}>{UNIT_DATABASE[u.id]?.name?.split(' ')[0]}</div>
+                        <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 3, background: 'rgba(255,100,0,0.1)', border: `1px solid ${COST_COLORS[uDef.cost] || '#666'}44`, borderRadius: 3, width: 52 }}>
+                          {(hasNew || unitImg || uDef.portrait)
+                            ? <PortraitImg unit={u} unitDef={uDef} size={32} alt={uDef.name} />
+                            : <UnitPlaceholder name={uDef.name} size={32} />}
+                          <div style={{ fontSize: 8, color: COST_COLORS[uDef.cost] || '#888' }}>{uDef.name?.split(' ')[0]}</div>
                           <div style={{ fontSize: 8 }}>{stars(u.stars)}</div>
                         </div>
                       );
