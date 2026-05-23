@@ -7,25 +7,118 @@ import { LORE } from '../data/lore.js';
 import { GameIcon } from './GameIcon.jsx';
 import { getWeaponType, IDLE_CLASSES } from '../systems/unitTypes.js';
 import { IMAGES } from '../data/images.js';
+import {
+  getPortraitUrl,
+  getHeaderUrl,
+  getAugmentUrl,
+  hasPortrait,
+  maxStarsFor,
+} from '../lib/portraitPath.js';
 
-/* ─── PortraitImg ─── tries the unit's external portrait PNG first; on error,
- * falls back to the existing IMAGES data URL; on error again, the caller renders
- * a placeholder (UnitPlaceholder). */
-export function PortraitImg({ unitId, starLevel, size, alt }) {
-  const portrait = UNIT_DATABASE[unitId]?.portrait;
-  const dataUrl = IMAGES[unitId]?.[starLevel] || IMAGES[unitId]?.[1] || null;
-  const initial = portrait || dataUrl;
-  const [src, setSrc] = React.useState(initial);
-  React.useEffect(() => { setSrc(portrait || dataUrl); }, [portrait, dataUrl]);
+// Re-export so Game.jsx / BossIntro.jsx can pull header art via a single import path.
+export { getPortraitUrl, getHeaderUrl, getAugmentUrl, hasPortrait };
+
+/* ─── Range / faction / role visual metadata ───
+ * Lookup tables keyed off the new unit-database fields Agent B is adding. Centralised
+ * here so UnitCard + UnitTooltip share one source of truth. Colors mirror typical
+ * Fallout faction palettes where possible. */
+const RANGE_META = {
+  melee: { icon: '⚔️', label: 'Melee', color: '#ff8855', desc: 'Strikes from the front rows.' },
+  ranged: { icon: '🎯', label: 'Ranged', color: '#88bbff', desc: 'Attacks from the back rows.' },
+  dual: { icon: '⚔️↔️🎯', label: 'Dual', color: '#ffd700', desc: 'Dual range — melee in front rows, ranged in back rows.' },
+};
+const FACTION_COLORS = {
+  Minutemen: '#4A90D9', Brotherhood: '#3366CC', Railroad: '#cc4488', Institute: '#88ccff',
+  Raider: '#CC3333', Wastelander: '#8B4513', Ghoul: '#669933', SuperMutant: '#7a6e3a',
+  Synth: '#aaaadd', NukaWorld: '#ff5577', Enclave: '#666666',
+};
+const ROLE_COLORS = {
+  Tank: '#6688ff', Bruiser: '#cc7744', Carry: '#ff4444', Marksman: '#ffaa44',
+  Support: '#44cc88', Healer: '#66ddaa', Caster: '#aa55ff', Assassin: '#883388',
+  Scout: '#88aa55', Bomber: '#ff7733', Disruptor: '#bb55cc',
+};
+const getFactionColor = (f) => FACTION_COLORS[f] || '#aaa';
+const getRoleColor = (r) => ROLE_COLORS[r] || '#aaa';
+
+/* ─── PortraitImg ─── tries the per-star portrait under public/images/units/<id>/<n>.png
+ * first (Agent A's new folder layout), then walks 3 → 2 → 1 if the requested star tier
+ * isn't available, then falls back to the legacy IMAGES data URL, then renders null so
+ * the caller can show a UnitPlaceholder.
+ *
+ * Props:
+ *   * `unit` or `unitDef` — either accepted; both used as a portraitBase source. `unit`
+ *     wins when provided (it carries the live stars).
+ *   * `unitId` / `starLevel` — legacy entry points still supported.
+ *   * `forceHeader` — when true, renders header.png instead of <star>.png.
+ */
+export function PortraitImg({ unit, unitDef, unitId, starLevel, size, alt, forceHeader = false }) {
+  // Resolve unit id + def + stars from whichever combination of props the caller gave us.
+  const id = unit?.id || unitId || unitDef?.id || null;
+  const def = unitDef || (id ? UNIT_DATABASE[id] : null) || {};
+  const stars = unit?.stars ?? starLevel ?? 1;
+  const portraitBase = def?.portraitBase || null;
+  const altText = alt || unit?.name || def?.name || id || 'unit';
+
+  // Robot Dog is Dogmeat's augment art — special-case before the manifest check so we
+  // don't gate it on a `robot-dog` manifest entry that doesn't exist.
+  const isRobotDog = id === 'robot-dog';
+  const isSoleSurvivor = id === 'sole-survivor';
+
+  // Build the candidate URL chain. The new folder layout sits at the head; we fall back
+  // to the legacy `def.portrait` field (Wave 1) and finally IMAGES[].
+  const candidates = React.useMemo(() => {
+    const list = [];
+    if (isRobotDog) {
+      // Robot Dog reuses Dogmeat's augment-transformed appearance.
+      const dogDef = UNIT_DATABASE.dogmeat || {};
+      const dogBase = dogDef.portraitBase || 'images/units/dogmeat';
+      const augUrl = getAugmentUrl(dogBase);
+      if (augUrl) list.push(augUrl);
+      // Fall back to Dogmeat's regular star portrait if augment.webp is missing.
+      const dogPortrait = getPortraitUrl(dogBase, stars);
+      if (dogPortrait) list.push(dogPortrait);
+    } else if (portraitBase && (forceHeader || hasPortrait(portraitBase) || isSoleSurvivor)) {
+      if (forceHeader) {
+        const headerUrl = getHeaderUrl(portraitBase);
+        if (headerUrl) list.push(headerUrl);
+      }
+      if (isSoleSurvivor) {
+        list.push(getPortraitUrl(portraitBase, 1, id));
+      } else {
+        // Walk down star tiers so onError gets a graceful fallback chain.
+        const top = Math.min(3, Math.max(1, maxStarsFor(portraitBase)));
+        const requested = Math.max(1, Math.min(top, stars));
+        for (let s = requested; s >= 1; s--) {
+          list.push(`${getPortraitUrl(portraitBase, s, id)}`);
+        }
+        // Header art as a final per-folder fallback (some units may have header but no
+        // numbered star yet).
+        const headerUrl = getHeaderUrl(portraitBase);
+        if (headerUrl) list.push(headerUrl);
+      }
+    }
+    // Legacy Wave-1 single-portrait field.
+    if (def?.portrait && !list.includes(def.portrait)) list.push(def.portrait);
+    // Legacy data-URL fallback.
+    const dataUrl = IMAGES[id]?.[stars] || IMAGES[id]?.[1] || null;
+    if (dataUrl && !list.includes(dataUrl)) list.push(dataUrl);
+    return list;
+  }, [id, portraitBase, stars, forceHeader, isRobotDog, isSoleSurvivor, def?.portrait]);
+
+  const [idx, setIdx] = React.useState(0);
+  React.useEffect(() => { setIdx(0); }, [id, stars, forceHeader]);
+
+  const src = candidates[idx] || null;
   if (!src) return null;
   return (
     <img
       src={src}
-      alt={alt}
+      alt={altText}
       draggable={false}
       onError={() => {
-        if (src === portrait && dataUrl) setSrc(dataUrl);
-        else setSrc(null);
+        // Step down the candidate list — last entry resolves to null and the caller
+        // can render a UnitPlaceholder.
+        setIdx((i) => (i + 1 < candidates.length ? i + 1 : i + 1));
       }}
       style={{ width: size, height: size, objectFit: 'contain', pointerEvents: 'none' }}
     />
@@ -147,12 +240,25 @@ export function UnitTooltip({ unitTooltip, onClose }) {
   };
 
   if (!unitTooltip) return null;
-  const { unit, x, y } = unitTooltip;
-  const db = UNIT_DATABASE[unit.id] || {};
+  const { unit, x, y, sticky } = unitTooltip;
+  // Right-click (sticky) tooltips dock to the right edge of the viewport (TFT-style).
+  // Hover tooltips still float at the cursor.
+  const docked = !!sticky;
+  const rawDb = UNIT_DATABASE[unit.id] || {};
+  // Robot Dog displays as "Robot Dog" even though it shares Dogmeat's data structure.
+  const db = unit.id === 'robot-dog' ? { ...rawDb, name: 'Robot Dog' } : rawDb;
+  const displayName = unit.id === 'robot-dog' ? 'Robot Dog' : (unit.name || db.name);
   const loreText = LORE.units?.[unit.id];
 
   // Gather item info
   const equippedItems = unit.items || [];
+
+  // Range / faction / role meta — gracefully degrade when Agent B hasn't shipped these
+  // fields yet (older units.js had no `range` enum, just a numeric range).
+  const rangeKey = typeof db.range === 'string' ? db.range : null;
+  const rangeMeta = rangeKey ? RANGE_META[rangeKey] : null;
+  const faction = db.faction || null;
+  const role = db.role || null;
 
   return (
     <>
@@ -164,17 +270,72 @@ export function UnitTooltip({ unitTooltip, onClose }) {
         onTouchStart={startLongPress}
         onTouchEnd={cancelLongPress}
         onTouchCancel={cancelLongPress}
-        style={{
-        position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 350),
-        zIndex: 3001, background: 'rgba(20,20,20,0.95)', border: '2px solid #ffd700',
-        borderRadius: 6, padding: 12, minWidth: 240, maxWidth: 300,
-        color: '#eee', fontSize: 13, boxShadow: '0 0 20px rgba(255,215,0,0.3)',
-        pointerEvents: 'auto',
-      }}>
+        style={docked ? {
+          // Docked (right-click): TFT-style right-edge panel.
+          position: 'fixed', right: 12, top: 80,
+          zIndex: 3001, background: 'linear-gradient(180deg, rgba(22,22,22,0.96), rgba(12,12,12,0.96))',
+          border: `2px solid ${getColor(unit.cost)}`,
+          borderRadius: 8, padding: 14, width: 280,
+          maxHeight: 'calc(100vh - 120px)', overflowY: 'auto',
+          color: '#eee', fontSize: 13,
+          boxShadow: `0 0 20px ${getColor(unit.cost)}55, 0 8px 32px rgba(0,0,0,0.5)`,
+          pointerEvents: 'auto',
+          animation: 'wt-tooltip-slide-in 0.18s ease-out',
+        } : {
+          // Hover / cursor-anchored.
+          position: 'fixed', left: Math.min(x, window.innerWidth - 280), top: Math.min(y, window.innerHeight - 350),
+          zIndex: 3001, background: 'rgba(20,20,20,0.95)', border: '2px solid #ffd700',
+          borderRadius: 6, padding: 12, minWidth: 240, maxWidth: 300,
+          color: '#eee', fontSize: 13, boxShadow: '0 0 20px rgba(255,215,0,0.3)',
+          pointerEvents: 'auto',
+        }}>
         {/* Name + stars */}
         <div style={{ fontSize: 16, fontWeight: 'bold', color: getColor(unit.cost), marginBottom: 4 }}>
-          {unit.name} {stars(unit.stars)}
+          {displayName} {stars(unit.stars)}
         </div>
+
+        {/* Range / Faction / Role badges (only shown when Agent B's data is present). */}
+        {(rangeMeta || faction || role) && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+            {rangeMeta && (
+              <span
+                title={rangeMeta.desc}
+                style={{
+                  fontSize: 10, padding: '2px 6px', borderRadius: 3,
+                  background: 'rgba(0,0,0,0.4)', color: rangeMeta.color,
+                  border: `1px solid ${rangeMeta.color}66`,
+                  display: 'inline-flex', alignItems: 'center', gap: 3,
+                }}
+              >
+                <span aria-hidden="true">{rangeMeta.icon}</span> {rangeMeta.label}
+              </span>
+            )}
+            {faction && (
+              <span
+                title={`Faction: ${faction}`}
+                style={{
+                  fontSize: 10, padding: '2px 6px', borderRadius: 3,
+                  background: 'rgba(0,0,0,0.4)', color: getFactionColor(faction),
+                  border: `1px solid ${getFactionColor(faction)}66`,
+                }}
+              >
+                {faction}
+              </span>
+            )}
+            {role && (
+              <span
+                title={`Role: ${role}`}
+                style={{
+                  fontSize: 10, padding: '2px 6px', borderRadius: 3,
+                  background: 'rgba(0,0,0,0.4)', color: getRoleColor(role),
+                  border: `1px solid ${getRoleColor(role)}66`,
+                }}
+              >
+                {role}
+              </span>
+            )}
+          </div>
+        )}
 
         {/* Traits */}
         <div style={{ fontSize: 12, color: '#aaa', marginBottom: 6 }}>
@@ -261,6 +422,8 @@ export function UnitCard({
   if (!unit) return null;
 
   const db = UNIT_DATABASE[unit.id] || {};
+  // Robot Dog reuses Dogmeat's portrait folder but displays under its own name.
+  const displayName = unit.id === 'robot-dog' ? 'Robot Dog' : (unit.name || db.name);
   const isSelected = selected && selected.location === location && selected.index === index;
   const isDragSource = draggedFrom && draggedFrom.location === location && draggedFrom.index === index;
   const inCombat = phase === 'combat';
@@ -280,6 +443,17 @@ export function UnitCard({
 
   const imgSize = small ? 44 : 56;
   const unitImg = getUnitImage(unit.id, unit.stars);
+  // Has the new folder-based portrait set? (Agent A's manifest). Falls back to the
+  // legacy data-URL when not present.
+  const hasNewPortrait = db.portraitBase
+    ? hasPortrait(db.portraitBase) || unit.id === 'sole-survivor'
+    : false;
+  // Robot Dog also gets a portrait (via Dogmeat's augment.webp).
+  const hasAnyPortrait = hasNewPortrait || unit.id === 'robot-dog' || db.portrait || unitImg;
+
+  // DUAL range visual cue — Agent B sets `range: 'dual'` for Hancock, Sarah Lyon,
+  // Sole Survivor. We render a small top-right badge so the card glance-tells.
+  const isDualRange = db.range === 'dual';
 
   // Item badges
   const equippedItems = unit.items || [];
@@ -292,11 +466,61 @@ export function UnitCard({
         background: getColor(unit.cost), borderRadius: '4px 4px 0 0',
       }} />
 
-      {/* Unit portrait (PNG) → IMAGES data URL → placeholder fallback chain */}
-      {(UNIT_DATABASE[unit.id]?.portrait || unitImg) ? (
-        <PortraitImg unitId={unit.id} starLevel={unit.stars} size={imgSize} alt={unit.name} />
+      {/* Cost tier badge — top-left corner. Always visible on bench + board so the
+          player can tell tier at a glance (TFT-style). */}
+      <span
+        className="wt-cost-badge"
+        title={`Cost ${unit.cost} (tier ${unit.cost})`}
+        style={{
+          position: 'absolute', top: -2, left: -2, zIndex: 2,
+          minWidth: 14, height: 14, padding: '0 3px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, fontWeight: 'bold', fontFamily: "'Share Tech Mono', monospace",
+          background: getColor(unit.cost), color: '#0a0a0a',
+          border: '1px solid rgba(0,0,0,0.6)', borderRadius: 3,
+          pointerEvents: 'none', userSelect: 'none',
+          textShadow: '0 1px 0 rgba(255,255,255,0.25)',
+        }}
+      >{unit.cost}</span>
+
+      {/* DUAL range badge — corner indicator, doesn't obstruct portrait.
+          Uses inline SVG (no emojis — see feedback_no_emojis memory). */}
+      {isDualRange && (
+        <span
+          className="wt-range-dual-badge"
+          title="Dual range — melee in front rows, ranged in back rows"
+          style={{
+            position: 'absolute', top: -2, right: -2, zIndex: 2,
+            lineHeight: 0, padding: 2,
+            background: 'rgba(20,20,20,0.85)',
+            border: '1px solid #ffd700', borderRadius: 3,
+            pointerEvents: 'none', userSelect: 'none',
+            boxShadow: '0 0 4px rgba(255,215,0,0.6)',
+          }}
+          aria-label="dual range"
+        >
+          <svg width="18" height="10" viewBox="0 0 28 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* sword (melee) */}
+            <path d="M2.5 9.5 L8 4 L9 5 L3.5 10.5 Z" fill="#ffd700" stroke="#806000" strokeWidth="0.4" />
+            <path d="M8 4 L10 2 L11.5 3.5 L9.5 5.5 Z" fill="#fff7a0" stroke="#806000" strokeWidth="0.4" />
+            {/* arrow between */}
+            <path d="M12.5 6 L15.5 6 M14.2 4.8 L15.5 6 L14.2 7.2" stroke="#ffd700" strokeWidth="0.9" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+            {/* crosshair (ranged) */}
+            <circle cx="22" cy="6" r="3.2" fill="none" stroke="#ffd700" strokeWidth="0.9" />
+            <line x1="22" y1="2" x2="22" y2="4" stroke="#ffd700" strokeWidth="0.9" strokeLinecap="round" />
+            <line x1="22" y1="8" x2="22" y2="10" stroke="#ffd700" strokeWidth="0.9" strokeLinecap="round" />
+            <line x1="18" y1="6" x2="20" y2="6" stroke="#ffd700" strokeWidth="0.9" strokeLinecap="round" />
+            <line x1="24" y1="6" x2="26" y2="6" stroke="#ffd700" strokeWidth="0.9" strokeLinecap="round" />
+            <circle cx="22" cy="6" r="0.8" fill="#ffd700" />
+          </svg>
+        </span>
+      )}
+
+      {/* Unit portrait — new folder layout → legacy data URL → placeholder fallback. */}
+      {hasAnyPortrait ? (
+        <PortraitImg unit={unit} unitDef={db} size={imgSize} alt={displayName} />
       ) : (
-        <UnitPlaceholder name={unit.name} size={imgSize} />
+        <UnitPlaceholder name={displayName} size={imgSize} />
       )}
 
       {/* Star indicators */}

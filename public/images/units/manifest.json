@@ -1,0 +1,211 @@
+﻿{
+    "units":  {
+                  "cade":  {
+                               "stars":  3,
+                               "header":  true,
+                               "augment":  false
+                           },
+                  "cait":  {
+                               "stars":  3,
+                               "header":  true,
+                               "augment":  true
+                           },
+                  "cross":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "curie":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "danse":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "deacon":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  false
+                             },
+                  "desdemona":  {
+                                    "stars":  3,
+                                    "header":  true,
+                                    "augment":  false
+                                },
+                  "dogmeat":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  true
+                              },
+                  "fahrenheit":  {
+                                     "stars":  3,
+                                     "header":  true,
+                                     "augment":  false
+                                 },
+                  "glory":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "hancock":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  false
+                              },
+                  "ingram":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  false
+                             },
+                  "irma":  {
+                               "stars":  3,
+                               "header":  true,
+                               "augment":  false
+                           },
+                  "jack-cabot":  {
+                                     "stars":  3,
+                                     "header":  true,
+                                     "augment":  false
+                                 },
+                  "kellogg":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  false
+                              },
+                  "maccready":  {
+                                    "stars":  3,
+                                    "header":  true,
+                                    "augment":  false
+                                },
+                  "madison-li":  {
+                                     "stars":  3,
+                                     "header":  true,
+                                     "augment":  false
+                                 },
+                  "magnolia":  {
+                                   "stars":  3,
+                                   "header":  true,
+                                   "augment":  false
+                               },
+                  "maxson":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  false
+                             },
+                  "moira":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "mother-isolde":  {
+                                        "stars":  3,
+                                        "header":  true,
+                                        "augment":  false
+                                    },
+                  "nick":  {
+                               "stars":  3,
+                               "header":  true,
+                               "augment":  false
+                           },
+                  "pickman":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  false
+                              },
+                  "piper":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "preston":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  false
+                              },
+                  "ronnie":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  false
+                             },
+                  "sarah-lyon":  {
+                                     "stars":  3,
+                                     "header":  true,
+                                     "augment":  false
+                                 },
+                  "shaun":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "silver-shroud":  {
+                                        "stars":  3,
+                                        "header":  true,
+                                        "augment":  false
+                                    },
+                  "sole-survivor":  {
+                                        "stars":  1,
+                                        "header":  true,
+                                        "augment":  false
+                                    },
+                  "strong":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  false
+                             },
+                  "sturges":  {
+                                  "stars":  3,
+                                  "header":  true,
+                                  "augment":  false
+                              },
+                  "tom":  {
+                              "stars":  3,
+                              "header":  true,
+                              "augment":  false
+                          },
+                  "virgil":  {
+                                 "stars":  3,
+                                 "header":  true,
+                                 "augment":  true
+                             },
+                  "x6-88":  {
+                                "stars":  3,
+                                "header":  true,
+                                "augment":  false
+                            },
+                  "zeek":  {
+                               "stars":  3,
+                               "header":  true,
+                               "augment":  false
+                           }
+              },
+    "bosses":  [
+                   "atom-theil",
+                   "lorenzo-cabot",
+                   "swan",
+                   "synth-courser"
+               ],
+    "creeps":  [
+                   "atom-theil",
+                   "glowing-one",
+                   "gunner",
+                   "hood-disciple-1",
+                   "hood-disciple-2",
+                   "lorenzo-cabot",
+                   "pack-1",
+                   "pack-2",
+                   "raider-1",
+                   "raider-2",
+                   "sentry-bot",
+                   "sentry-bot-rusty",
+                   "super-mutant",
+                   "swan",
+                   "synth",
+                   "synth-courser",
+                   "talon-company-1",
+                   "talon-company-2",
+                   "triggerman"
+               ]
+}

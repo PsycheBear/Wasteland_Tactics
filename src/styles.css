@@ -171,13 +171,17 @@ body {
   max-width: 960px;
   margin: 0 auto;
   aspect-ratio: 4 / 3;
-  max-height: calc(100vh - 280px);
+  /* Reserve vertical room for the bench (~95px) + shop bar (~150px) + bottom HUD (~50px)
+     plus the top HUD (~60px) so the shop never gets clipped at any resolution. */
+  max-height: calc(100vh - 380px);
   border-radius: 6px 6px 0 0;
   border: 2px solid #333;
   border-bottom: none;
   box-shadow: 0 0 30px rgba(0,0,0,0.6), inset 0 0 60px rgba(0,0,0,0.3);
   position: relative;
-  overflow: visible;
+  /* Clip the arena so the iso board cells and other absolute overlays never
+     spill into the bench/shop area below. */
+  overflow: hidden;
   padding: 12px 16px;
   display: flex;
   flex-direction: column;
@@ -185,6 +189,25 @@ body {
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
+  flex-shrink: 0;
+}
+
+/* Make sure the shop + bench always get their needed footprint at the bottom of
+   the center column. The arena above will shrink (via aspect-ratio + max-height)
+   to make room. The bench has a stable height so its unit cards can't overflow
+   upward into the arena. */
+.wt-center-column > .wt-bench-strip {
+  flex-shrink: 0;
+  min-height: 88px;
+  align-items: stretch !important;
+  overflow: hidden;
+}
+.wt-center-column > .wt-shop-bar { flex-shrink: 0; min-height: 130px; }
+
+/* Bench unit slots: explicit height + clip so cards never poke above the strip. */
+.wt-bench-strip [data-slot-location="bench"] {
+  overflow: hidden;
+  max-height: 76px;
 }
 
 /* Bench + shop bar also cap at the arena width so the column reads as one stack. */
@@ -3066,6 +3089,12 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════ */
+/* Docked-tooltip slide-in (TFT-style right-click info panel). */
+@keyframes wt-tooltip-slide-in {
+  0%   { opacity: 0; transform: translateX(20px); }
+  100% { opacity: 1; transform: translateX(0); }
+}
+
 /* === MOBILE === Phase 3 responsive + a11y additions      */
 /* ═══════════════════════════════════════════════════════ */
 

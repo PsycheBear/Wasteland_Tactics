@@ -9,6 +9,169 @@ import { isPveRound, getPveWave } from '../data/pveWaves.js';
 import { COST_COLORS, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, isCarouselRound, getRandomCost, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from './audio.js';
 
+// ── FO4 Companion roster ─────────────────────────────────────────────
+// Used by Sole Survivor's "Survivor's Bond" passive (each hex-adjacent FO4
+// companion grants +8% ATK and +8% AP gain). Agent B is shipping the
+// canonical list at `../data/fo4Companions.js` in the same wave; the
+// integration step will swap this inline default for the real import.
+// Until then this fallback keeps combat.js loadable and tests green.
+export const FO4_COMPANIONS = [
+  'cait', 'codsworth', 'curie', 'danse', 'deacon', 'dogmeat',
+  'hancock', 'maccready', 'nick', 'piper', 'preston', 'strong',
+  'x6-88',
+];
+
+// ── Dual-range positional resolver ──────────────────────────────────
+// Units with `range === 'dual'` (Agent B: Hancock, Sarah Lyon, Sole
+// Survivor) resolve to ranged when they sit in the back row of their half
+// of the board and to melee when they sit in the front row. Range LOCKS
+// at the start of each combat round — it does not flip mid-fight if the
+// unit is repositioned by abilities or knockbacks.
+//
+// Board layout: 14 slots / 2 rows of 7.
+//   slots 0-6  = row 0 (player back / enemy back)
+//   slots 7-13 = row 1 (player front / enemy front)
+// For BOTH sides the back row is the slot's lower row index — the
+// helper just looks at `pos` and decides. (When the spec talks about
+// rows 1-4 it's a 4-row mental model; this engine uses 2 rows, so
+// "back half" = row 0 and "front half" = row 1.)
+//
+// Returns `{ range: 'ranged'|'melee', attackRange: number }` for the
+// effective values; the unit's static `attackRange` (number) is used
+// as the ranged distance, falling back to 4 when not provided.
+export const resolveDualRange = (unit, position) => {
+  const isBack = Math.floor((position ?? 0) / 7) === 0;
+  if (isBack) {
+    // Back half → ranged. Prefer the unit's declared ranged distance.
+    const declared = typeof unit.attackRange === 'number' ? unit.attackRange : null;
+    return { range: 'ranged', attackRange: declared || 4 };
+  }
+  return { range: 'melee', attackRange: 1 };
+};
+
+// Apply dual-range lock to a unit in place. Idempotent; only fires when
+// the unit's `range` field is the string 'dual' (Agent B's flag). Existing
+// numeric `range` values (1..4) are left untouched, so non-dual units are
+// completely unaffected.
+export const lockDualRange = (unit) => {
+  if (!unit || unit.range !== 'dual') return false;
+  const eff = resolveDualRange(unit, unit.position ?? 0);
+  unit._effectiveRange = eff.range;
+  unit._effectiveAttackRange = eff.attackRange;
+  return true;
+};
+
+// ── Robot Dog augment transform ─────────────────────────────────────
+// `aug_robot_dog` augment (Agent B's `characterAugments.js`) upgrades
+// the player's highest-star Dogmeat into a Robot Dog, preserving stars
+// and equipped items. If no Dogmeat is owned, a 1★ Robot Dog is added
+// to the bench. Game.jsx owns the augment-application orchestration —
+// this helper does the data shape change in one place.
+//
+// `player` should expose `.board` (array of slots, may contain nulls)
+// and `.bench` (array). Either may be undefined; we no-op gracefully.
+// Returns `true` if a transformation or bench insertion happened.
+export const applyRobotDogTransform = (player) => {
+  if (!player) return false;
+  const board = Array.isArray(player.board) ? player.board : [];
+  const bench = Array.isArray(player.bench) ? player.bench : [];
+  // Highest-star Dogmeat across board + bench. Ties broken by board first.
+  let bestSrc = null; // { from: 'board'|'bench', idx: number, ref: unit }
+  const scan = (arr, from) => {
+    for (let i = 0; i < arr.length; i++) {
+      const u = arr[i];
+      if (!u || u.id !== 'dogmeat') continue;
+      if (!bestSrc || (u.stars || 1) > (bestSrc.ref.stars || 1)) {
+        bestSrc = { from, idx: i, ref: u };
+      }
+    }
+  };
+  scan(board, 'board');
+  scan(bench, 'bench');
+  if (bestSrc) {
+    // In-place id swap. Stars + items + uid preserved.
+    bestSrc.ref.id = 'robot-dog';
+    return true;
+  }
+  // No Dogmeat — drop a fresh 1★ Robot Dog onto the bench. Game.jsx
+  // is expected to materialize uid / make this a proper unit record.
+  if (Array.isArray(player.bench)) {
+    player.bench.push({ id: 'robot-dog', stars: 1, items: [] });
+    return true;
+  }
+  return false;
+};
+
+// Hex-adjacent neighbours on the 2-row × 7-col board, used by Sole
+// Survivor's Survivor's Bond passive. The board is stored linearly but
+// laid out with offset rows: a unit at (row 0, col c) is adjacent to
+// (row 0, c-1), (row 0, c+1), (row 1, c-1), (row 1, c); a unit at
+// (row 1, c) is adjacent to (row 1, c-1), (row 1, c+1), (row 0, c),
+// (row 0, c+1). (Two-row boards naturally cap neighbours at 4 not 6.)
+export const hexNeighbors = (pos) => {
+  const row = Math.floor(pos / 7);
+  const col = pos % 7;
+  const out = [];
+  const push = (r, c) => { if (r >= 0 && r < 2 && c >= 0 && c < 7) out.push(r * 7 + c); };
+  push(row, col - 1);
+  push(row, col + 1);
+  if (row === 0) { push(1, col - 1); push(1, col); }
+  else { push(0, col); push(0, col + 1); }
+  return out;
+};
+
+// Count hex-adjacent FO4 companions for a given board slot. Used by
+// Sole Survivor's Survivor's Bond passive (+8% ATK/AP per adjacent
+// companion). Exported for unit tests; the live runCombat path inlines
+// the same arithmetic.
+export const countAdjacentFo4Companions = (board, position) => {
+  if (!Array.isArray(board) || typeof position !== 'number') return 0;
+  let n = 0;
+  for (const adj of hexNeighbors(position)) {
+    const u = board[adj];
+    if (u && FO4_COMPANIONS.includes(u.id)) n++;
+  }
+  return n;
+};
+
+// Apply the Survivor's Bond multiplier to a unit's atk + apGain in place.
+// Returns the multiplier applied (1.0 if no bond). Idempotent — call once
+// at combat start.
+export const applySurvivorsBond = (unit, board) => {
+  if (!unit || unit.id !== 'sole-survivor') return 1;
+  const count = countAdjacentFo4Companions(board, unit.position);
+  if (count <= 0) return 1;
+  const mult = 1 + count * 0.08;
+  unit.atk *= mult;
+  unit.baseAtk = (unit.baseAtk || unit.atk) * mult;
+  unit.apGain = (unit.apGain || 0) * mult;
+  unit._survivorsBondCount = count;
+  return mult;
+};
+
+// Apply Sole Survivor's per-round PERMANENT growth to a persistent unit
+// record. Returns the new scalingBonus object.
+export const accrueSoleSurvivorRoundBonus = (unit) => {
+  if (!unit || unit.id !== 'sole-survivor') return null;
+  const base = unit.scalingBonus || { atk: 0, hp: 0, def: 0 };
+  const next = { atk: base.atk + 5, hp: base.hp + 50, def: base.def + 1 };
+  unit.scalingBonus = next;
+  return next;
+};
+
+// Apply Sole Survivor's per-attack IN-COMBAT growth in place. Mutates atk
+// + maxHp + currentHp. Returns the new total in-combat bonus.
+export const accrueSoleSurvivorAttackBonus = (unit) => {
+  if (!unit || unit.id !== 'sole-survivor') return null;
+  unit.atk += 2;
+  unit.baseAtk = (unit.baseAtk || unit.atk) + 2;
+  unit.maxHp += 20;
+  unit.currentHp += 20;
+  unit._ssInCombatAtk = (unit._ssInCombatAtk || 0) + 2;
+  unit._ssInCombatHp = (unit._ssInCombatHp || 0) + 20;
+  return { atk: unit._ssInCombatAtk, hp: unit._ssInCombatHp };
+};
+
 // ── Mothman darkness-shroud damage modifier ─────────────────────────
 // When a unit takes damage and it's the Mothman boss with darkness_shroud
 // active, look up the current phase's incoming-damage multiplier (thick
@@ -16,7 +179,12 @@ import { sound, WT_SETTINGS } from './audio.js';
 // pass-through (returns the original damage unchanged), so we can call it
 // unconditionally on every damage write.
 export const applyShroudMultiplier = (target, damage, isAoE) => {
-  if (!target || !target.isBoss || target.bossMechanic !== 'darkness_shroud') return damage;
+  if (!target) return damage;
+  // Lorenzo Cabot: takes 50% less damage while ANY player unit is frozen.
+  if (target.isBoss && target.crimsonStasis && target._lorenzoActive) {
+    damage = damage * 0.5;
+  }
+  if (!target.isBoss || target.bossMechanic !== 'darkness_shroud') return damage;
   const phases = target.shroudPhases;
   const effects = target.shroudEffects;
   if (!Array.isArray(phases) || !effects) return damage;
@@ -229,6 +397,8 @@ export const ghostPlayerBoard = (ghost, round) => {
       items: [],
     };
   });
+  // Lock dual-range units to ranged/melee based on their starting row.
+  slots.forEach(s => { if (s) lockDualRange(s); });
   return slots;
 };
 
@@ -258,6 +428,15 @@ export const generateEnemies = (round, difficultyId = DEFAULT_DIFFICULTY_ID) => 
       traits: [], cost: 5, items: [],
       bossMechanic: boss.mechanic, bossInterval: boss.mechanicInterval,
       bossDmg: boss.mechanicDmg || 0, bossEnrageThreshold: boss.enrageThreshold || 0,
+      enrageAtkMult: boss.enrageAtkMult || 2,
+      // Side-flags for the new (Wave-2) bosses. The mechanic key may be
+      // recycled ('stomp', 'poison', 'spawn') — these flags are what the
+      // tick loop reads to dispatch the new behaviour.
+      courserTeleport: !!boss.courserTeleport,
+      glowBurst: !!boss.glowBurst,
+      deathHealAllies: typeof boss.deathHealAllies === 'number' ? boss.deathHealAllies : 0,
+      crimsonStasis: !!boss.crimsonStasis,
+      stasisDuration: boss.stasisDuration || 0,
       // Mothman darkness-shroud bookkeeping. Phase index starts at 0 ('thick').
       // Only meaningful when bossMechanic === 'darkness_shroud'.
       shroudPhases: boss.shroudPhases || null,
@@ -297,6 +476,8 @@ export const generateEnemies = (round, difficultyId = DEFAULT_DIFFICULTY_ID) => 
   const slots = Array(14).fill(null);
   ranged.forEach((e, i) => { if (i < 7) { e.position = i; slots[i] = e; } });
   melee.forEach((e, i) => { if (i < 7) { e.position = 7 + i; slots[7 + i] = e; } });
+  // Lock dual-range units to ranged/melee based on their starting row.
+  slots.forEach(s => { if (s) lockDualRange(s); });
   return slots;
 };
 
@@ -379,17 +560,22 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       return true;
     }
 
-    case 'dogmeat': {
-      // Attack Dog: Stun highest ATK enemy for 3s (6 ticks), scales with stars
+    case 'dogmeat':
+    case 'robot-dog': {
+      // Attack Dog: Stun highest ATK enemy for 3s (6 ticks), scales with stars.
+      // Robot Dog upgrade (aug_robot_dog transform) hits the TOP 2 highest-ATK
+      // enemies instead of just one. Stun duration unchanged.
       const aliveEnemies = targetable.filter(e => (e.stunDuration || 0) <= 0);
       if (aliveEnemies.length === 0) return false;
-      // Target highest ATK enemy that isn't already stunned
       aliveEnemies.sort((a, b) => b.atk - a.atk);
-      const stunTarget = aliveEnemies[0];
-      const stunTicks = (4 + starMult * 2) * abilityMult; // 6/8/10 ticks at 1/2/3 stars
-      stunTarget.stunDuration = Math.round(stunTicks);
-      { const stunEl = document.querySelector(`[data-unit-uid="${stunTarget.uid}"]`); if (stunEl) stunEl.classList.add('wt-stunned'); }
-      logs.unshift(`🐕 ${unit.name} pounces on ${stunTarget.name}! Stunned for ${Math.round(stunTicks / 2)}s!`);
+      const stunCount = unit.id === 'robot-dog' ? 2 : 1;
+      const stunTargets = aliveEnemies.slice(0, Math.min(stunCount, aliveEnemies.length));
+      const stunTicks = (4 + starMult * 2) * abilityMult;
+      stunTargets.forEach(t => {
+        t.stunDuration = Math.round(stunTicks);
+        const stunEl = document.querySelector(`[data-unit-uid="${t.uid}"]`); if (stunEl) stunEl.classList.add('wt-stunned');
+      });
+      logs.unshift(`🐕 ${unit.name} pounces on ${stunTargets.map(t => t.name).join(' & ')}! Stunned for ${Math.round(stunTicks / 2)}s!`);
       abilityUnits.push(unit.uid);
       try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
       return true;
@@ -736,6 +922,40 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
   let pUnits = [...playerUnits];
   // Reset per-combat flags
   pUnits.forEach(u => { u.kelloggRevived = false; });
+
+  // Lock dual-range units (Hancock, Sarah Lyon, Sole Survivor) to ranged
+  // or melee based on their START-OF-ROUND row. Range does NOT flip mid
+  // fight if the unit is later repositioned by abilities/knockbacks.
+  pUnits.forEach(u => lockDualRange(u));
+  enemyUnits.forEach(u => { if (u) lockDualRange(u); });
+
+  // ── Sole Survivor: combat-start bookkeeping ───────────────────────
+  // (a) Merge the player's persistent per-round scaling bonus into the
+  //     combat-unit's base stats. Game.jsx owns the persistent record
+  //     (`unit.scalingBonus = { atk, hp, def }`) and we read it here so
+  //     the combat clone reflects the bonus without permanently mutating
+  //     base UNIT_DATABASE numbers.
+  // (b) Reset the per-combat (in-fight) counter so per-attack stacks
+  //     start at 0 each fight.
+  // (c) Survivor's Bond — snapshot count of hex-adjacent FO4 companions
+  //     on the player's board and apply +8% ATK / +8% AP gain per
+  //     companion (capped naturally at 4 neighbours on this 2-row board).
+  pUnits.forEach(u => {
+    if (u.id !== 'sole-survivor') return;
+    const persist = u.scalingBonus || { atk: 0, hp: 0, def: 0 };
+    if (persist.atk) { u.atk += persist.atk; u.baseAtk = (u.baseAtk || u.atk) + persist.atk; }
+    if (persist.hp) {
+      u.maxHp += persist.hp;
+      u.currentHp += persist.hp;
+    }
+    if (persist.def) { u.def += persist.def; u.baseDef = (u.baseDef ?? u.def) + persist.def; }
+    u._ssInCombatAtk = 0;
+    u._ssInCombatHp = 0;
+
+    // Survivor's Bond — snapshot count of adjacent FO4 companions.
+    applySurvivorsBond(u, board);
+  });
+
   const enemySlots = enemyUnits;
   let eUnits = enemyUnits.filter(e => e != null);
   let logs = [];
@@ -1204,24 +1424,24 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
     } catch(_) {} });
   };
 
-  // Check for Support synergy (heal tick)
+  // Trait synergy lookups. New trait IDs are kebab-case (Wave: character overhaul):
+  //   Medic   = old Support  (heal tick + revive)
+  //   Caster  = old Tech     (ability multiplier)
+  // The old Scout trait's attack-speed + first-strike mechanic is retired in the
+  // new role system — kept here as a no-op so any downstream variables remain defined.
   const synergies = getActiveSynergies(board);
-  const supportSynergy = synergies.find(s => s.trait === 'Support');
-  const healTick = supportSynergy ? TRAITS.Support.effect(supportSynergy.count).healTick : 0;
-  const supportRevive = supportSynergy ? TRAITS.Support.effect(supportSynergy.count).revive : false;
+  const medicSynergy = synergies.find(s => s.trait === 'medic');
+  const healTick = medicSynergy ? TRAITS.medic.effect(medicSynergy.count).healTick : 0;
+  const supportRevive = medicSynergy ? TRAITS.medic.effect(medicSynergy.count).revive : false;
   let reviveUsed = false;
 
-  // Check for Scout synergy (attack speed)
-  const scoutSynergy = synergies.find(s => s.trait === 'Scout');
-  const asMult = scoutSynergy ? TRAITS.Scout.effect(scoutSynergy.count).asMult : 1;
-  const firstStrike = scoutSynergy ? TRAITS.Scout.effect(scoutSynergy.count).firstStrike : false;
-  if (firstStrike) {
-    pUnits.forEach(u => { u.attackCooldown = 0; });
-  }
+  // Scout retired in the new design — preserve variables for downstream readers.
+  const asMult = 1;
+  const firstStrike = false;
 
-  // Check for Tech synergy (ability power)
-  const techSynergy = synergies.find(s => s.trait === 'Tech');
-  const baseAbilityMult = techSynergy ? TRAITS.Tech.effect(techSynergy.count).abilityMult : 1;
+  // Caster role drives ability power (Tech equivalent in the new system).
+  const casterSynergy = synergies.find(s => s.trait === 'caster');
+  const baseAbilityMult = casterSynergy ? TRAITS.caster.effect(casterSynergy.count).abilityMult : 1;
   // Augment: Nuka Addict — abilities deal bonus damage
   const abilityMult = baseAbilityMult * (callbacks.augAbilityDmgMult || 1);
   // Augment: Field Medic — heal multiplier
@@ -1415,9 +1635,15 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       }
       if (u.bossMechanic === 'enrage' && !u._enraged && u.currentHp / u.maxHp <= u.bossEnrageThreshold) {
         // Behemoth: enrage at 50% HP
-        u.atk = u.baseAtk * 2;
+        u.atk = u.baseAtk * (u.enrageAtkMult || 2);
         u._enraged = true;
         logs.unshift(`👹 ${u.name} ENRAGES! ATK doubled!`);
+      }
+      // Swan (round 14): enrage at <30% HP layered on a stomp boss.
+      if (u.bossMechanic === 'stomp' && u.bossEnrageThreshold && !u._enraged && u.currentHp / u.maxHp <= u.bossEnrageThreshold) {
+        u.atk = u.baseAtk * (u.enrageAtkMult || 1.5);
+        u._enraged = true;
+        logs.unshift(`👹 ${u.name} ENRAGES! ATK +${Math.round(((u.enrageAtkMult || 1.5) - 1) * 100)}%!`);
       }
       if (u.bossMechanic === 'stomp' && u._bossTickCounter % u.bossInterval === 0) {
         // Mythic Deathclaw: AoE stomp
@@ -1439,6 +1665,68 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           else logs.unshift(`🌑 The shroud shifts to ${phaseName}...`);
         }
       }
+
+      // Synth Courser (round 21): every `bossInterval` ticks teleport-strike
+      // the lowest-HP player unit for `bossDmg`. Agent B re-uses the 'stomp'
+      // mechanic key + a `courserTeleport` flag — both must be present.
+      if (u.courserTeleport) {
+        const interval = u.bossInterval || 50;
+        if (u._bossTickCounter > 0 && u._bossTickCounter % interval === 0) {
+          const alive = pUnits.filter(p => p.currentHp > 0);
+          if (alive.length > 0) {
+            alive.sort((a, b) => a.currentHp - b.currentHp);
+            const victim = alive[0];
+            const strikeDmg = u.bossDmg || 300;
+            victim.currentHp -= strikeDmg;
+            spawnVFX('impact', { targetUid: victim.uid, isCrit: true, unitId: 'boss' }, rectMap);
+            spawnFloat(strikeDmg, true, victim.uid, true, setFloatingNumbers);
+            logs.unshift(`⚡ ${u.name} teleport-strikes ${victim.name} for ${Math.round(strikeDmg)}!`);
+            try { sound.criticalHit?.(); } catch(_) {}
+          }
+        }
+      }
+
+      // Atom Theil (round 35): every tick add 1 stack of radiation DoT to
+      // every player unit. Stacks NEVER fall off; each stack ticks 0.5 HP
+      // (= 5/s at 100ms). Detected by the `glowBurst` flag set on the boss.
+      if (u.glowBurst) {
+        pUnits.forEach(p => {
+          if (p.currentHp <= 0) return;
+          p._radStacks = (p._radStacks || 0) + 1;
+        });
+        pUnits.forEach(p => {
+          if (p.currentHp <= 0 || !p._radStacks) return;
+          p.currentHp -= p._radStacks * 0.5;
+        });
+      }
+
+      // Lorenzo Cabot (round 42): every `bossInterval` ticks freeze one
+      // random player unit for `stasisDuration * 10` ticks (= 4s at the
+      // default 8). Frozen = stunned + cannot be targeted. Boss takes 50%
+      // less damage while ANY player is frozen (applied via
+      // applyShroudMultiplier on the damage path through _lorenzoActive).
+      // Detected by the `crimsonStasis` flag.
+      if (u.crimsonStasis) {
+        const interval = u.bossInterval || 80;
+        if (u._bossTickCounter > 0 && u._bossTickCounter % interval === 0) {
+          const alive = pUnits.filter(p => p.currentHp > 0 && !(p._frozenDuration > 0));
+          if (alive.length > 0) {
+            const victim = alive[Math.floor(Math.random() * alive.length)];
+            const ticks = (u.stasisDuration || 8) * 5; // stasisDuration counted in half-seconds (8 → 40 ticks = 4s)
+            victim._frozenDuration = ticks;
+            victim.stunDuration = Math.max(victim.stunDuration || 0, ticks);
+            victim.deaconUntargetable = Math.max(victim.deaconUntargetable || 0, ticks);
+            const el = document.querySelector(`[data-unit-uid="${victim.uid}"]`); if (el) el.classList.add('wt-stunned');
+            logs.unshift(`❄️ ${u.name} freezes ${victim.name}!`);
+          }
+        }
+        u._lorenzoActive = pUnits.some(p => (p._frozenDuration || 0) > 0);
+      }
+    });
+
+    // Tick down frozen-duration on player units (used by lorenzo_cabot).
+    pUnits.forEach(p => {
+      if ((p._frozenDuration || 0) > 0) p._frozenDuration--;
     });
 
     // Tick down attack cooldowns — stunned units do NOT tick
@@ -1599,6 +1887,32 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       target.mana = Math.min(target.manaMax, (target.mana || 0) + (target.apOnHit || 0));
       damageStats[unit.uid] = (damageStats[unit.uid] || 0) + damage;
       if (!damageStats[unit.uid + '_name']) damageStats[unit.uid + '_name'] = unit.name;
+
+      // ── Robot Dog: CLEAVE auto-attack ───────────────────────────
+      // Hits primary + up to the 2 nearest other enemies for 60% damage.
+      // Each cleaved hit still respects shroud / death VFX / damage stats.
+      if (unit.id === 'robot-dog') {
+        const others = eUnits.filter(e => e !== target && e.currentHp > 0 && (e.deaconUntargetable || 0) <= 0);
+        others.sort((a, b) => gridDist(target.position, a.position) - gridDist(target.position, b.position));
+        const cleaveTargets = others.slice(0, 2);
+        cleaveTargets.forEach(ct => {
+          let cleaveDmg = damage * 0.6;
+          cleaveDmg = applyShroudMultiplier(ct, cleaveDmg, true);
+          ct.currentHp -= cleaveDmg;
+          damageStats[unit.uid] = (damageStats[unit.uid] || 0) + cleaveDmg;
+          spawnVFX('impact', { targetUid: ct.uid, isCrit: false, unitId: unit.id }, rectMap);
+          spawnFloat(cleaveDmg, false, ct.uid, false, setFloatingNumbers);
+          hitUnits.push(ct.uid);
+          if (ct.currentHp <= 0) dyingUnits.push(ct.uid);
+        });
+        if (cleaveTargets.length) {
+          logs.unshift(`🤖 ${unit.name} cleaves ${cleaveTargets.map(t => t.name).join(' & ')}!`);
+        }
+      }
+
+      // ── Sole Survivor: per-attack in-combat scaling ─────────────
+      // +2 ATK / +20 HP per completed attack. Resets each fight.
+      if (unit.id === 'sole-survivor') accrueSoleSurvivorAttackBonus(unit);
       const pIsMelee = isMeleeUnit(unit.id);
       spawnVFX('lunge', { attackerUid: unit.uid, targetUid: target.uid, unitId: unit.id, isAbilityAttack: pAbilityTriggered && unit.id === 'dogmeat' }, rectMap);
       if (!pIsMelee) spawnVFX('projectile', { fromUid: unit.uid, toUid: target.uid, unitId: unit.id, cost: UNIT_DATABASE[unit.id]?.cost }, rectMap);
@@ -1688,6 +2002,19 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (unit.itemHealOnKill > 0) {
           unit.currentHp = Math.min(unit.maxHp, unit.currentHp + unit.itemHealOnKill);
           logs.unshift(`🏥 ${unit.name} heals ${unit.itemHealOnKill} HP on kill!`);
+        }
+        // Atom Theil (glowBurst boss): on death, restore N% maxHp to all
+        // remaining ally enemies (default 50%, configurable via `deathHealAllies`).
+        if (target.isBoss && target.glowBurst && !target._atomTheilDeathDone) {
+          target._atomTheilDeathDone = true;
+          const healPct = typeof target.deathHealAllies === 'number' ? target.deathHealAllies : 0.5;
+          eUnits.forEach(ally => {
+            if (ally === target || ally.currentHp <= 0) return;
+            const heal = ally.maxHp * healPct;
+            ally.currentHp = Math.min(ally.maxHp, ally.currentHp + heal);
+            spawnVFX('heal', { targetUid: ally.uid }, rectMap);
+          });
+          logs.unshift(`☢️ ${target.name} blooms on death — allies restored ${Math.round(healPct * 100)}% HP!`);
         }
       }
     });
@@ -1878,6 +2205,21 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       // 3★ Dogmeat Passive: Good Boy — +1 bonus caps on victory (no survival needed)
       const dogmeat3 = pUnits.find(u => u.id === 'dogmeat' && u.stars >= 3);
       if (won && dogmeat3) extraGold = 1;
+
+      // ── Sole Survivor: per-round PERMANENT scaling ──────────────
+      // +5 ATK / +50 HP / +1 DEF accrued at the end of every round
+      // (win OR loss). The persistent record lives on the player's
+      // board slot (`scalingBonus = { atk, hp, def }`) so it survives
+      // across fights; we mirror onto both the combat-clone and the
+      // board record so a subsequent buy/move keeps the gain.
+      pUnits.forEach(u => {
+        if (u.id !== 'sole-survivor') return;
+        const next = accrueSoleSurvivorRoundBonus(u);
+        if (next && Array.isArray(board)) {
+          const rec = board.find(b => b && b.uid === u.uid);
+          if (rec) rec.scalingBonus = next;
+        }
+      });
 
       // TFT-style player damage on loss: base by stage + sum of surviving enemy unit damage by cost.
       // Per-unit damage scales with cost (1c→1, 2c→1, 3c→2, 4c→3, 5c→4) with a small star bump

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+  <!-- Crossed swords -->
+  <path d="M3 5 L5 3 L15 13 L13 15 Z"/>
+  <path d="M21 5 L19 3 L9 13 L11 15 Z"/>
+  <path d="M2 18 L4 16 L8 20 L6 22 Z"/>
+  <path d="M22 18 L20 16 L16 20 L18 22 Z"/>
+</svg>

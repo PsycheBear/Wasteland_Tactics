@@ -9,7 +9,7 @@ import { IMAGES } from '../data/images.js';
 import { COST_COLORS, TIER_LABELS, SHOP_ODDS, getRandomCost, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, ROUNDS_PER_STAGE, isCarouselRound, initPool, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from '../systems/audio.js';
 import { getActiveSynergies, generateEnemies, initGhostPlayers, ghostPlayerShop, ghostPlayerBoard, runCombat, spawnFloat } from '../systems/combat.js';
-import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard } from './UiComponents.jsx';
+import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard, PortraitImg } from './UiComponents.jsx';
 import { GameIcon, createGameIcon } from './GameIcon.jsx';
 import Lucky38Carousel from './Lucky38Carousel.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
@@ -1253,6 +1253,10 @@ function WastelandTactics() {
 
   // Handlers for UnitCard callbacks
   const handleUnitPointerDown = (e, location, index, unit) => {
+    // Only start a drag on LEFT click. Right-click (button 2) is reserved for
+    // the context-menu tooltip; if we ran this path on right-click we'd clear
+    // the tooltip that's about to be opened.
+    if (e.button !== 0) return;
     setUnitTooltip(null);
     setPointerDrag({ location, index, unit, startX: e.clientX, startY: e.clientY });
     hasMovedRef.current = false;
@@ -1260,7 +1264,10 @@ function WastelandTactics() {
   };
 
   const handleUnitContextMenu = (e, unit) => {
-    setUnitTooltip(prev => (prev?.unit?.uid === unit.uid ? null : { unit, x: e.clientX, y: e.clientY }));
+    // Right-click tooltips are STICKY (sticky: true). The hover/mouseleave
+    // logic in board cells skips clearing when sticky is set, so the tooltip
+    // persists until the user clicks elsewhere or right-clicks the same unit.
+    setUnitTooltip(prev => (prev?.unit?.uid === unit.uid ? null : { unit, x: e.clientX, y: e.clientY, sticky: true }));
   };
 
   const handleUnitClick = (e, unit, location, index) => {
@@ -1443,7 +1450,7 @@ function WastelandTactics() {
                       <div style={{ fontSize: 14, color: '#00ff00', letterSpacing: 3, marginBottom: 2, fontWeight: 'bold', textShadow: '0 0 6px rgba(0,255,0,0.3)' }}>SEASON 1</div>
                       <div style={{ fontSize: 9, color: '#00aa00', letterSpacing: 2, marginBottom: 8, opacity: 0.5 }}>THE COMMONWEALTH</div>
                       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-                        {[{ l: '22 UNITS' }, { l: '8 SYNERGIES' }, { l: '20 ITEMS' }].map((c, i) => (
+                        {[{ l: '37 UNITS' }, { l: '13 SYNERGIES' }, { l: '25 ITEMS' }].map((c, i) => (
                           <div key={i} style={{ padding: '2px 8px', border: '1px solid #00ff0033', borderRadius: 2, fontSize: 8, color: '#00ff00' }}>{c.l}</div>
                         ))}
                       </div>
@@ -1536,9 +1543,9 @@ function WastelandTactics() {
                     {/* Featured info cards */}
                     <div style={{ display: 'flex', gap: 10, marginBottom: 20, opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 1.8s forwards' : 'none' }}>
                       {[
-                        { label: '22 UNITS', sub: 'Draft & build', color: '#e8c060' },
-                        { label: '8 SYNERGIES', sub: 'Combine traits', color: '#c89848' },
-                        { label: '20 ITEMS', sub: 'Craft & equip', color: '#a08040' },
+                        { label: '37 UNITS', sub: 'Draft & build', color: '#e8c060' },
+                        { label: '13 SYNERGIES', sub: '9 factions + 4 roles', color: '#c89848' },
+                        { label: '25 ITEMS', sub: 'Craft & equip', color: '#a08040' },
                       ].map((card, i) => (
                         <div key={i} style={{ padding: '8px 18px', background: 'rgba(10,6,2,0.7)', border: `1px solid ${card.color}33`, borderRadius: 4, textAlign: 'center', backdropFilter: 'blur(6px)' }}>
                           <div style={{ fontSize: 15, fontWeight: 'bold', color: card.color }}>{card.label}</div>
@@ -1562,13 +1569,8 @@ function WastelandTactics() {
                       ][Math.floor(Date.now() / 86400000) % 8]}</div>
                     </div>
 
-                    {/* Difficulty selector */}
-                    <div style={{ marginBottom: 12, opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 2.2s forwards' : 'none' }}>
-                      <DifficultySelector value={difficultyId} onChange={setDifficultyId} />
-                    </div>
-
                     {/* Buttons */}
-                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 2.4s forwards' : 'none' }}>
+                    <div style={{ display: 'flex', gap: 12, alignItems: 'center', opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 2.2s forwards' : 'none' }}>
                       <button onClick={() => startGame(false)} disabled={false} style={{
                         width: 400, padding: '28px 0', fontSize: 30, fontWeight: 'bold', letterSpacing: 10,
                         background: 'linear-gradient(180deg, rgba(200,148,42,0.15) 0%, rgba(140,100,30,0.1) 50%, rgba(200,148,42,0.08) 100%)',
@@ -1597,6 +1599,11 @@ function WastelandTactics() {
                           CONTINUE
                         </button>
                       )}
+                    </div>
+
+                    {/* Difficulty selector — placed below PLAY per user feedback */}
+                    <div style={{ marginTop: 16, opacity: menuFirstLoad ? 0 : 1, animation: menuFirstLoad ? 'wt-menu-fade-in 0.6s ease-out 2.4s forwards' : 'none' }}>
+                      <DifficultySelector value={difficultyId} onChange={setDifficultyId} />
                     </div>
                   </div>
                 </div>}
@@ -2650,15 +2657,16 @@ function WastelandTactics() {
         const stageType = currentStage <= 1 ? 'PvE' : isBoss ? 'BOSS' : 'PvP';
         const stageTypeColor = isBoss ? '#ff4444' : currentStage <= 1 ? '#ff9900' : 'var(--ui-primary)';
         return (
-          <div className="wt-top-bar">
+          <div className="wt-top-bar" style={{ position: 'relative' }}>
             {/* Left — Logo + Settings */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              {LOGO_IMG ? <img src={LOGO_IMG} alt="WT" style={{ height: 32, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(0,255,0,0.5))' }} /> : <span style={{ fontSize: 18, fontWeight: 'bold', textShadow: '0 0 10px var(--ui-primary)' }}>☢️ WT</span>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 2 }}>
+              {LOGO_IMG ? <img src={LOGO_IMG} alt="WT" style={{ height: 32, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(0,255,0,0.5))' }} /> : <span style={{ fontSize: 18, fontWeight: 'bold', textShadow: '0 0 10px var(--ui-primary)' }}>WT</span>}
               <button onClick={() => setSettingsOpen(o => !o)} style={{ background: 'transparent', border: '1px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', padding: '3px 6px', fontSize: 14 }} title="Settings"><svg width="14" height="14" viewBox="0 0 20 20"><path d="M10 7a3 3 0 100 6 3 3 0 000-6zm7.3 2.2l-1.4-.3a5.8 5.8 0 00-.7-1.7l.8-1.2-1.4-1.4-1.2.8a5.8 5.8 0 00-1.7-.7L11.4.3h-2l-.3 1.4a5.8 5.8 0 00-1.7.7L6.2 1.6 4.8 3l.8 1.2a5.8 5.8 0 00-.7 1.7l-1.4.3v2l1.4.3c.1.6.4 1.2.7 1.7l-.8 1.2 1.4 1.4 1.2-.8c.5.3 1.1.6 1.7.7l.3 1.4h2l.3-1.4a5.8 5.8 0 001.7-.7l1.2.8 1.4-1.4-.8-1.2c.3-.5.6-1.1.7-1.7l1.4-.3z" fill="currentColor"/></svg></button>
             </div>
 
-            {/* Center — Stage + Progress */}
-            <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12 }}>
+            {/* Center — Stage + Progress (absolutely centered, TFT-style) */}
+            <div style={{ position: 'absolute', left: '50%', top: '50%', transform: 'translate(-50%, -50%)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12, zIndex: 1, pointerEvents: 'none' }}>
+              <div style={{ pointerEvents: 'auto', display: 'flex', alignItems: 'center', gap: 12 }}>
               <div className="wt-stage-badge">
                 <span className={`wt-stage-type ${isBoss ? 'wt-stage-type-boss' : currentStage <= 1 ? 'wt-stage-type-pve' : 'wt-stage-type-pvp'}`}>{isBoss ? 'BOSS' : currentStage <= 1 ? 'ENCOUNTER' : 'SKIRMISH'}</span>
                 <span className="wt-stage-number">{currentStage}-{roundInStage}</span>
@@ -2709,6 +2717,7 @@ function WastelandTactics() {
               <div className={`wt-phase-badge ${phase === 'carousel' ? 'wt-phase-carousel' : phase === 'combat' ? (isBoss ? 'wt-phase-boss' : 'wt-phase-combat') : phase === 'gameover' ? 'wt-phase-dead' : 'wt-phase-prep'}`}>
                 {phase === 'carousel' ? 'LUCKY 38' : phase === 'combat' ? (isBoss ? 'BOSS FIGHT' : currentOpponent ? `vs ${currentOpponent}` : 'COMBAT') : phase === 'gameover' ? 'DEAD' : 'PREP'}
               </div>
+              </div>{/* end pointerEvents inner */}
             </div>
 
             {/* Stats moved to bottom-right HUD */}
@@ -2921,7 +2930,7 @@ function WastelandTactics() {
                       onContextMenu={(e) => {
                         e.preventDefault();
                         if (!enemy) return;
-                        setUnitTooltip(prev => (prev?.unit?.uid === enemy.uid ? null : { unit: enemy, x: e.clientX, y: e.clientY }));
+                        setUnitTooltip(prev => (prev?.unit?.uid === enemy.uid ? null : { unit: enemy, x: e.clientX, y: e.clientY, sticky: true }));
                       }}
                       style={{
                       width: '100%', aspectRatio: '1/1.15', overflow: 'visible',
@@ -2937,11 +2946,7 @@ function WastelandTactics() {
                         <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', width: '80%', height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', filter: 'blur(4px)', pointerEvents: 'none' }} />
                         {/* Counter-rotate enemy unit to face camera */}
                         <div className="wt-iso-unit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible' }}>
-                          {getUnitImage(enemy.id, enemy.stars) ? (
-                            <img src={getUnitImage(enemy.id, enemy.stars)} alt={enemy.name} style={{ width: 44, height: 44, objectFit: 'contain' }} />
-                          ) : (
-                            <UnitPlaceholder name={enemy.name} size={48} />
-                          )}
+                          <PortraitImg unit={enemy} unitDef={UNIT_DATABASE[enemy.id]} size={44} alt={enemy.name} />
                           <div style={{ fontSize: 9 }}>{stars(enemy.stars)}</div>
                           <CombatBars currentHp={enemy.currentHp} maxHp={enemy.maxHp} mana={enemy.mana} manaMax={enemy.manaMax} variant="enemy" compact />
                         </div>
@@ -2972,8 +2977,8 @@ function WastelandTactics() {
                       if (selected && !unit) { moveUnit(selected.location, selected.index, 'board', i); }
                       else if (unit) { setSelected(selected?.location === 'board' && selected?.index === i ? null : { unit, location: 'board', index: i }); }
                     }}
-                    onMouseEnter={(e) => { if (phase === 'prep' && unit) setUnitTooltip({ unit, x: e.clientX, y: e.clientY }); }}
-                    onMouseLeave={() => { if (phase === 'prep') setUnitTooltip(null); }}
+                    onMouseEnter={(e) => { if (phase === 'prep' && unit) setUnitTooltip(prev => prev?.sticky ? prev : { unit, x: e.clientX, y: e.clientY }); }}
+                    onMouseLeave={() => { if (phase === 'prep') setUnitTooltip(prev => prev?.sticky ? prev : null); }}
                     className={`wt-board-cell ${phase === 'prep' ? 'wt-board-cell-prep' : 'wt-board-cell-combat'} ${unit ? 'wt-board-cell-occupied' : 'wt-board-cell-empty'} ${(itemDrag && dragOverTarget?.location === 'board' && dragOverTarget?.index === i && unit) ? 'wt-board-cell-item-drop' : ''} ${(!itemDrag && dragOverTarget?.location === 'board' && dragOverTarget?.index === i) ? 'wt-board-cell-unit-drop' : ''}`}
                     style={{ width: '100%', aspectRatio: '1/1.15', borderRadius: 4, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: phase === 'prep' ? 'pointer' : 'default', overflow: 'visible' }}>
                     {unit ? <UnitCard unit={unit} location="board" index={i} small isBoard
@@ -3073,47 +3078,89 @@ function WastelandTactics() {
             </div>
           </div>
 
-          {/* Shop bar — TFT style: controls left, cards center, fight+sell right */}
+          {/* Shop bar — TFT style: stacked Buy XP/Reroll left, large portrait cards center, fight+sell right */}
           <div className="wt-shop-bar">
-            {/* Left — Reroll + Buy XP */}
+            {/* Left — Reroll + Buy XP stacked vertically (TFT layout) */}
             {phase === 'prep' ? (
-              <div className="wt-shop-controls">
-                <button onClick={refreshShop} disabled={gold < 2} className={`wt-shop-btn ${gold < 2 ? 'wt-shop-btn-disabled' : ''}`} style={{ fontSize: 11 }}>
-                  REROLL 2g
+              <div className="wt-shop-controls" style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0, minWidth: 96 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: 9, color: 'var(--ui-text-dim)', fontFamily: "'Share Tech Mono', monospace", padding: '0 2px' }}>
+                  <span>LV.{level}</span>
+                  <span>{xp}/{xpNeeded}</span>
+                </div>
+                {/* XP progress bar above the buttons */}
+                <div style={{ height: 4, width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid var(--ui-border-dim)', borderRadius: 2, overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, (xp / xpNeeded) * 100)}%`, height: '100%', background: 'linear-gradient(90deg, #4488ff, #88ccff)' }} />
+                </div>
+                <button onClick={buyXP} disabled={gold < 4 || level >= 9} className={`wt-shop-btn ${gold < 4 || level >= 9 ? 'wt-shop-btn-disabled' : ''}`} style={{ fontSize: 11, padding: '6px 4px', '--ui-primary': gold >= 4 && level < 9 ? '#4488ff' : undefined, '--ui-border': gold >= 4 && level < 9 ? '#4488ff' : undefined, '--ui-glow': gold >= 4 && level < 9 ? 'rgba(68,136,255,0.3)' : undefined }}>
+                  BUY XP <span style={{ color: '#ffd700', marginLeft: 4 }}>4g</span>
                 </button>
-                <button onClick={buyXP} disabled={gold < 4 || level >= 9} className={`wt-shop-btn ${gold < 4 || level >= 9 ? 'wt-shop-btn-disabled' : ''}`} style={{ fontSize: 11, '--ui-primary': gold >= 4 && level < 9 ? '#4488ff' : undefined, '--ui-border': gold >= 4 && level < 9 ? '#4488ff' : undefined, '--ui-glow': gold >= 4 && level < 9 ? 'rgba(68,136,255,0.3)' : undefined }}>
-                  BUY XP 4g
+                <button onClick={refreshShop} disabled={gold < 2} className={`wt-shop-btn ${gold < 2 ? 'wt-shop-btn-disabled' : ''}`} style={{ fontSize: 11, padding: '6px 4px' }}>
+                  REROLL <span style={{ color: '#ffd700', marginLeft: 4 }}>2g</span>
                 </button>
               </div>
-            ) : <div style={{ width: 80 }} />}
+            ) : <div style={{ width: 96 }} />}
 
-            {/* Center — Shop cards */}
-            <div className="wt-shop-cards">
+            {/* Center — Shop cards (large TFT-style portrait cards) */}
+            <div className="wt-shop-cards" style={{ display: 'flex', gap: 8, flex: 1, alignItems: 'stretch' }}>
               {shop.map((unit, i) => (
                 <div key={unit ? `${i}-${unit.uid}` : `empty-${i}`} onClick={() => { setUnitTooltip(null); unit && buyUnit(i); }}
                   onContextMenu={(e) => {
                     e.preventDefault();
                     if (!unit) return;
-                    setUnitTooltip(prev => (prev?.unit?.uid === unit.uid ? null : { unit, x: e.clientX, y: e.clientY }));
+                    setUnitTooltip(prev => (prev?.unit?.uid === unit.uid ? null : { unit, x: e.clientX, y: e.clientY, sticky: true }));
                   }}
                   onMouseEnter={() => { if (unit) { try { sound.hover?.(); } catch(_) {} } }}
                   className={`wt-shop-card ${shopFlipping ? 'wt-shop-flip' : 'wt-shop-deal'}`}
-                  style={{ width: 68, height: 90, animationDelay: `${i * 0.08}s`, background: unit ? `linear-gradient(180deg, ${getColor(unit.cost)}66 0%, ${getColor(unit.cost)}33 100%)` : 'rgba(30,30,30,0.7)', border: `2px solid ${unit ? getColor(unit.cost) : '#333'}`, borderRadius: 4, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', cursor: unit && gold >= unit.cost ? 'pointer' : 'not-allowed', opacity: unit ? (gold >= unit.cost ? 1 : 0.5) : 0.3, '--shop-glow-color': unit ? getColor(unit.cost) : 'transparent' }}>
+                  style={{
+                    flex: 1, minWidth: 110, height: 100,
+                    animationDelay: `${i * 0.08}s`,
+                    background: unit ? `linear-gradient(180deg, ${getColor(unit.cost)}44 0%, rgba(15,15,15,0.85) 60%)` : 'rgba(30,30,30,0.5)',
+                    border: `2px solid ${unit ? getColor(unit.cost) : '#333'}`,
+                    borderRadius: 4,
+                    display: 'flex', flexDirection: 'column',
+                    cursor: unit && gold >= unit.cost ? 'pointer' : 'not-allowed',
+                    opacity: unit ? (gold >= unit.cost ? 1 : 0.55) : 0.3,
+                    '--shop-glow-color': unit ? getColor(unit.cost) : 'transparent',
+                    position: 'relative', overflow: 'hidden',
+                  }}>
                   {unit ? (<>
-                    {getUnitImage(unit.id, 1) ? (
-                      <img src={getUnitImage(unit.id, 1)} alt={unit.name} style={{ width: 32, height: 32, objectFit: unit.id === 'nick' ? 'cover' : 'contain', borderRadius: unit.id === 'nick' ? '50%' : undefined }} />
-                    ) : (
-                      <UnitPlaceholder name={unit.name} size={32} />
-                    )}
-                    <div style={{ fontSize: 9, textAlign: 'center', marginTop: 1, textShadow: '1px 1px 1px black', lineHeight: 1.1 }}>{unit.name}</div>
-                    <div style={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap', lineHeight: 1 }}>
-                      {(UNIT_DATABASE[unit.id]?.traits || []).map(t => {
-                        const trait = TRAITS[t];
-                        return trait ? <span key={t} title={trait.name} style={{ fontSize: 8, opacity: 0.8 }}><GameIcon iconImg={trait.iconImg} icon={trait.icon} size={10} /></span> : null;
-                      })}
+                    {/* Cost badge top-left (TFT style — colored number) */}
+                    <span style={{
+                      position: 'absolute', top: 2, left: 2, zIndex: 2,
+                      minWidth: 16, padding: '0 4px', height: 14,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 11, fontWeight: 'bold', fontFamily: "'Share Tech Mono', monospace",
+                      background: getColor(unit.cost), color: '#0a0a0a',
+                      border: '1px solid rgba(0,0,0,0.6)', borderRadius: 3,
+                      textShadow: '0 1px 0 rgba(255,255,255,0.25)',
+                    }}>{unit.cost}</span>
+
+                    {/* Big portrait fills the upper portion — uses the new
+                        public/images/units/<id>/1.png (1-star variant) with
+                        graceful fallback through PortraitImg's chain. */}
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '4px 4px 0', overflow: 'hidden' }}>
+                      <PortraitImg unit={{ ...unit, stars: 1 }} unitDef={UNIT_DATABASE[unit.id]} size={56} alt={unit.name} />
                     </div>
-                    <div style={{ fontSize: 9, color: '#ffd700', display: 'flex', alignItems: 'center', gap: 2 }}>{unit.cost}{CAPS_IMG ? <img src={CAPS_IMG} alt="" style={{ width: 10, height: 10 }} /> : '💰'}</div>
-                  </>) : <div style={{ fontSize: 9, opacity: 0.5 }}>SOLD</div>}
+
+                    {/* Bottom info strip: name on top, trait icons below */}
+                    <div style={{
+                      background: `linear-gradient(180deg, ${getColor(unit.cost)}55, ${getColor(unit.cost)}88)`,
+                      padding: '3px 4px',
+                      borderTop: `1px solid ${getColor(unit.cost)}`,
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center', textShadow: '0 1px 2px rgba(0,0,0,0.9)', lineHeight: 1.1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{unit.name}</div>
+                      <div style={{ display: 'flex', gap: 3, justifyContent: 'center', marginTop: 2 }}>
+                        {(UNIT_DATABASE[unit.id]?.traits || []).map(t => {
+                          const trait = TRAITS[t];
+                          return trait ? (
+                            <span key={t} title={trait.name} style={{ display: 'inline-flex', alignItems: 'center', gap: 2, fontSize: 8, color: trait.color, fontWeight: 'bold', padding: '1px 4px', background: 'rgba(0,0,0,0.55)', borderRadius: 2, border: `1px solid ${trait.color}66` }}>
+                              <GameIcon iconImg={trait.iconImg} icon={trait.icon} size={9} />{trait.name}
+                            </span>
+                          ) : null;
+                        })}
+                      </div>
+                    </div>
+                  </>) : <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, opacity: 0.5, color: 'var(--ui-text-dim)' }}>SOLD</div>}
                 </div>
               ))}
             </div>
@@ -3138,8 +3185,51 @@ function WastelandTactics() {
           </div>
         </div>
 
-        {/* Right panel — Unit Info & Combat Log */}
+        {/* Right panel — Players · Unit Info · Combat Log */}
         <div className="wt-info-panel" style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          {/* PLAYERS — TFT-style vertical roster: current player + ghost opponents */}
+          <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 6 }}>
+            <div className="wt-panel-header">PLAYERS</div>
+            {(() => {
+              const all = [
+                { id: 'me', name: 'You', hp, level, alive: hp > 0, isMe: true },
+                ...(ghostPlayersRef.current || []).map(g => ({ id: `ghost_${g.id ?? g.name}`, name: g.name, hp: g.hp, level: g.level, alive: g.alive, isMe: false })),
+              ];
+              // Sort: alive first by HP desc, then dead last
+              const sorted = [...all].sort((a, b) => (b.alive - a.alive) || (b.hp - a.hp));
+              return sorted.map((p, rank) => {
+                const rankStr = String(rank + 1).padStart(2, '0');
+                const initial = (p.name || '?').trim().charAt(0).toUpperCase();
+                const hpColor = !p.alive ? '#444' : p.hp > 60 ? '#44ff44' : p.hp > 25 ? '#ffaa00' : '#ff4444';
+                const isCurrentOpp = currentOpponent && p.name === currentOpponent;
+                return (
+                  <div key={p.id} style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '4px 5px', marginBottom: 3,
+                    background: p.isMe ? 'rgba(78,255,78,0.08)' : isCurrentOpp ? 'rgba(255,80,80,0.10)' : 'transparent',
+                    border: p.isMe ? '1px solid rgba(78,255,78,0.35)' : isCurrentOpp ? '1px solid rgba(255,80,80,0.5)' : '1px solid var(--ui-border-dim)',
+                    borderRadius: 3,
+                    opacity: p.alive ? 1 : 0.4,
+                  }}>
+                    <span style={{ fontSize: 9, color: 'var(--ui-text-dim)', fontFamily: "'Share Tech Mono', monospace", minWidth: 18 }}>{rankStr}</span>
+                    <span style={{ fontSize: 11, fontWeight: 'bold', color: hpColor, fontFamily: "'Share Tech Mono', monospace", minWidth: 26, textAlign: 'right' }}>{Math.max(0, p.hp)}</span>
+                    <div style={{
+                      width: 22, height: 22, borderRadius: '50%',
+                      background: p.isMe ? 'linear-gradient(135deg, #4eff4e, #008800)' : 'linear-gradient(135deg, #886644, #442200)',
+                      border: `1.5px solid ${p.isMe ? '#4eff4e' : isCurrentOpp ? '#ff5050' : '#555'}`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 10, fontWeight: 'bold', color: '#0a0a0a', textShadow: '0 1px 0 rgba(255,255,255,0.3)',
+                      flexShrink: 0,
+                    }} title={`${p.name} — LV.${p.level} · ${p.hp} HP${!p.alive ? ' · DEAD' : ''}${isCurrentOpp ? ' · current opponent' : ''}`}>{initial}</div>
+                    <span style={{ fontSize: 9, color: p.isMe ? '#aaffaa' : 'var(--ui-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
+                      {p.name}{!p.alive && <span style={{ color: '#ff4444', marginLeft: 4 }}>×</span>}
+                    </span>
+                  </div>
+                );
+              });
+            })()}
+          </div>
+
           {/* Unit Info */}
           <div style={{ background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 8 }}>
             <div className="wt-panel-header">UNIT INFO</div>
@@ -4275,11 +4365,47 @@ function WastelandTactics() {
         onPick={(aug) => {
           setAugments(prev => [...prev, aug.id]);
           setAugmentChoice(null);
-          // Apply immediate effects
-          if (aug.effect.benchAdd) {
+          // Apply immediate effects.
+          if (aug.effect?.benchAdd) {
             setBench(prev => [...prev, ...Array(aug.effect.benchAdd).fill(null)]);
           }
-          setLog(prev => [`⚡ Acquired augment: ${aug.name}!`, ...prev.slice(0, 9)]);
+          // Character augments — grant a free copy of a unit.
+          if (aug.grantUnit) {
+            const def = UNIT_DATABASE[aug.grantUnit.id];
+            if (def) {
+              const newUnit = { id: aug.grantUnit.id, name: def.name, stars: aug.grantUnit.stars || 1, uid: makeUid(), cost: def.cost, hp: def.hp, atk: def.atk, def: def.def, traits: def.traits, items: [] };
+              setBench(prev => {
+                const idx = prev.findIndex(u => !u);
+                if (idx === -1) return [...prev, newUnit];
+                const next = [...prev]; next[idx] = newUnit; return next;
+              });
+              setLog(prev => [`A ${def.name} joined your bench from the augment.`, ...prev.slice(0, 9)]);
+            }
+          }
+          // Robot Dog augment — transform highest-star Dogmeat into Robot Dog.
+          if (aug.transformUnit && aug.transformUnit.from === 'dogmeat' && aug.transformUnit.to === 'robot-dog') {
+            const findHighest = (units) => {
+              let bestIdx = -1, bestStars = -1;
+              units.forEach((u, i) => { if (u?.id === 'dogmeat' && u.stars > bestStars) { bestStars = u.stars; bestIdx = i; } });
+              return bestIdx;
+            };
+            const boardIdx = findHighest(board);
+            const benchIdx = findHighest(bench);
+            const rdDef = UNIT_DATABASE['robot-dog'];
+            const transform = (u) => ({ ...u, id: 'robot-dog', name: rdDef?.name || 'Robot Dog' });
+            if (boardIdx !== -1 && (benchIdx === -1 || board[boardIdx].stars >= bench[benchIdx].stars)) {
+              setBoard(prev => { const next = [...prev]; next[boardIdx] = transform(next[boardIdx]); return next; });
+              setLog(prev => ['Dogmeat reborn as Robot Dog!', ...prev.slice(0, 9)]);
+            } else if (benchIdx !== -1) {
+              setBench(prev => { const next = [...prev]; next[benchIdx] = transform(next[benchIdx]); return next; });
+              setLog(prev => ['Dogmeat reborn as Robot Dog!', ...prev.slice(0, 9)]);
+            } else if (rdDef) {
+              const newRD = { id: 'robot-dog', name: rdDef.name, stars: 1, uid: makeUid(), cost: rdDef.cost, hp: rdDef.hp, atk: rdDef.atk, def: rdDef.def, traits: rdDef.traits, items: [] };
+              setBench(prev => { const idx = prev.findIndex(u => !u); if (idx === -1) return [...prev, newRD]; const next = [...prev]; next[idx] = newRD; return next; });
+              setLog(prev => ['Robot Dog activated on your bench.', ...prev.slice(0, 9)]);
+            }
+          }
+          setLog(prev => [`Acquired augment: ${aug.name}!`, ...prev.slice(0, 9)]);
           sound.upgrade();
         }}
       />

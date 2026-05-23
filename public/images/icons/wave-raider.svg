@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1a0e08" stroke="#a06030" stroke-width="2"/>
+  <!-- Pistol silhouette: barrel + grip + trigger guard -->
+  <path d="M14 28 L46 28 L46 32 L40 32 L40 36 L34 36 L34 38 Q32 40 30 38 L30 32 L20 32 L20 30 L14 30 Z"
+        fill="none" stroke="#d6a070" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <!-- Muzzle flash hint -->
+  <path d="M14 30 L10 27 M14 28 L9 30 M14 30 L11 33" stroke="#ffb070" stroke-width="1.4" stroke-linecap="round" opacity="0.7"/>
+  <!-- Front sight -->
+  <rect x="20" y="26" width="2" height="2" fill="#d6a070"/>
+</svg>

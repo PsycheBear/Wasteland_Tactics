@@ -1,65 +1,112 @@
-// Themed PvE creep waves — TFT-style PvE rounds with named creeps.
-// The combat engine still generates enemies the existing way; this file
-// only supplies a *theme* (name, flavour, icon, log lines) that the UI
-// surfaces during PvE rounds so they don't feel like generic ghost fights.
+// Themed PvE creep waves — TFT-style PvE rounds.
 //
-// Keyed by round number. Round 1-3 are the always-PvE opening; rounds
-// 8 / 15 / 22 / 29 are between-boss PvE waves with stronger themes.
+// TFT pattern: 3 opening PvE rounds (1, 2, 3) plus 1 mid-stage PvE round at
+// the start of each new stage (8, 15, 22, 29, 36). 8 PvE rounds total.
+//
+// `creeps` lists the kebab-case creep IDs used by combat.js. They map to
+// portraits under public/images/pve/<creep-id>.png. Each wave fields a
+// homogenous group (TFT style); the engine still rolls the cost/stat curve.
+//
+// `dropTier` controls what the player picks at the end of the round:
+//   - 'component' (default) → 3 choices of single item components
+//   - 'completed'           → 3 choices of fully-built items (round 36 only)
+//
+// Iconography note: emojis were removed in favor of SVGs. Each wave declares
+// `iconImg` (under public/images/icons/wave-<id>.svg) which the UI loads
+// through GameIcon. The `icon` field is kept (empty string) for the
+// emoji-fallback API shape — GameIcon prefers iconImg when present.
+//
+// Log lines prefix with [PVE] so Game.jsx's LOG_EMOJI_MAP renders a
+// colored badge instead of an emoji glyph.
+
+import { BASE } from '../baseUrl.js';
 
 export const PVE_WAVES = {
   1: {
-    name: 'Radroach Swarm',
-    flavour: 'A skittering tide of irradiated vermin.',
-    icon: '🪳', // 🪳
+    name: 'Raider Gang',
+    flavour: 'A handful of pipe-rifle thugs spoiling for trouble.',
+    creeps: ['raider-1', 'raider-2'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-raider.svg`,
     color: '#a06030',
-    logLine: '🪳 Radroaches emerge from the rubble!',
+    logLine: '[PVE] A Raider Gang ambushes you!',
+    dropTier: 'component',
   },
   2: {
-    name: 'Mole Rat Nest',
-    flavour: 'Bristly hide, weak armour — drop fast or get bit.',
-    icon: '🐀', // 🐀
-    color: '#8a6b3a',
-    logLine: '🐀 Mole rats burrow up underfoot!',
+    name: 'Triggerman Hit',
+    flavour: 'Goodneighbor leftovers in matching suits and tommyguns.',
+    creeps: ['triggerman', 'gunner'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-triggerman.svg`,
+    color: '#7a5a30',
+    logLine: '[PVE] Triggermen open fire from the alleys!',
+    dropTier: 'component',
   },
   3: {
-    name: 'Feral Ghouls',
-    flavour: 'Shambling, fast, and they pile in fours.',
-    icon: '☣️', // ☣️
-    color: '#669933',
-    logLine: '☣️ Feral ghouls charge from the wastes!',
+    name: 'The Pack',
+    flavour: 'Nuka-World gang on too much Psycho.',
+    creeps: ['pack-1', 'pack-2'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-pack.svg`,
+    color: '#883344',
+    logLine: '[PVE] The Pack howls and charges!',
+    dropTier: 'component',
   },
   8: {
-    name: 'Yao Guai Pack',
-    flavour: 'Rad-bears. They hit like trucks. Tank them.',
-    icon: '🐻', // 🐻
-    color: '#5a3a20',
-    logLine: '🐻 A Yao Guai pack closes in!',
+    name: 'Hood Disciples',
+    flavour: 'Cult of Atom acolytes wreathed in radiation.',
+    creeps: ['hood-disciple-1', 'hood-disciple-2'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-hood-disciple.svg`,
+    color: '#669933',
+    logLine: '[PVE] Hood Disciples emerge from the glow!',
+    dropTier: 'component',
   },
   15: {
-    name: 'Super Mutant Strike',
-    flavour: 'Big, green, angry. Pack item parts dropped at the end.',
-    icon: '👹', // 👹
-    color: '#558844',
-    logLine: '👹 Super Mutants smash through!',
+    name: 'Talon Company',
+    flavour: 'Mercenaries in matching armor, paid to kill you specifically.',
+    creeps: ['talon-company-1', 'talon-company-2'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-talon.svg`,
+    color: '#555555',
+    logLine: '[PVE] Talon Company moves in!',
+    dropTier: 'component',
   },
   22: {
-    name: 'Mirelurk Hunters',
-    flavour: 'Shelled, fast, and they target your back line.',
-    icon: '🦀', // 🦀
-    color: '#446688',
-    logLine: '🦀 Mirelurks scuttle out of the muck!',
+    name: 'Super Mutants',
+    flavour: 'Big, green, angry. Pack item parts dropped at the end.',
+    creeps: ['super-mutant'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-super-mutant.svg`,
+    color: '#558844',
+    logLine: '[PVE] Super Mutants smash through!',
+    dropTier: 'component',
   },
   29: {
     name: 'Glowing Horde',
     flavour: 'Radiation-soaked feral ghouls — they explode on death.',
-    icon: '💥', // 💥
+    creeps: ['glowing-one'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-glowing-horde.svg`,
     color: '#88cc44',
-    logLine: '💥 The Glowing Horde descends!',
+    logLine: '[PVE] The Glowing Horde descends!',
+    dropTier: 'component',
+  },
+  36: {
+    name: 'Sentry Bots',
+    flavour: 'Pre-war military hardware, rusted but operational.',
+    creeps: ['sentry-bot', 'sentry-bot-rusty'],
+    icon: '',
+    iconImg: `${BASE}/images/icons/wave-sentry-bot.svg`,
+    color: '#888899',
+    logLine: '[PVE] Sentry Bots activate and acquire targets!',
+    // TFT 4-7 "Raptors" — late-game PvE round drops a fully-completed item.
+    dropTier: 'completed',
   },
 };
 
 // Rounds that should be PvE even though they aren't 1-3 or a boss round.
-export const EXTRA_PVE_ROUNDS = [8, 15, 22, 29];
+export const EXTRA_PVE_ROUNDS = [8, 15, 22, 29, 36];
 
 export function isPveRound(round) {
   if (round <= 3) return true;

@@ -32,13 +32,16 @@ export const getRandomCost = (playerLevel) => {
 
 export const POOL_SIZES = { 1: 13, 2: 10, 3: 7, 4: 5, 5: 5 };
 
-export const UNIT_KEYS = Object.keys(UNIT_DATABASE);
+// Units flagged `notShoppable: true` (e.g. Robot Dog from the Dogmeat augment,
+// any boss-only units) are excluded from the shop pool. They can still exist
+// on the board / bench via augment grants — they just never roll in the shop.
+export const UNIT_KEYS = Object.keys(UNIT_DATABASE).filter(k => !UNIT_DATABASE[k].notShoppable);
 
 export const XP_TO_LEVEL = { 4: 4, 5: 8, 6: 14, 7: 24, 8: 36, 9: 48 };
 
 export const initPool = () => {
   const p = {};
-  Object.keys(UNIT_DATABASE).forEach(k => { p[k] = POOL_SIZES[UNIT_DATABASE[k].cost] || 10; });
+  UNIT_KEYS.forEach(k => { p[k] = POOL_SIZES[UNIT_DATABASE[k].cost] || 10; });
   return p;
 };
 

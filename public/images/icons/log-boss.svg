@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+  <!-- Crowned skull -->
+  <path d="M6 4 L9 7 L12 4 L15 7 L18 4 L18 8 L6 8 Z"/>
+  <path d="M12 9 C7 9 4 12 4 16 C4 18 5 19 6 20 L6 22 L9 22 L9 20 L11 20 L11 22 L13 22 L13 20 L15 20 L15 22 L18 22 L18 20 C19 19 20 18 20 16 C20 12 17 9 12 9 Z M9 15 A1.2 1.2 0 1 1 9 15.001 Z M15 15 A1.2 1.2 0 1 1 15 15.001 Z"/>
+</svg>

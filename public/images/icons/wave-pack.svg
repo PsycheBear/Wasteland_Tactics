@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#1a0810" stroke="#883344" stroke-width="2"/>
+  <!-- Wolf head silhouette (front-facing) -->
+  <!-- Ears -->
+  <path d="M16 22 L20 12 L26 22 Z" fill="none" stroke="#cc7a88" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M48 22 L44 12 L38 22 Z" fill="none" stroke="#cc7a88" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Head shape -->
+  <path d="M18 24 Q18 32 22 38 L28 44 L36 44 L42 38 Q46 32 46 24 Q40 20 32 20 Q24 20 18 24 Z"
+        fill="none" stroke="#cc7a88" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Eyes -->
+  <circle cx="26" cy="30" r="1.6" fill="#cc7a88"/>
+  <circle cx="38" cy="30" r="1.6" fill="#cc7a88"/>
+  <!-- Snout -->
+  <path d="M28 38 L32 42 L36 38" fill="none" stroke="#cc7a88" stroke-width="1.6" stroke-linecap="round"/>
+  <circle cx="32" cy="36" r="1.2" fill="#cc7a88"/>
+</svg>

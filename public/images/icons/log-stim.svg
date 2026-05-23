@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+  <!-- Syringe / stimpak -->
+  <path d="M3 18 L6 21 L8 19 L5 16 Z"/>
+  <rect x="7" y="11" width="10" height="4" transform="rotate(-45 12 13)"/>
+  <path d="M17 5 L19 7 L21 5 L19 3 Z"/>
+  <line x1="2" y1="22" x2="4" y2="20" stroke="currentColor" stroke-width="1.5"/>
+</svg>

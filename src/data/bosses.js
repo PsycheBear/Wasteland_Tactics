@@ -1,33 +1,95 @@
 // === BOSS DATA ===
+//
+// 6 bosses at rounds 7 / 14 / 21 / 28 / 35 / 42.
+//
+//   Round  7  RADSCORPION    — keep current poison stomp
+//   Round 14  SWAN           — stomp AoE every 8s, +50% ATK below 30% HP
+//   Round 21  SYNTH COURSER  — teleport-strike lowest-HP every 5s for 300 burst
+//   Round 28  DEATHCLAW      — keep current stomp mechanic
+//   Round 35  ATOM THEIL     — glow burst (stacking rad DoT), heals allies 50% on death
+//   Round 42  LORENZO CABOT  — crimson stasis (freezes 1 unit per cast for 4s)
+//
+// `extraBosses.js` is kept for future content but exports an empty array now —
+// Mothman and the older one-off bosses were retired in this overhaul.
+
 import { BASE } from '../baseUrl.js';
 import { extraBosses } from './extraBosses.js';
+
 export const BOSS_DATABASE = {
-  7: { name: 'Legendary Radscorpion', hp: 3000, atk: 60, def: 30, mechanic: 'poison', mechanicInterval: 30, mechanicDmg: 80, icon: '\u{1F982}', iconImg: `${BASE}/images/icons/boss-radscorpion.svg` },
-  14: { name: 'Mirelurk Queen', hp: 5000, atk: 75, def: 35, mechanic: 'spawn', mechanicInterval: 50, icon: '\u{1F980}', iconImg: `${BASE}/images/icons/boss-mirelurk.svg` },
-  21: { name: 'Behemoth', hp: 7000, atk: 90, def: 40, mechanic: 'enrage', enrageThreshold: 0.5, icon: '\u{1F479}', iconImg: `${BASE}/images/icons/boss-behemoth.svg` },
-  28: { name: 'Mythic Deathclaw', hp: 10000, atk: 110, def: 45, mechanic: 'stomp', mechanicInterval: 40, mechanicDmg: 100, icon: '\u{1F409}', iconImg: `${BASE}/images/icons/boss-deathclaw.svg` },
+  7: {
+    name: 'Legendary Radscorpion',
+    hp: 3000, atk: 60, def: 30,
+    mechanic: 'poison', mechanicInterval: 30, mechanicDmg: 80,
+    icon: '🦂', iconImg: `${BASE}/images/icons/boss-radscorpion.svg`,
+  },
+  14: {
+    name: 'Swan',
+    hp: 5500, atk: 95, def: 40,
+    // Stomp AoE every 8 ticks; combat.js applies an enrage @ <30% HP that
+    // bumps ATK by +50% (handled the same way as the existing 'enrage'
+    // mechanic but layered on a stomp boss — the engine reads both flags).
+    mechanic: 'stomp', mechanicInterval: 16, mechanicDmg: 110,
+    enrageThreshold: 0.3, enrageAtkMult: 1.5,
+    icon: '🦢', iconImg: `${BASE}/images/icons/boss-swan.svg`,
+  },
+  21: {
+    name: 'Synth Courser',
+    hp: 7000, atk: 95, def: 45,
+    // Teleport-strike the lowest-HP enemy every 5 ticks for 300 burst damage.
+    // Reuses the existing 'stomp' mechanic key (interval+dmg pattern) so
+    // current combat plumbing renders the windup the same way.
+    mechanic: 'stomp', mechanicInterval: 10, mechanicDmg: 300,
+    courserTeleport: true,
+    icon: '🤖', iconImg: `${BASE}/images/icons/boss-synth-courser.svg`,
+  },
+  28: {
+    name: 'Mythic Deathclaw',
+    hp: 10000, atk: 110, def: 45,
+    mechanic: 'stomp', mechanicInterval: 40, mechanicDmg: 100,
+    icon: '🐲', iconImg: `${BASE}/images/icons/boss-deathclaw.svg`,
+  },
+  35: {
+    name: 'Atom Theil',
+    hp: 13000, atk: 120, def: 50,
+    // Glow burst: stacking radiation DoT on all enemies. Reuses 'poison'
+    // mechanic plumbing for the per-tick tick application (so the engine's
+    // existing tick loop drains it the same way).
+    mechanic: 'poison', mechanicInterval: 12, mechanicDmg: 60,
+    glowBurst: true,           // signals combat.js to stack the DoT
+    deathHealAllies: 0.5,      // on boss death, heal allies 50% HP
+    icon: '☢️', iconImg: `${BASE}/images/icons/boss-atom-theil.svg`,
+  },
+  42: {
+    name: 'Lorenzo Cabot',
+    hp: 18000, atk: 150, def: 60,
+    // Crimson stasis: freeze 1 enemy unit per cast for 4s. We re-use
+    // 'spawn' mechanic plumbing (it has a mechanicInterval but no dmg)
+    // and add a stasis flag for the engine to read.
+    mechanic: 'spawn', mechanicInterval: 14,
+    crimsonStasis: true, stasisDuration: 8,
+    icon: '🔴', iconImg: `${BASE}/images/icons/boss-lorenzo-cabot.svg`,
+  },
 };
 
-// Spread Wave 1 extras under their round-number keys (Mothman at 35).
+// Spread any extras under their round-number keys. Currently empty.
 for (const b of extraBosses) {
   BOSS_DATABASE[b.round] = b;
 }
 
-// Boss ID is derived from the kebab-cased name (e.g. "Mirelurk Queen" -> "mirelurk-queen").
-// Used both for the portrait path and as a stable identifier for stats / replay.
+// Boss ID is derived from the kebab-cased name. Used for portrait path + replay.
 export const getBossId = (boss) => {
   if (!boss?.name) return null;
   return boss.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 };
+
 export const getBossPortrait = (boss) => {
   const id = getBossId(boss);
   return id ? `${BASE}/images/bosses/${id}.png` : null;
 };
 
-// Stamp portrait + id fields on each boss for the UI layer's fallback path.
+// Stamp portrait + id + round on each boss entry for the UI fallback path.
 for (const [round, b] of Object.entries(BOSS_DATABASE)) {
   b.id = getBossId(b);
   b.portrait = getBossPortrait(b);
-  // Make the round explicit on the boss object too (existing entries lacked it).
   if (b.round === undefined) b.round = Number(round);
 }

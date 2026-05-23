@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0e1808" stroke="#558844" stroke-width="2"/>
+  <!-- Hulking ogre face -->
+  <!-- Massive jaw / head -->
+  <path d="M14 28 Q14 18 32 16 Q50 18 50 28 L48 42 Q44 50 32 52 Q20 50 16 42 Z"
+        fill="none" stroke="#a3d28a" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Brow ridge -->
+  <path d="M16 28 Q24 24 32 26 Q40 24 48 28" fill="none" stroke="#a3d28a" stroke-width="2" stroke-linecap="round"/>
+  <!-- Tiny mean eyes -->
+  <circle cx="24" cy="32" r="1.6" fill="#a3d28a"/>
+  <circle cx="40" cy="32" r="1.6" fill="#a3d28a"/>
+  <!-- Snarling teeth (lower fangs) -->
+  <path d="M24 42 L26 48 L28 42 L30 46 L32 42 L34 46 L36 42 L38 48 L40 42"
+        fill="none" stroke="#cfe7b8" stroke-width="1.6" stroke-linejoin="round"/>
+  <!-- Tusks -->
+  <path d="M22 40 L20 50" stroke="#cfe7b8" stroke-width="2.2" stroke-linecap="round"/>
+  <path d="M42 40 L44 50" stroke="#cfe7b8" stroke-width="2.2" stroke-linecap="round"/>
+</svg>

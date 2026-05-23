@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="30" fill="#0a1408" stroke="#669933" stroke-width="2"/>
+  <!-- Robed hood silhouette -->
+  <path d="M20 50 L20 30 Q20 18 32 14 Q44 18 44 30 L44 50 Z"
+        fill="none" stroke="#a8d77a" stroke-width="2" stroke-linejoin="round"/>
+  <!-- Inner hood shadow -->
+  <path d="M26 30 Q26 22 32 20 Q38 22 38 30 Q34 36 32 36 Q30 36 26 30 Z"
+        fill="#0a1408" stroke="#a8d77a" stroke-width="1.6"/>
+  <!-- Candle flame (above the robe) -->
+  <path d="M32 8 Q30 11 30 14 Q30 17 32 18 Q34 17 34 14 Q34 11 32 8 Z"
+        fill="none" stroke="#cce690" stroke-width="1.6" stroke-linejoin="round"/>
+  <!-- Glow rays -->
+  <line x1="32" y1="5" x2="32" y2="2" stroke="#a8d77a" stroke-width="1" opacity="0.6"/>
+  <line x1="26" y1="10" x2="23" y2="8" stroke="#a8d77a" stroke-width="1" opacity="0.6"/>
+  <line x1="38" y1="10" x2="41" y2="8" stroke="#a8d77a" stroke-width="1" opacity="0.6"/>
+</svg>
