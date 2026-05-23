@@ -447,6 +447,57 @@ export const generateEnemies = (round, difficultyId = DEFAULT_DIFFICULTY_ID) => 
     return slots;
   }
 
+  // === PVE CREEP ROUND ===
+  // Themed creep waves (raiders, triggermen, the pack, hood disciples, etc.)
+  // pull from public/images/creeps/<id>.png with custom stats per round —
+  // these are NOT shop-roster units. TFT-style krug/wolf/raptor equivalents.
+  const pveWave = isPveRound(round) ? getPveWave(round) : null;
+  if (pveWave && pveWave.creeps && pveWave.creeps.length > 0) {
+    // Count + stats scale with round stage.
+    const stage = Math.ceil(round / 7);
+    const creepCount = Math.min(2 + Math.floor((round - 1) / 3), 5);
+    const baseHpForRound = 320 + (stage - 1) * 220;       // 320, 540, 760, 980, ...
+    const baseAtkForRound = 28 + (stage - 1) * 18;        // 28, 46, 64, 82, ...
+    const baseDefForRound = 18 + (stage - 1) * 8;
+    const creeps = Array(creepCount).fill(null).map((_, i) => {
+      // Rotate through the wave's creep art so a wave of 4 with 2 art entries
+      // produces an alternating squad.
+      const creepArt = pveWave.creeps[i % pveWave.creeps.length];
+      const ext = creepArt.endsWith('-courser') || creepArt === 'glowing-one' || creepArt === 'atom-theil' || creepArt === 'swan' ? 'webp' : 'png';
+      const isMelee = /raider|pack|super-mutant|hood-disciple|triggerman/.test(creepArt);
+      return {
+        name: pveWave.name,
+        id: `creep_${creepArt}_${i}`,                     // unique id, scoped to the round
+        creepArt,                                          // UI hint: images/creeps/<creepArt>.<ext>
+        creepArtExt: ext,
+        stars: 1, uid: `enemy_creep_${round}_${i}`,
+        currentHp: baseHpForRound * hpMult,
+        maxHp: baseHpForRound * hpMult,
+        atk: baseAtkForRound * atkMult,
+        baseAtk: baseAtkForRound * atkMult,
+        baseDef: baseDefForRound,
+        def: baseDefForRound,
+        position: 0, isEnemy: true, isCreep: true, stunDuration: 0,
+        mana: 0, manaMax: 0, apGain: 0, apOnHit: 0,
+        abilityUsed: true,                                 // creeps don't cast abilities
+        buffDuration: 0, buffAtkMult: 1,
+        attackSpeed: 1.0, attackCooldown: 10,
+        traits: [], cost: 1, items: [],
+        attackRange: isMelee ? 1 : 3,
+        _meleeCreep: isMelee,
+      };
+    });
+    const slots = Array(14).fill(null);
+    // Melee creeps in the FRONT (closest to player) — positions 7-13.
+    // Ranged creeps in the BACK row — positions 0-6.
+    const meleeCreeps = creeps.filter(c => c._meleeCreep);
+    const rangedCreeps = creeps.filter(c => !c._meleeCreep);
+    meleeCreeps.forEach((c, i) => { if (i < 7) { c.position = 7 + i; slots[7 + i] = c; } });
+    rangedCreeps.forEach((c, i) => { if (i < 7) { c.position = i; slots[i] = c; } });
+    return slots;
+  }
+
+  // === GHOST-LIKE PVP ROUND (fallback for non-PvE non-boss rounds) ===
   const count = Math.min(Math.ceil(round / 2) + 1, 7);
   const maxCost = round <= 3 ? 1 : round <= 6 ? 2 : round <= 8 ? 3 : round <= 10 ? 4 : 5;
   const rawEnemies = Array(count).fill(null).map((_, i) => {

@@ -2992,15 +2992,19 @@ function WastelandTactics() {
                         <div style={{ position: 'absolute', bottom: -4, left: '50%', transform: 'translateX(-50%)', width: '80%', height: 8, background: 'rgba(0,0,0,0.4)', borderRadius: '50%', filter: 'blur(4px)', pointerEvents: 'none' }} />
                         {/* Counter-rotate enemy unit to face camera */}
                         <div className="wt-iso-unit" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'visible' }}>
-                          {/* Render the placeholder UNDER the portrait so if PortraitImg
-                              resolves to null (no manifest hit, no legacy data url) the
-                              user still sees the unit's silhouette instead of an empty cell. */}
-                          <div style={{ position: 'relative', width: 44, height: 44 }}>
-                            <UnitPlaceholder name={enemy.name} size={44} />
-                            <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                              <PortraitImg unit={enemy} unitDef={UNIT_DATABASE[enemy.id]} size={44} alt={enemy.name} />
-                            </div>
-                          </div>
+                          {/* PvE creep render path: use the wave's creep art from
+                              public/images/creeps/. For ghost PvP enemies fall back to
+                              PortraitImg with a placeholder behind as safety net. */}
+                          {enemy.creepArt ? (
+                            <img src={`${BASE}/images/creeps/${enemy.creepArt}.${enemy.creepArtExt || 'png'}`} alt={enemy.name} style={{ width: 44, height: 44, objectFit: 'contain', pointerEvents: 'none' }} />
+                          ) : (() => {
+                            const eDef = UNIT_DATABASE[enemy.id] || {};
+                            const hasNew = eDef.portraitBase && (hasPortrait(eDef.portraitBase) || enemy.id === 'sole-survivor' || enemy.id === 'robot-dog');
+                            const hasLegacy = !!eDef.portrait || !!getUnitImage(enemy.id, enemy.stars);
+                            return (hasNew || hasLegacy)
+                              ? <PortraitImg unit={enemy} unitDef={eDef} size={44} alt={enemy.name} />
+                              : <UnitPlaceholder name={enemy.name} size={44} />;
+                          })()}
                           <div style={{ fontSize: 9 }}>{stars(enemy.stars)}</div>
                           <CombatBars currentHp={enemy.currentHp} maxHp={enemy.maxHp} mana={enemy.mana} manaMax={enemy.manaMax} variant="enemy" compact />
                         </div>

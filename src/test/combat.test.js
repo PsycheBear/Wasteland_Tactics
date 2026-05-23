@@ -137,14 +137,17 @@ describe('generateEnemies', () => {
     expect(slots).toHaveLength(14);
   });
 
-  it('uses cost-1 units only on round 1', () => {
+  it('fields themed creep enemies on PvE round 1 (Raider Gang)', () => {
     for (let i = 0; i < 10; i++) {
       const slots = generateEnemies(1);
       const occupied = slots.filter(s => s !== null);
       expect(occupied.length).toBeGreaterThan(0);
       for (const e of occupied) {
         if (e.isBoss) continue;
-        expect(UNIT_DATABASE[e.id].cost).toBeLessThanOrEqual(1);
+        // Round 1 should produce themed creeps, not shop-roster units.
+        expect(e.isCreep).toBe(true);
+        expect(e.creepArt).toMatch(/raider|triggerman|gunner|pack/);
+        expect(e.currentHp).toBeGreaterThan(0);
       }
     }
   });
