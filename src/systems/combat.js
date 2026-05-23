@@ -15,8 +15,10 @@ import { sound, WT_SETTINGS } from './audio.js';
 // canonical list at `../data/fo4Companions.js` in the same wave; the
 // integration step will swap this inline default for the real import.
 // Until then this fallback keeps combat.js loadable and tests green.
+// Canonical roster (12). Codsworth was removed in the character overhaul so
+// the Survivor's Bond passive no longer searches for him.
 export const FO4_COMPANIONS = [
-  'cait', 'codsworth', 'curie', 'danse', 'deacon', 'dogmeat',
+  'cait', 'curie', 'danse', 'deacon', 'dogmeat',
   'hancock', 'maccready', 'nick', 'piper', 'preston', 'strong',
   'x6-88',
 ];
@@ -2100,11 +2102,15 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         pAbilityTriggered = triggerAbility(unit, pUnits, eUnits, logs, abilityMult, abilityUnits);
         if (pAbilityTriggered) {
           if (['sturges','curie'].includes(unit.id)) abilityTarget = pUnits.filter(a=>a.currentHp>0&&a.currentHp<a.maxHp).sort((a,b)=>(a.currentHp/a.maxHp)-(b.currentHp/b.maxHp))[0];
-          else if (['dogmeat','nick','deathclaw','marcy'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>b.atk-a.atk)[0];
-          else if (['codsworth','danse','moira','hancock','maxson','kellogg','liberty','fahrenheit','wiseman'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0)[0];
+          // VFX targeting buckets — keep in sync with the case handlers in triggerAbility.
+          // Removed: marcy, codsworth, liberty, wiseman (no longer in roster).
+          else if (['dogmeat','robot-dog','nick','deathclaw','magnolia','jack-cabot','tom','sarah-lyon','zeek','virgil'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>b.atk-a.atk)[0];
+          else if (['danse','moira','hancock','maxson','kellogg','fahrenheit','glory','mother-isolde','madison-li','shaun'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0)[0];
           else if (unit.id === 'piper') abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>b.def-a.def)[0];
-          else if (unit.id === 'maccready') abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>a.currentHp-b.currentHp)[0];
-          else if (['strong','preston','cait','deacon'].includes(unit.id)) abilityTarget = { uid: unit.uid };
+          else if (['maccready','x6-88'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>a.currentHp-b.currentHp)[0];
+          else if (['ronnie','pickman'].includes(unit.id)) abilityTarget = eUnits.filter(e=>e.currentHp>0).sort((a,b)=>b.currentHp-a.currentHp)[0];
+          else if (['cade','irma','ingram','silver-shroud'].includes(unit.id)) abilityTarget = pUnits.filter(a=>a.currentHp>0&&a.currentHp<a.maxHp).sort((a,b)=>(a.currentHp/a.maxHp)-(b.currentHp/b.maxHp))[0];
+          else if (['strong','preston','cait','deacon','desdemona','cross','sole-survivor'].includes(unit.id)) abilityTarget = { uid: unit.uid };
           if (abilityTarget) {
             spawnVFX('ability', { unitId: unit.id, fromUid: unit.uid, toUid: abilityTarget.uid }, rectMap);
             // Heal VFX for sturges (single target) and curie (all allies)
@@ -2375,12 +2381,13 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         if (unit.id === 'dima') eAbilityTarget = eUnits.filter(a=>a.currentHp<=0).sort((a,b)=>a.position-b.position)[0];
         eAbilityTriggered = triggerAbility(unit, eUnits, pUnits, logs, 1, abilityUnits);
         if (eAbilityTriggered) {
-          if (['sturges','curie'].includes(unit.id)) eAbilityTarget = eUnits.filter(a=>a.currentHp>0&&a.currentHp<a.maxHp).sort((a,b)=>(a.currentHp/a.maxHp)-(b.currentHp/b.maxHp))[0];
-          else if (['dogmeat','nick','deathclaw','marcy'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>b.atk-a.atk)[0];
-          else if (['codsworth','danse','moira','hancock','maxson','kellogg','liberty','fahrenheit','wiseman'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0)[0];
+          if (['sturges','curie','cade','irma','ingram','silver-shroud'].includes(unit.id)) eAbilityTarget = eUnits.filter(a=>a.currentHp>0&&a.currentHp<a.maxHp).sort((a,b)=>(a.currentHp/a.maxHp)-(b.currentHp/b.maxHp))[0];
+          else if (['dogmeat','robot-dog','nick','deathclaw','magnolia','jack-cabot','tom','sarah-lyon','zeek','virgil'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>b.atk-a.atk)[0];
+          else if (['danse','moira','hancock','maxson','kellogg','fahrenheit','glory','mother-isolde','madison-li','shaun'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0)[0];
           else if (unit.id === 'piper') eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>b.def-a.def)[0];
-          else if (unit.id === 'maccready') eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>a.currentHp-b.currentHp)[0];
-          else if (['strong','preston','cait','deacon'].includes(unit.id)) eAbilityTarget = { uid: unit.uid };
+          else if (['maccready','x6-88'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>a.currentHp-b.currentHp)[0];
+          else if (['ronnie','pickman'].includes(unit.id)) eAbilityTarget = pUnits.filter(p=>p.currentHp>0).sort((a,b)=>b.currentHp-a.currentHp)[0];
+          else if (['strong','preston','cait','deacon','desdemona','cross','sole-survivor'].includes(unit.id)) eAbilityTarget = { uid: unit.uid };
           spawnVFX('ability', { unitId: unit.id, fromUid: unit.uid, toUid: eAbilityTarget?.uid }, rectMap);
           // Heal VFX for enemy sturges/curie abilities
           if (unit.id === 'sturges' && eAbilityTarget) {
@@ -2676,8 +2683,8 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
           setLog(prev => [`[GIFT] Choose an item component!`, ...prev.slice(0, 9)]);
         }
 
-        // Augment choice at rounds 3, 8, 13, 18
-        const augmentRounds = [3, 8, 13, 18];
+        // Augment choice spread across the 42-round game so endgame keeps progressing.
+        const augmentRounds = [3, 8, 13, 18, 24, 30, 36];
         if (augmentRounds.includes(round)) {
           const available = AUGMENT_POOL.filter(a => !augments.includes(a.id));
           if (available.length >= 3) {

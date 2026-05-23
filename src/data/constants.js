@@ -53,5 +53,6 @@ export function makeUid() {
 // Stage 1 ends at round 3, stage 2 at round 6, etc. First carousel after round 3 (end of stage 1).
 export const ROUNDS_PER_STAGE = 3;
 export const isCarouselRound = (round) => round >= 3 && round % ROUNDS_PER_STAGE === 0;
-// Keep array export for backward compat (used in pip rendering) — generates first 10 carousel rounds
-export const CAROUSEL_ROUNDS = Array.from({ length: 10 }, (_, i) => (i + 1) * ROUNDS_PER_STAGE);
+// Keep array export for backward compat (used in pip rendering). 14 covers the
+// full 42-round game (carousel every 3 rounds: 3, 6, 9, ..., 42).
+export const CAROUSEL_ROUNDS = Array.from({ length: 14 }, (_, i) => (i + 1) * ROUNDS_PER_STAGE);
