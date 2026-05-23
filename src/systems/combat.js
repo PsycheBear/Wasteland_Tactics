@@ -873,6 +873,294 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
       return true;
     }
 
+    // ──────────────────────────────────────────────────────────────────
+    // Character-overhaul roster additions (20 new units).
+    // Same conventions as the existing cases: scale damage/heal by starMult
+    // and abilityMult, push to abilityUnits, log with bracket-tag, sound,
+    // return true on success.
+    // ──────────────────────────────────────────────────────────────────
+
+    case 'cade': {
+      // Field Triage: heal lowest-HP ally for 120 HP
+      const target = allies.filter(a => a.currentHp > 0 && a.currentHp < a.maxHp)
+        .sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp))[0];
+      if (!target) return false;
+      const healAmt = 120 * starMult * abilityMult;
+      target.currentHp = Math.min(target.maxHp, target.currentHp + healAmt);
+      logs.unshift(`[STIM] ${unit.name}'s Field Triage heals ${target.name} for ${Math.round(healAmt)}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'glory': {
+      // Minigun Spray: AoE hit up to 4 enemies for 70 each
+      const aliveEnemies = targetable.slice().sort(() => Math.random() - 0.5).slice(0, 4);
+      if (aliveEnemies.length === 0) return false;
+      const dmg = 70 * starMult * abilityMult;
+      aliveEnemies.forEach(e => { e.currentHp -= applyShroudMultiplier(e, dmg * (0.85 + Math.random() * 0.3), true); });
+      logs.unshift(`[ATK] ${unit.name}'s Minigun Spray hits ${aliveEnemies.length} for ${Math.round(dmg)} each!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'irma': {
+      // Madam's Mercy: heal 2 lowest-HP allies for 90 each
+      const targets = allies.filter(a => a.currentHp > 0 && a.currentHp < a.maxHp)
+        .sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp)).slice(0, 2);
+      if (targets.length === 0) return false;
+      const healAmt = 90 * starMult * abilityMult;
+      targets.forEach(t => { t.currentHp = Math.min(t.maxHp, t.currentHp + healAmt); });
+      logs.unshift(`[STIM] ${unit.name}'s Madam's Mercy heals ${targets.length} allies for ${Math.round(healAmt)} each!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'magnolia': {
+      // Siren's Lull: charm highest-ATK enemy — they target their own allies for 4s (8 ticks).
+      const aliveEnemies = targetable.filter(e => !e.charmed);
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      target.charmed = true;
+      target.charmDuration = Math.round(8 * abilityMult);
+      logs.unshift(`[BUF] ${unit.name}'s Siren's Lull charms ${target.name}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'ronnie': {
+      // Laser Musket Volley: 3x ATK to highest-HP enemy
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.currentHp - a.currentHp)[0];
+      const dmg = unit.atk * 3 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      logs.unshift(`[ATK] ${unit.name}'s Laser Musket Volley blasts ${target.name} for ${Math.round(dmg)}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'tom': {
+      // Conspiracy Shot: mark highest-ATK enemy — +30% incoming damage for 5s (10 ticks)
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      target.markedDmgMult = 1.3;
+      target.markedDuration = Math.round(10 * abilityMult);
+      logs.unshift(`[DEF] ${unit.name} marks ${target.name}: +30% damage taken!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'ingram': {
+      // Power Armor Patch: shield lowest-HP ally 200 + 30% DEF for 5s (10 ticks)
+      const target = allies.filter(a => a.currentHp > 0)
+        .sort((a, b) => (a.currentHp / a.maxHp) - (b.currentHp / b.maxHp))[0];
+      if (!target) return false;
+      const shield = 200 * starMult * abilityMult;
+      target.shield = (target.shield || 0) + shield;
+      target.shieldDuration = 10;
+      target.def = (target.baseDef ?? target.def) * 1.3;
+      target.defBuffDuration = 10;
+      logs.unshift(`[DEF] ${unit.name}'s Power Armor Patch shields ${target.name} for ${Math.round(shield)} + DEF!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'mother-isolde': {
+      // Atom Communion: beam of radiation to 3 enemies for 130 each
+      const aliveEnemies = targetable.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+      if (aliveEnemies.length === 0) return false;
+      const dmg = 130 * starMult * abilityMult;
+      aliveEnemies.forEach(e => { e.currentHp -= applyShroudMultiplier(e, dmg, true); });
+      logs.unshift(`[RAD] ${unit.name}'s Atom Communion radiates ${aliveEnemies.length} enemies for ${Math.round(dmg)} each!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'pickman': {
+      // Gallery Showpiece: 4x ATK to highest-HP enemy + bleed (DoT)
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.currentHp - a.currentHp)[0];
+      const dmg = unit.atk * 4 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      target.bleedDmg = 25 * starMult;
+      target.bleedDuration = 8;
+      logs.unshift(`[ATK] ${unit.name}'s Gallery Showpiece slashes ${target.name} for ${Math.round(dmg)} + bleed!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'desdemona': {
+      // Liberty Signal: allies stealth + 50% AP gain for 4s (8 ticks)
+      allies.forEach(a => {
+        if (a.currentHp > 0) {
+          a.stealthed = true;
+          a.stealthDuration = 8;
+          a.apGainMult = 1.5;
+          a.apGainDuration = 8;
+        }
+      });
+      logs.unshift(`[STEALTH] ${unit.name}'s Liberty Signal: allies stealthed + 50% AP!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'jack-cabot': {
+      // Mesmetron Pulse: mind-control 2 enemies for 5s (10 ticks)
+      const aliveEnemies = targetable.filter(e => !e.charmed);
+      if (aliveEnemies.length === 0) return false;
+      const targets = aliveEnemies.sort((a, b) => b.atk - a.atk).slice(0, 2);
+      targets.forEach(t => { t.charmed = true; t.charmDuration = Math.round(10 * abilityMult); });
+      logs.unshift(`[BUF] ${unit.name}'s Mesmetron Pulse mind-controls ${targets.length} enemies!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'madison-li': {
+      // Prototype Discharge: arc lightning chains 3 enemies for 180 damage
+      const aliveEnemies = targetable.slice().sort(() => Math.random() - 0.5).slice(0, 3);
+      if (aliveEnemies.length === 0) return false;
+      const dmg = 180 * starMult * abilityMult;
+      aliveEnemies.forEach((e, idx) => {
+        const arcDmg = dmg * (1 - idx * 0.15); // chain fall-off
+        e.currentHp -= applyShroudMultiplier(e, arcDmg, true);
+      });
+      logs.unshift(`[ARC] ${unit.name}'s Prototype Discharge arcs to ${aliveEnemies.length} enemies!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityAoe?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'sarah-lyon': {
+      // Pride Lead: charge highest-ATK enemy for 250 damage + taunt 3s
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      const dmg = 250 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      unit.taunting = true;
+      unit.tauntDuration = 6;
+      logs.unshift(`[ATK] ${unit.name}'s Pride Lead slams ${target.name} for ${Math.round(dmg)} + taunts!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'zeek': {
+      // Power Punch: 3x ATK + knockback stun 2s (4 ticks)
+      const aliveEnemies = targetable.filter(e => (e.stunDuration || 0) <= 0);
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      const dmg = unit.atk * 3 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      target.stunDuration = Math.round(4 * abilityMult);
+      logs.unshift(`[ATK] ${unit.name}'s Power Punch knocks ${target.name} back for ${Math.round(dmg)}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'cross': {
+      // Lyon Vanguard: 300 damage to nearest enemy + 20% DEF buff to adjacent allies 6s
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies[0];
+      const dmg = 300 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      allies.filter(a => a.currentHp > 0 && Math.abs((a.position || 0) - (unit.position || 0)) <= 2).forEach(a => {
+        a.def = (a.baseDef ?? a.def) * 1.2;
+        a.defBuffDuration = 12;
+      });
+      logs.unshift(`[ATK] ${unit.name}'s Lyon Vanguard slams ${target.name} for ${Math.round(dmg)}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'shaun': {
+      // Synth Genesis: spawn 2 synth helpers (data-only flag, combat tick spawns them)
+      unit.pendingSpawn = 2;
+      unit.spawnHp = 300 * starMult * abilityMult;
+      logs.unshift(`[INST] ${unit.name}'s Synth Genesis spawns 2 synth assistants!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityBuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'silver-shroud': {
+      // Vigilante Justice: heal all allies 200 + 20% ATK for 5s
+      const healAmt = 200 * starMult * abilityMult;
+      const buffMult = 1 + 0.2 * starMult;
+      allies.forEach(a => {
+        if (a.currentHp > 0) {
+          a.currentHp = Math.min(a.maxHp, a.currentHp + healAmt);
+          a.buffAtkMult = buffMult;
+          a.buffDuration = 10;
+        }
+      });
+      logs.unshift(`[STIM] ${unit.name}'s Vigilante Justice heals & buffs the team!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityHeal?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'sole-survivor': {
+      // V.A.T.S. Burst: 4 hits on highest-ATK enemy for 1.5x ATK each
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      const perHit = unit.atk * 1.5 * starMult * abilityMult;
+      for (let i = 0; i < 4; i++) {
+        if (target.currentHp <= 0) break;
+        target.currentHp -= applyShroudMultiplier(target, perHit * (0.9 + Math.random() * 0.2), false);
+      }
+      logs.unshift(`[ATK] ${unit.name}'s V.A.T.S. Burst — 4 hits on ${target.name}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'virgil': {
+      // FEV Mutation: transform an enemy into a fragile super mutant for 6s
+      const aliveEnemies = targetable.filter(e => !e.mutated);
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => b.atk - a.atk)[0];
+      target.mutated = true;
+      target.mutateDuration = 12;
+      target.atk = Math.max(1, target.baseAtk * 0.4);
+      target.maxHp = 350 * starMult;
+      target.currentHp = Math.min(target.currentHp, target.maxHp);
+      logs.unshift(`[RAD] ${unit.name}'s FEV Mutation transforms ${target.name}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityDebuff?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
+    case 'x6-88': {
+      // Coordinated Strike: teleport-strike lowest-HP enemy for 5x ATK; ignores armor
+      const aliveEnemies = targetable;
+      if (aliveEnemies.length === 0) return false;
+      const target = aliveEnemies.sort((a, b) => a.currentHp - b.currentHp)[0];
+      const dmg = unit.atk * 5 * starMult * abilityMult;
+      target.currentHp -= applyShroudMultiplier(target, dmg, false);
+      logs.unshift(`[INST] ${unit.name}'s Coordinated Strike executes ${target.name} for ${Math.round(dmg)}!`);
+      abilityUnits.push(unit.uid);
+      try { sound.abilityShot?.(); } catch(_) { sound.ability(); }
+      return true;
+    }
+
     default:
       return false;
   }
