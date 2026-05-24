@@ -79,6 +79,24 @@ body {
   --ui-hover: rgba(255,68,68,0.1);
   --ui-panel: rgba(20,5,5,0.7);
 }
+[data-theme="tft"] {
+  --ui-primary: #d4af6a;
+  --ui-secondary: #8a6f3e;
+  --ui-accent: #5fc8e6;
+  --ui-text: #ede1c2;
+  --ui-text-dim: #a89770;
+  --ui-bg: rgba(14, 26, 38, 0.72);
+  --ui-bg-solid: #0e1a26;
+  --ui-border: #c8a25e;
+  --ui-border-dim: rgba(200, 162, 94, 0.35);
+  --ui-glow: rgba(95, 200, 230, 0.45);
+  --ui-hover: rgba(212, 175, 106, 0.12);
+  --ui-panel: rgba(8, 16, 24, 0.78);
+  --tft-frame-gradient: linear-gradient(180deg, #e8c780 0%, #c8a25e 45%, #8a6f3e 100%);
+  --tft-cyan-glow: 0 0 0 1px rgba(95, 200, 230, 0.25), 0 0 16px rgba(95, 200, 230, 0.18);
+  --tft-display-font: 'Cinzel', 'Trajan Pro', 'Cambria', Georgia, serif;
+  --tft-body-font: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+}
 
 /* Fight button */
 .wt-fightBtn { transition: transform 0.2s; will-change: transform; }
@@ -125,20 +143,24 @@ body {
   flex-shrink: 0;
 }
 
-/* Main 3-column layout */
+/* Main 3-column layout — capped + centered so ultrawide screens don't fling
+   side panels to the bezels with a sea of dead space in between. */
 .wt-main-layout {
   display: flex;
   gap: 6px;
   flex: 1;
   min-height: 0;
   overflow: hidden;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
 }
 
 /* Side panels */
 .wt-synergy-panel, .wt-info-panel {
-  width: 14vw;
-  min-width: 160px;
-  max-width: 260px;
+  width: 220px;
+  min-width: 180px;
+  max-width: 280px;
   flex-shrink: 0;
 }
 .wt-synergy-panel {
@@ -227,6 +249,24 @@ body {
   .wt-center-column > .wt-shop-bar,
   .wt-center-column > .wt-sell-zone { max-width: 1100px; }
 }
+/* Ultrawide >2400px: lift the whole-layout cap so the panels don't crowd
+   the center column on 3440x1440 / 5120x1440 monitors. */
+@media (min-width: 2400px) {
+  .wt-main-layout { max-width: 1900px; }
+  .wt-synergy-panel, .wt-info-panel { width: 280px; max-width: 320px; }
+  .wt-arena-frame { max-width: 1300px; }
+  .wt-center-column > .wt-bench-strip,
+  .wt-center-column > .wt-shop-bar,
+  .wt-center-column > .wt-sell-zone { max-width: 1300px; }
+}
+@media (min-width: 3200px) {
+  .wt-main-layout { max-width: 2200px; }
+  .wt-synergy-panel, .wt-info-panel { width: 320px; max-width: 360px; }
+  .wt-arena-frame { max-width: 1500px; }
+  .wt-center-column > .wt-bench-strip,
+  .wt-center-column > .wt-shop-bar,
+  .wt-center-column > .wt-sell-zone { max-width: 1500px; }
+}
 
 /* Below the arena's natural width the cap shrinks naturally to viewport width. */
 @media (max-width: 1000px) {
@@ -287,11 +327,6 @@ body {
   display: flex;
   gap: 6px;
   justify-content: center;
-}
-
-/* Ultrawide: give side panels more room */
-@media (min-width: 2200px) {
-  .wt-synergy-panel, .wt-info-panel { max-width: 300px; }
 }
 
 /* Responsive: narrow screens collapse side panels */
@@ -3295,4 +3330,264 @@ textarea:focus-visible,
   .wt-terminal-log-scanlines {
     animation: none !important;
   }
+}
+
+/* ═══ TFT IN-GAME OVERRIDES ═══ */
+
+/* --- Typography swap --- */
+[data-in-game="true"] .wt-stat-value,
+[data-in-game="true"] .wt-stat-label,
+[data-in-game="true"] .wt-stage-type,
+[data-in-game="true"] .wt-phase-badge,
+[data-in-game="true"] .wt-log-entry,
+[data-in-game="true"] .wt-log-empty,
+[data-in-game="true"] .wt-shop-btn,
+[data-in-game="true"] .wt-items-header,
+[data-in-game="true"] .wt-board-divider-text,
+[data-in-game="true"] .wt-pip-tooltip {
+  font-family: var(--tft-body-font) !important;
+}
+
+[data-in-game="true"] .wt-stage-number,
+[data-in-game="true"] .wt-panel-header {
+  font-family: var(--tft-display-font) !important;
+  letter-spacing: 3px;
+  font-weight: 700;
+}
+
+/* --- Panel framing --- */
+[data-in-game="true"] .wt-synergy-panel,
+[data-in-game="true"] .wt-info-panel > div,
+[data-in-game="true"] .wt-shop-bar,
+[data-in-game="true"] .wt-top-bar,
+[data-in-game="true"] .wt-bench-strip {
+  border: 2px solid transparent;
+  background-image:
+    linear-gradient(180deg, rgba(18, 30, 44, 0.92) 0%, rgba(8, 16, 24, 0.92) 100%),
+    var(--tft-frame-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.4) inset,
+    0 0 18px rgba(95, 200, 230, 0.10),
+    0 4px 18px rgba(0, 0, 0, 0.5);
+  border-radius: 6px;
+}
+
+/* --- Panel header --- */
+[data-in-game="true"] .wt-panel-header {
+  background: linear-gradient(180deg, rgba(40, 60, 80, 0.5), rgba(15, 25, 35, 0.3));
+  color: #e8c780;
+  text-shadow: 0 0 8px rgba(95, 200, 230, 0.4), 0 1px 0 rgba(0, 0, 0, 0.6);
+  border-bottom: 2px solid transparent;
+  border-image: var(--tft-frame-gradient) 1;
+}
+[data-in-game="true"] .wt-panel-header::after {
+  background: #5fc8e6;
+  box-shadow: 0 0 6px rgba(95, 200, 230, 0.6);
+}
+
+/* --- Stage badge --- */
+[data-in-game="true"] .wt-stage-badge {
+  background: linear-gradient(180deg, rgba(40, 60, 80, 0.7), rgba(10, 18, 26, 0.85));
+  border: 1.5px solid #c8a25e;
+  position: relative;
+}
+[data-in-game="true"] .wt-stage-badge::before,
+[data-in-game="true"] .wt-stage-badge::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  width: 6px;
+  height: 6px;
+  background: var(--tft-frame-gradient);
+  transform: rotate(45deg);
+  box-shadow: 0 0 4px rgba(232, 199, 128, 0.6);
+}
+[data-in-game="true"] .wt-stage-badge::before { left: 4px; }
+[data-in-game="true"] .wt-stage-badge::after { right: 4px; }
+
+/* --- Synergy row --- */
+[data-in-game="true"] .wt-synergy-row {
+  background: linear-gradient(90deg, rgba(20, 32, 46, 0.85) 0%, rgba(10, 18, 26, 0.7) 100%);
+  border-radius: 5px;
+  padding: 6px 8px;
+  border-left: 3px solid var(--ui-border);
+}
+[data-in-game="true"] .wt-synergy-row-active {
+  border-left-color: var(--synergy-color);
+  box-shadow:
+    inset 3px 0 6px color-mix(in srgb, var(--synergy-color) 30%, transparent),
+    0 0 10px color-mix(in srgb, var(--synergy-color) 25%, transparent);
+}
+
+/* --- Shop cards --- */
+[data-in-game="true"] .wt-shop-card {
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 4px 14px rgba(0, 0, 0, 0.6);
+  border-radius: 5px;
+}
+[data-in-game="true"] .wt-shop-card:hover {
+  transform: translateY(-3px) scale(1.04);
+  box-shadow:
+    inset 0 0 0 1px rgba(0, 0, 0, 0.5),
+    0 0 20px var(--shop-glow-color, rgba(95, 200, 230, 0.5)),
+    0 6px 18px rgba(0, 0, 0, 0.7);
+  filter: brightness(1.15);
+}
+
+/* --- Shop buttons --- */
+[data-in-game="true"] .wt-shop-btn {
+  border: 1.5px solid transparent;
+  background-image:
+    linear-gradient(180deg, rgba(40, 60, 80, 0.85), rgba(10, 18, 26, 0.85)),
+    var(--tft-frame-gradient);
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  color: #e8c780;
+}
+[data-in-game="true"] .wt-shop-btn:hover {
+  box-shadow:
+    0 0 14px rgba(95, 200, 230, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* --- Phase badge --- */
+[data-in-game="true"] .wt-phase-prep {
+  background: linear-gradient(180deg, rgba(95, 200, 230, 0.18), rgba(40, 90, 110, 0.25));
+  border: 1.5px solid #5fc8e6;
+  color: #aee9f5;
+}
+
+/* --- Round pip current --- */
+[data-in-game="true"] .wt-pip-current {
+  box-shadow: 0 0 10px #5fc8e6, 0 0 16px rgba(95, 200, 230, 0.5);
+}
+
+/* --- Kill the CRT vibe --- */
+[data-in-game="true"] .wt-game-scanlines { display: none !important; }
+[data-in-game="true"] .wt-dust-particle { display: none !important; }
+[data-in-game="true"] .wt-game-border { border-color: rgba(200, 162, 94, 0.18); }
+[data-in-game="true"] .wt-game-vignette {
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0, 0, 0, 0.45) 100%);
+}
+[data-in-game="true"] .wt-log-empty::after { display: none; }
+
+/* ═══════════════════════════════════════════════════════ */
+/* ═══ TFT STAR-UP ANIMATION ═══                          */
+/* ═══════════════════════════════════════════════════════ */
+
+/* Replaces the old wt-evolve-flash. Two tiers:
+   .wt-starup-2 — golden burst + ring + sparkles
+   .wt-starup-3 — same but BIG with a light pillar + screen flash */
+
+.wt-starup-2, .wt-starup-3 {
+  animation: wt-starup-pulse 1.0s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  position: relative;
+  z-index: 50;
+}
+.wt-starup-3 {
+  animation-duration: 1.4s;
+  z-index: 60;
+}
+
+@keyframes wt-starup-pulse {
+  0%   { transform: scale(1)    rotate(0deg); filter: brightness(1) saturate(1); }
+  12%  { transform: scale(0.82) rotate(-2deg); filter: brightness(0.6) saturate(0.5); }
+  18%  { transform: scale(0.78) rotate(0deg);  filter: brightness(0.4) saturate(0.4); }
+  35%  { transform: scale(1.5)  rotate(2deg);  filter: brightness(2.8) saturate(1.6) drop-shadow(0 0 22px #ffd76a); }
+  50%  { transform: scale(1.25) rotate(0deg);  filter: brightness(2.0) saturate(1.4) drop-shadow(0 0 14px #ffd76a); }
+  72%  { transform: scale(1.08); filter: brightness(1.3) saturate(1.15) drop-shadow(0 0 8px rgba(255,215,106,0.6)); }
+  100% { transform: scale(1); filter: brightness(1) saturate(1); }
+}
+
+/* Expanding gold ring — child element added by the helper */
+.wt-starup-ring {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  border: 3px solid #ffd76a;
+  box-shadow: 0 0 18px #ffd76a, inset 0 0 12px rgba(255,215,106,0.6);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 51;
+  animation: wt-starup-ring 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.wt-starup-3 .wt-starup-ring { animation-duration: 1.1s; }
+@keyframes wt-starup-ring {
+  0%   { width: 0; height: 0; opacity: 0; border-width: 4px; }
+  15%  { width: 30px; height: 30px; opacity: 1; border-width: 4px; }
+  100% { width: 220px; height: 220px; opacity: 0; border-width: 1px; }
+}
+
+/* Second, slightly delayed inner ring for layered TFT feel */
+.wt-starup-ring.wt-starup-ring-2 {
+  animation-delay: 0.18s;
+  border-color: rgba(255,255,255,0.9);
+  box-shadow: 0 0 12px rgba(255,255,255,0.7);
+}
+
+/* Vertical light pillar — only added for 3-star upgrades */
+.wt-starup-pillar {
+  position: absolute;
+  left: 50%; bottom: 50%;
+  width: 80px; height: 0;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg,
+    rgba(255, 215, 106, 0) 0%,
+    rgba(255, 215, 106, 0.85) 25%,
+    rgba(255, 245, 200, 1) 70%,
+    rgba(255, 215, 106, 0.7) 100%);
+  filter: blur(2px) drop-shadow(0 0 18px rgba(255,215,106,0.7));
+  pointer-events: none;
+  z-index: 52;
+  animation: wt-starup-pillar 1.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  border-radius: 40% 40% 0 0;
+  mix-blend-mode: screen;
+}
+@keyframes wt-starup-pillar {
+  0%   { height: 0; opacity: 0; width: 30px; }
+  18%  { height: 320px; opacity: 1; width: 80px; }
+  60%  { height: 320px; opacity: 0.85; width: 60px; }
+  100% { height: 320px; opacity: 0; width: 20px; }
+}
+
+/* Sparkle particles — small gold dots flying outward */
+.wt-starup-sparkle {
+  position: absolute;
+  left: 50%; top: 50%;
+  width: 6px; height: 6px;
+  background: radial-gradient(circle, #fff 0%, #ffd76a 40%, transparent 70%);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 53;
+  animation: wt-starup-sparkle 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  transform: translate(-50%, -50%);
+}
+@keyframes wt-starup-sparkle {
+  0%   { transform: translate(-50%, -50%) translate(0,0) scale(0.3); opacity: 0; }
+  15%  { opacity: 1; transform: translate(-50%, -50%) translate(calc(var(--sx, 0) * 0.3), calc(var(--sy, 0) * 0.3)) scale(1.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) translate(var(--sx, 0), var(--sy, 0)) scale(0.4); }
+}
+
+/* Screen-edge gold flash — only for 3-star. Fixed to viewport. */
+.wt-starup-screen-flash {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2750;
+  background: radial-gradient(ellipse at center,
+    transparent 30%,
+    rgba(255, 215, 106, 0.0) 55%,
+    rgba(255, 215, 106, 0.35) 85%,
+    rgba(255, 245, 200, 0.55) 100%);
+  animation: wt-starup-screen-flash 1.1s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  mix-blend-mode: screen;
+}
+@keyframes wt-starup-screen-flash {
+  0%   { opacity: 0; }
+  25%  { opacity: 1; }
+  100% { opacity: 0; }
 }

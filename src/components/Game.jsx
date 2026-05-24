@@ -162,6 +162,56 @@ function formatLogEntry(text, roundNum) {
   );
 }
 
+function playStarUp(uid, stars) {
+  if (!uid) return;
+  setTimeout(() => {
+    const el = document.querySelector(`[data-unit-uid="${uid}"]`);
+    if (!el) return;
+    const tier = stars >= 3 ? 3 : 2;
+    const cls = `wt-starup-${tier}`;
+    el.classList.add(cls);
+
+    const cleanup = [];
+    const spawn = (className, styles) => {
+      const node = document.createElement('div');
+      node.className = className;
+      if (styles) Object.assign(node.style, styles);
+      el.appendChild(node);
+      cleanup.push(node);
+      return node;
+    };
+
+    spawn('wt-starup-ring');
+    spawn('wt-starup-ring wt-starup-ring-2');
+
+    const sparkleCount = tier === 3 ? 14 : 8;
+    const sparkleDist = tier === 3 ? 110 : 70;
+    for (let i = 0; i < sparkleCount; i++) {
+      const angle = (i / sparkleCount) * Math.PI * 2 + (Math.random() - 0.5) * 0.4;
+      const dist = sparkleDist + (Math.random() - 0.5) * 30;
+      spawn('wt-starup-sparkle', {
+        '--sx': `${Math.cos(angle) * dist}px`,
+        '--sy': `${Math.sin(angle) * dist}px`,
+        animationDelay: `${Math.random() * 0.15}s`,
+      });
+    }
+
+    if (tier === 3) {
+      spawn('wt-starup-pillar');
+      const flash = document.createElement('div');
+      flash.className = 'wt-starup-screen-flash';
+      document.body.appendChild(flash);
+      setTimeout(() => flash.remove(), 1200);
+    }
+
+    const lifetime = tier === 3 ? 1500 : 1100;
+    setTimeout(() => {
+      el.classList.remove(cls);
+      cleanup.forEach(n => n.remove());
+    }, lifetime);
+  }, 50);
+}
+
 function WastelandTactics() {
   const [playTransition, setPlayTransition] = useState(false);
   const pendingLoadRef = useRef(false);
@@ -551,8 +601,7 @@ function WastelandTactics() {
       if (phase === 'prep') {
         sound.startPrepMusic(); sound.stopBattleMusic(); try { sound.stopCasinoMusic?.(); } catch(_) {} try { sound.stopBossMusic?.(); } catch(_) {} try { sound.prepStart?.(); } catch(_) {}
         setUnitTooltip(null); // Dismiss stale combat tooltips
-        // Income breakdown tick-up overlay
-        if (incomeBreakdown) { setShowIncome(true); setTimeout(() => setShowIncome(false), 3000); }
+        // Income breakdown shown in bottom-bar mini display; no auto-popup
         // Winning unit celebration — only apply to player units (not enemies)
         if (streak > 0) {
           document.querySelectorAll('.wt-board-cell [data-unit-uid], .wt-bench-slot [data-unit-uid]').forEach(el => {
@@ -618,7 +667,7 @@ function WastelandTactics() {
         newBench[freeSlot] = { ...unit, stars: 2, uid: makeUid() };
         setLog(prev => [`[UP] ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
         sound.upgrade();
-        setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${newBench[freeSlot]?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
+        playStarUp(newBench[freeSlot]?.uid, 2);
         setBench(newBench);
         setGold(g => g - unit.cost);
         const newShop = [...shop]; newShop[index] = null; setShop(newShop);
@@ -642,7 +691,7 @@ function WastelandTactics() {
             if (upgradeSlot !== -1) newBench[upgradeSlot] = upgraded;
             setLog(prev => [`[UP] ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
             sound.upgrade();
-            setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
+            playStarUp(upgraded?.uid, upgraded.stars);
             didUpgrade = true;
             break;
           }
@@ -690,7 +739,7 @@ function WastelandTactics() {
       }
       setLog(prev => [`[UP] ${unit.name} upgraded to 2 stars!`, ...prev.slice(0, 9)]);
       sound.upgrade();
-      setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
+      playStarUp(upgraded?.uid, upgraded.stars);
       setBench(newBench);
       setBoard(newBoard);
       setGold(g => g - unit.cost);
@@ -736,7 +785,7 @@ function WastelandTactics() {
 
           setLog(prev => [`[UP] ${unit.name} upgraded to ${upgraded.stars} stars!`, ...prev.slice(0, 9)]);
           sound.upgrade();
-          setTimeout(() => { const evolveEl = document.querySelector(`[data-unit-uid="${upgraded?.uid}"]`); if (evolveEl) { evolveEl.classList.add('wt-evolve-flash'); setTimeout(() => evolveEl.classList.remove('wt-evolve-flash'), 800); } }, 50);
+          playStarUp(upgraded?.uid, upgraded.stars);
           didUpgrade = true;
           break;
         }
@@ -1310,16 +1359,22 @@ function WastelandTactics() {
     else { setSelected((selected && selected.location === location && selected.index === index) ? null : { unit, location, index }); }
   };
 
+  const inGame = phase !== 'menu';
   return (
     <div
-      data-theme={settings.uiTheme || 'tactical'}
+      data-theme={inGame ? 'tft' : (settings.uiTheme || 'tactical')}
+      data-in-game={inGame ? 'true' : 'false'}
       style={{
         minHeight: '100vh',
         height: '100vh',
         display: 'flex',
         flexDirection: 'column',
-        background: 'linear-gradient(180deg, #1a1a0f 0%, #0d0d08 50%, #1a1a0f 100%)',
-        fontFamily: '"Share Tech Mono", "Courier New", monospace',
+        background: inGame
+          ? 'radial-gradient(ellipse at 50% 30%, #1a2838 0%, #0a141e 55%, #050a12 100%)'
+          : 'linear-gradient(180deg, #1a1a0f 0%, #0d0d08 50%, #1a1a0f 100%)',
+        fontFamily: inGame
+          ? '"Inter", "Segoe UI", system-ui, -apple-system, sans-serif'
+          : '"Share Tech Mono", "Courier New", monospace',
         color: 'var(--ui-text)',
         padding: '4px 8px',
         margin: '0 auto',
@@ -2658,11 +2713,11 @@ function WastelandTactics() {
       )}
 
       {/* Green phosphor tint - stronger when phosphor enabled */}
-      {settings.phosphor && (
+      {settings.phosphor && phase === 'menu' && (
         <div style={{ position: 'fixed', inset: 0, background: phase === 'combat' ? 'radial-gradient(ellipse at 50% 50%, rgba(0,255,0,0.06) 0%, rgba(0,255,0,0.02) 40%, transparent 70%)' : 'radial-gradient(ellipse at 50% 50%, rgba(0,255,0,0.03) 0%, transparent 60%)', pointerEvents: 'none', zIndex: 998, animation: phase === 'combat' ? 'wt-phosphor-pulse 2s ease-in-out infinite' : 'none' }} />
       )}
       {/* CRT mode - screen curve + bloom */}
-      {settings.crtMode && (
+      {settings.crtMode && phase === 'menu' && (
         <div style={{ position: 'fixed', inset: 0, pointerEvents: 'none', zIndex: 997, boxShadow: 'inset 0 0 80px rgba(0,255,0,0.03)', borderRadius: '3%', overflow: 'hidden' }}>
           <div style={{ position: 'absolute', inset: '-5%', background: 'radial-gradient(ellipse 70% 70% at 50% 50%, rgba(0,0,0,0) 0%, rgba(0,0,0,0.25) 100%)', borderRadius: '50%' }} />
         </div>
@@ -2670,9 +2725,9 @@ function WastelandTactics() {
 
       {/* Game ambient overlays */}
       <div className="wt-game-vignette" />
-      {settings.scanlines !== false && <div className="wt-game-scanlines" />}
+      {settings.scanlines !== false && phase === 'menu' && <div className="wt-game-scanlines" />}
       <div className="wt-game-border" />
-      {settings.particleFx !== false && Array.from({ length: 8 }, (_, i) => (
+      {settings.particleFx !== false && phase === 'menu' && Array.from({ length: 8 }, (_, i) => (
         <div key={`dust-${i}`} className="wt-dust-particle" style={{
           left: `${10 + (i * 11) % 80}%`,
           '--dust-duration': `${12 + (i * 3) % 10}s`,
@@ -3362,9 +3417,18 @@ function WastelandTactics() {
               // non-boss rounds — same gate as the scout preview itself.
               const aliveGhosts = (ghostPlayersRef.current || []).filter(g => g.alive);
               const canScout = phase === 'prep' && round > 3 && !isPveRound(round) && !(round % 7 === 0 && BOSS_DATABASE[round]);
+              const PLAYER_ICON_MAP = {
+                'Raider Boss': `${BASE}/images/icons/trait-raider.svg`,
+                'Vault Dweller': `${BASE}/images/icons/trait-vault-dweller.svg`,
+                'Brotherhood Knight': `${BASE}/images/icons/trait-brotherhood.svg`,
+                'Railroad Agent': `${BASE}/images/icons/trait-railroad.svg`,
+                'Institute Synth': `${BASE}/images/icons/trait-institute.svg`,
+                'Minuteman General': `${BASE}/images/icons/trait-minutemen.svg`,
+                'Wasteland Drifter': `${BASE}/images/icons/trait-wasteland.svg`,
+              };
               return sorted.map((p, rank) => {
                 const rankStr = String(rank + 1).padStart(2, '0');
-                const initial = (p.name || '?').trim().charAt(0).toUpperCase();
+                const iconSrc = p.isMe ? `${BASE}/images/icons/trait-vanguard.svg` : PLAYER_ICON_MAP[p.name];
                 const hpColor = !p.alive ? '#444' : p.hp > 60 ? '#44ff44' : p.hp > 25 ? '#ffaa00' : '#ff4444';
                 const isCurrentOpp = currentOpponent && p.name === currentOpponent;
                 const ghostIdx = !p.isMe ? aliveGhosts.findIndex(g => g.name === p.name) : -1;
@@ -3400,13 +3464,21 @@ function WastelandTactics() {
                     <span style={{ fontSize: 9, color: 'var(--ui-text-dim)', fontFamily: "'Share Tech Mono', monospace", minWidth: 18 }}>{rankStr}</span>
                     <span style={{ fontSize: 11, fontWeight: 'bold', color: hpColor, fontFamily: "'Share Tech Mono', monospace", minWidth: 26, textAlign: 'right' }}>{Math.max(0, p.hp)}</span>
                     <div style={{
-                      width: 22, height: 22, borderRadius: '50%',
-                      background: p.isMe ? 'linear-gradient(135deg, #4eff4e, #008800)' : 'linear-gradient(135deg, #886644, #442200)',
-                      border: `1.5px solid ${isScoutSelected && canScout ? '#ffaa00' : p.isMe ? '#4eff4e' : isCurrentOpp ? '#ff5050' : '#555'}`,
+                      width: 24, height: 24, borderRadius: '50%',
+                      background: p.isMe
+                        ? 'radial-gradient(circle at 35% 30%, #4eff4e, #006a00 70%)'
+                        : 'radial-gradient(circle at 35% 30%, #b08858, #4a2e16 75%)',
+                      border: `1.5px solid ${isScoutSelected && canScout ? '#ffaa00' : p.isMe ? '#4eff4e' : isCurrentOpp ? '#ff5050' : '#8a6f3e'}`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: 10, fontWeight: 'bold', color: '#0a0a0a', textShadow: '0 1px 0 rgba(255,255,255,0.3)',
                       flexShrink: 0,
-                    }}>{initial}</div>
+                      boxShadow: 'inset 0 1px 2px rgba(255,255,255,0.15), 0 1px 2px rgba(0,0,0,0.5)',
+                    }}>
+                      {iconSrc ? (
+                        <img src={iconSrc} alt="" style={{ width: 16, height: 16, filter: 'drop-shadow(0 1px 1px rgba(0,0,0,0.6))' }} />
+                      ) : (
+                        <span style={{ fontSize: 10, fontWeight: 'bold', color: '#1a1208' }}>{(p.name || '?').trim().charAt(0).toUpperCase()}</span>
+                      )}
+                    </div>
                     <span style={{ fontSize: 9, color: p.isMe ? '#aaffaa' : 'var(--ui-text-dim)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
                       {p.name}{!p.alive && <span style={{ color: '#ff4444', marginLeft: 4 }}>×</span>}
                     </span>

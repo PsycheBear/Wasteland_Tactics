@@ -65,7 +65,7 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      background: 'radial-gradient(ellipse at center, rgba(40,0,60,0.92) 0%, rgba(8,0,16,0.96) 70%)',
+      background: 'radial-gradient(ellipse at center, rgba(10,20,30,0.94) 0%, rgba(3,6,10,0.97) 70%)',
       backdropFilter: 'blur(6px)',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       zIndex: 2500,
@@ -75,12 +75,12 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
         animation: 'wt-aug-panel-in 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
       }}>
         <div style={{
-          fontSize: 28, fontWeight: 'bold', color: '#e6c8ff', marginBottom: 22,
-          letterSpacing: 4, textTransform: 'uppercase',
-          textShadow: '0 0 18px rgba(204,102,255,0.55), 0 2px 0 rgba(0,0,0,0.6)',
-          fontFamily: "'Share Tech Mono', monospace",
+          fontSize: 36, fontWeight: 'bold', color: '#e8c780', marginBottom: 22,
+          letterSpacing: 6, textTransform: 'uppercase',
+          textShadow: '0 0 18px rgba(95,200,230,0.5), 0 0 30px rgba(212,175,106,0.35), 0 2px 0 rgba(0,0,0,0.7)',
+          fontFamily: '"Cinzel", "Trajan Pro", "Cambria", Georgia, serif',
         }}>
-          Choose an Augment
+          CHOOSE ONE
         </div>
         <div style={{ display: 'flex', gap: 18, justifyContent: 'center', alignItems: 'flex-start' }}>
           {displayed.map((aug, idx) => {
@@ -107,31 +107,32 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
                     cursor: 'pointer',
                     position: 'relative',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                    background: 'linear-gradient(180deg, rgba(50,10,75,0.95) 0%, rgba(20,5,30,0.95) 100%)',
+                    background: 'linear-gradient(180deg, rgba(14,26,38,0.96) 0%, rgba(8,16,24,0.96) 100%)',
                     border: '3px solid transparent',
                     backgroundImage: `
-                      linear-gradient(180deg, rgba(50,10,75,0.96), rgba(20,5,30,0.96)),
-                      linear-gradient(180deg, #ffd76a 0%, #cc66ff 50%, #ffd76a 100%)
+                      linear-gradient(180deg, rgba(14,26,38,0.96), rgba(8,16,24,0.96)),
+                      linear-gradient(180deg, #e8c780 0%, #5fc8e6 50%, #c8a25e 100%)
                     `,
                     backgroundOrigin: 'border-box',
                     backgroundClip: 'padding-box, border-box',
                     borderRadius: 10,
-                    boxShadow: '0 0 24px rgba(204,102,255,0.4), inset 0 0 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
+                    boxShadow: '0 0 24px rgba(95,200,230,0.35), inset 0 0 22px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)',
                     transition: 'transform 0.18s ease, box-shadow 0.18s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)'; e.currentTarget.style.boxShadow = '0 0 36px rgba(204,102,255,0.7), inset 0 0 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.1)'; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 0 24px rgba(204,102,255,0.4), inset 0 0 22px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)'; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-4px) scale(1.03)'; e.currentTarget.style.boxShadow = '0 0 36px rgba(95,200,230,0.6), inset 0 0 22px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 0 24px rgba(95,200,230,0.35), inset 0 0 22px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.08)'; }}
                 >
                   {badgeLabel && (
                     <div style={{
                       position: 'absolute', top: -11, left: '50%', transform: 'translateX(-50%)',
                       fontSize: 8, fontWeight: 'bold', letterSpacing: 1.4,
-                      background: 'linear-gradient(180deg, #ffd76a, #c9a04a)',
-                      color: '#1a0028',
+                      background: 'linear-gradient(180deg, #e8c780, #b88c3e)',
+                      color: '#1a1410',
                       padding: '2px 10px', borderRadius: 3,
                       whiteSpace: 'nowrap', textTransform: 'uppercase',
                       boxShadow: '0 0 8px rgba(255,215,106,0.7)',
                       border: '1px solid rgba(0,0,0,0.45)',
+                      fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
                     }}>{isTransform ? 'TRANSFORM' : 'GRANT'}</div>
                   )}
                   {/* Hex icon plate */}
@@ -144,16 +145,16 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
                     <svg viewBox="0 0 100 100" width="78" height="78" style={{ position: 'absolute', inset: 0 }} aria-hidden="true">
                       <defs>
                         <linearGradient id={`aug-hex-${idx}`} x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#3a1058" />
-                          <stop offset="100%" stopColor="#16041f" />
+                          <stop offset="0%" stopColor="#1e3850" />
+                          <stop offset="100%" stopColor="#0a1620" />
                         </linearGradient>
                       </defs>
                       <polygon
                         points="50,4 92,28 92,72 50,96 8,72 8,28"
                         fill={`url(#aug-hex-${idx})`}
-                        stroke="#cc66ff"
+                        stroke="#5fc8e6"
                         strokeWidth="2.5"
-                        style={{ filter: 'drop-shadow(0 0 8px rgba(204,102,255,0.55))' }}
+                        style={{ filter: 'drop-shadow(0 0 8px rgba(95,200,230,0.55))' }}
                       />
                       <polygon
                         points="50,14 84,32 84,68 50,86 16,68 16,32"
@@ -168,22 +169,23 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
                   </div>
                   {/* Name */}
                   <div style={{
-                    fontSize: 14, fontWeight: 'bold', color: '#ffd76a',
-                    textShadow: '0 0 8px rgba(255,215,106,0.6), 0 1px 0 rgba(0,0,0,0.6)',
-                    letterSpacing: 0.5, marginTop: 2, lineHeight: 1.15,
-                    fontFamily: "'Share Tech Mono', monospace",
+                    fontSize: 15, fontWeight: 700, color: '#e8c780',
+                    textShadow: '0 0 8px rgba(95,200,230,0.4), 0 1px 0 rgba(0,0,0,0.7)',
+                    letterSpacing: 1, marginTop: 2, lineHeight: 1.15,
+                    fontFamily: '"Cinzel", "Trajan Pro", "Cambria", Georgia, serif',
                   }}>{aug.name}</div>
                   {/* Description plate */}
                   <div style={{
                     flex: 1,
                     marginTop: 4, padding: '8px 10px',
                     background: 'rgba(0,0,0,0.45)',
-                    border: '1px solid rgba(204,102,255,0.25)',
+                    border: '1px solid rgba(95,200,230,0.3)',
                     borderRadius: 5,
-                    fontSize: 10, lineHeight: 1.4, color: '#e0c8ff',
+                    fontSize: 10, lineHeight: 1.4, color: '#ede1c2',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     textAlign: 'center',
                     width: '100%',
+                    boxShadow: 'inset 0 0 12px rgba(95,200,230,0.08)',
                   }}>{aug.desc || aug.description}</div>
                   {badgeLabel && (
                     <div style={{ fontSize: 9, color: '#ffcc66', fontStyle: 'italic', marginTop: 2 }}>{badgeLabel}</div>
@@ -197,18 +199,18 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
                   style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                     width: 130, padding: '6px 10px',
-                    background: remaining > 0 ? 'linear-gradient(180deg, rgba(80,30,120,0.85), rgba(40,10,70,0.85))' : 'rgba(30,15,40,0.6)',
-                    border: `2px solid ${remaining > 0 ? '#cc66ff' : '#5a3a78'}`,
+                    background: remaining > 0 ? 'linear-gradient(180deg, rgba(30,55,75,0.9), rgba(10,20,30,0.9))' : 'rgba(30,15,40,0.6)',
+                    border: `2px solid ${remaining > 0 ? '#5fc8e6' : '#5a3a78'}`,
                     borderRadius: 5,
-                    color: remaining > 0 ? '#ffd76a' : '#666',
+                    color: remaining > 0 ? '#e8c780' : '#666',
                     cursor: remaining > 0 ? 'pointer' : 'not-allowed',
-                    fontFamily: "'Share Tech Mono', monospace",
+                    fontFamily: '"Inter", "Segoe UI", system-ui, sans-serif',
                     fontSize: 10, fontWeight: 'bold', letterSpacing: 1.4,
-                    boxShadow: remaining > 0 ? '0 0 8px rgba(204,102,255,0.35), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none',
+                    boxShadow: remaining > 0 ? '0 0 8px rgba(95,200,230,0.35), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none',
                     transition: 'transform 0.15s, box-shadow 0.15s',
                   }}
-                  onMouseEnter={(e) => { if (remaining > 0) { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 0 14px rgba(204,102,255,0.65)'; } }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = remaining > 0 ? '0 0 8px rgba(204,102,255,0.35), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none'; }}
+                  onMouseEnter={(e) => { if (remaining > 0) { e.currentTarget.style.transform = 'scale(1.05)'; e.currentTarget.style.boxShadow = '0 0 14px rgba(95,200,230,0.65)'; } }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = remaining > 0 ? '0 0 8px rgba(95,200,230,0.35), inset 0 1px 0 rgba(255,255,255,0.08)' : 'none'; }}
                 >
                   {/* Circular arrow SVG */}
                   <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
