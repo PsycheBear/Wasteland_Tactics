@@ -140,6 +140,22 @@ export default function Lucky38Carousel({
   const spinTimersRef = useRef([]);
   useEffect(() => () => spinTimersRef.current.forEach(clearTimeout), []);
 
+  // Wheel scales to fit the viewport. Budget ~300px vertically for header +
+  // reward card + actions + padding, and ~80px horizontally for safe margins.
+  const computeWheelSize = () => {
+    if (typeof window === 'undefined') return 480;
+    return Math.max(280, Math.min(480, window.innerHeight - 300, window.innerWidth - 80));
+  };
+  const [wheelSize, setWheelSize] = useState(computeWheelSize);
+  useEffect(() => {
+    const onResize = () => setWheelSize(computeWheelSize());
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+  const imgSize = Math.round(wheelSize * 340 / 480);
+  const labelRadius = Math.round(wheelSize * 210 / 480);
+  const pointerTop = Math.round(wheelSize * 52 / 480);
+
   // When skipping elevator (repeat carousels), kick off the casino music
   // immediately so the player lands on the ready state with audio + ambience.
   useEffect(() => {
@@ -533,9 +549,9 @@ export default function Lucky38Carousel({
             10 rewards mapped to 36° each starting from 12 o'clock clockwise.
             Pointer is a separate SVG arrow fixed at top center.
           */}
-          <div className="lucky38-wheel-wrap" style={{ width: 480, height: 480, position: 'relative', marginTop: 8, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div className="lucky38-wheel-wrap" style={{ width: wheelSize, height: wheelSize, position: 'relative', marginTop: 8, marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Fixed golden pointer at top — relative to inner wheel, not wrap */}
-            <div className="lucky38-img-pointer" style={{ top: 52 }}>
+            <div className="lucky38-img-pointer" style={{ top: pointerTop }}>
               <svg width="36" height="48" viewBox="0 0 36 48">
                 <defs>
                   <linearGradient id="ptrG" x1="0" y1="0" x2="1" y2="1">
@@ -557,7 +573,7 @@ export default function Lucky38Carousel({
               className={`lucky38-wheel-img ${nearMiss ? 'lucky38-near-miss' : ''}`}
               draggable={false}
               style={{
-                width: 340, height: 340, objectFit: 'contain', flexShrink: 0,
+                width: imgSize, height: imgSize, objectFit: 'contain', flexShrink: 0,
                 transform: `rotate(${wheelAngle}deg)`,
                 transition: spinning ? 'transform 8s cubic-bezier(0.15, 0.85, 0.25, 1)' : (nearMiss ? 'transform 0.3s ease-out' : 'none'),
                 filter: 'drop-shadow(0 0 12px rgba(200,148,42,0.4))',
@@ -568,7 +584,7 @@ export default function Lucky38Carousel({
             {ALL_SLICES.map((s, i) => {
               const angle = i * sliceAngle + sliceAngle / 2 + wheelAngle;
               const rad = (angle - 90) * Math.PI / 180;
-              const r = 210;
+              const r = labelRadius;
               const x = Math.cos(rad) * r;
               const y = Math.sin(rad) * r;
               return (
