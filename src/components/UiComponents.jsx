@@ -5,7 +5,7 @@ import { ITEM_COMPONENTS, COMPLETED_ITEMS } from '../data/items.js';
 import { COST_COLORS } from '../data/constants.js';
 import { LORE } from '../data/lore.js';
 import { GameIcon } from './GameIcon.jsx';
-import { getWeaponType, IDLE_CLASSES } from '../systems/unitTypes.js';
+import { getWeaponType, IDLE_CLASSES } from '../data/unitTypes.js';
 import { IMAGES } from '../data/images.js';
 import {
   getPortraitUrl,
@@ -76,7 +76,7 @@ const getRoleColor = (r) => ROLE_COLORS[r] || '#aaa';
  *   * `unitId` / `starLevel` — legacy entry points still supported.
  *   * `forceHeader` — when true, renders header.png instead of <star>.png.
  */
-export function PortraitImg({ unit, unitDef, unitId, starLevel, size, alt, forceHeader = false }) {
+function PortraitImgImpl({ unit, unitDef, unitId, starLevel, size, alt, forceHeader = false }) {
   // Resolve unit id + def + stars from whichever combination of props the caller gave us.
   const id = unit?.id || unitId || unitDef?.id || null;
   const def = unitDef || (id ? UNIT_DATABASE[id] : null) || {};
@@ -152,7 +152,18 @@ export function PortraitImg({ unit, unitDef, unitId, starLevel, size, alt, force
 
 /* ─── helpers ─── */
 const getColor = (cost) => COST_COLORS[cost] || '#888';
-const stars = (n) => '\u2605'.repeat(n);
+// Inline-SVG star rank (replaces the unicode \u2605 glyph, which renders fuzzy at
+// small sizes and varies by platform font).
+const StarSvg = ({ size = 8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" style={{ display: 'block' }}>
+    <path d="M12 2l2.9 6.3 6.9.8-5.1 4.7 1.4 6.8L12 17.2 5.9 20.6l1.4-6.8L2.2 9.1l6.9-.8z" />
+  </svg>
+);
+const stars = (n, size = 8) => (
+  <span aria-label={`${n} star${n === 1 ? '' : 's'}`} style={{ display: 'inline-flex', gap: 1, verticalAlign: 'middle' }}>
+    {Array.from({ length: n }, (_, i) => <StarSvg key={i} size={size} />)}
+  </span>
+);
 const getUnitImage = (unitId, starLevel) => {
   const img = IMAGES[unitId]?.[starLevel] || IMAGES[unitId]?.[1];
   return img || null;
@@ -166,7 +177,7 @@ const TIER_GLOW = {
 };
 
 /* ─── CombatBars ─── */
-export function CombatBars({ currentHp, maxHp, mana, manaMax, variant = 'ally', compact = false }) {
+function CombatBarsImpl({ currentHp, maxHp, mana, manaMax, variant = 'ally', compact = false }) {
   const hpPct = maxHp > 0 ? Math.max(0, Math.min(100, (currentHp / maxHp) * 100)) : 0;
   const manaPct = manaMax > 0 ? Math.max(0, Math.min(100, (mana / manaMax) * 100)) : 0;
   const manaFull = mana >= manaMax;
@@ -222,7 +233,7 @@ export function CombatBars({ currentHp, maxHp, mana, manaMax, variant = 'ally', 
 }
 
 /* ─── UnitPlaceholder ─── */
-export function UnitPlaceholder({ name, size }) {
+function UnitPlaceholderImpl({ name, size }) {
   const letter = name ? name.charAt(0).toUpperCase() : '?';
   return (
     <div style={{
@@ -466,7 +477,7 @@ export function UnitTooltip({ unitTooltip, onClose }) {
 }
 
 /* ─── UnitCard ─── */
-export function UnitCard({
+function UnitCardImpl({
   unit, location, index, small,
   selected, draggedFrom, phase,
   combatUnits, animations,
@@ -620,6 +631,10 @@ export function UnitCard({
     <div
       className={animClass}
       data-unit-uid={unit.uid}
+      role="button"
+      tabIndex={0}
+      aria-label={`${displayName}, ${unit.stars} star, cost ${unit.cost}`}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.(e, unit, location, index); } }}
       onPointerDown={(e) => onPointerDown?.(e, location, index, unit)}
       onContextMenu={(e) => { e.preventDefault(); onContextMenu?.(e, unit); }}
       onClick={(e) => onClick?.(e, unit, location, index)}
@@ -660,6 +675,18 @@ export function UnitCard({
     </div>
   );
 }
+
+/* ─── Memoized exports ───
+ * These render per-unit inside the board/bench/shop map() loops, so skipping
+ * re-renders when props are shallow-equal removes most of the per-tick render
+ * cost flagged in the June 2026 audit. During prep the animation/combat arrays
+ * are stable references, so unrelated state changes (gold, timer, shop) no
+ * longer re-render every card. */
+export const renderStars = stars;
+export const PortraitImg = React.memo(PortraitImgImpl);
+export const CombatBars = React.memo(CombatBarsImpl);
+export const UnitPlaceholder = React.memo(UnitPlaceholderImpl);
+export const UnitCard = React.memo(UnitCardImpl);
 
 /* ─── WtErrorBoundary ─── */
 import { logError } from '../lib/logger.js';

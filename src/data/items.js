@@ -4,7 +4,6 @@
 // field (emoji fallback) is intentionally empty across the board because
 // the project no longer uses emoji glyphs anywhere in the UI.
 import { BASE } from '../baseUrl.js';
-import { extraItems } from './extraItems.js';
 export const ITEM_COMPONENTS = {
   scrap_metal: { name: 'Scrap Metal', icon: '', iconImg: `${BASE}/images/icons/item-scrap-metal.svg`, stat: 'def', value: 15, desc: '+15 DEF' },
   stimpak: { name: 'Stimpak', icon: '', iconImg: `${BASE}/images/icons/item-stimpak.png`, stat: 'hp', value: 200, desc: '+200 HP' },
@@ -41,15 +40,12 @@ export const COMPLETED_ITEMS = {
   fortified_helm: { name: 'Fortified Helm', icon: '', iconImg: `${BASE}/images/icons/item-fortified-helm.svg`, recipe: ['scrap_metal', 'targeting_module'], effects: { def: 20, apGain: 0.1, stunResist: true }, desc: '+20 DEF, +10% AP gain, stun immune' },
   infiltrator_kit: { name: 'Infiltrator\'s Kit', icon: '', iconImg: `${BASE}/images/icons/item-infiltrator-kit.svg`, recipe: ['targeting_module', 'stealth_boy'], effects: { apGain: 0.1, dodge: 0.15, bonusDmgFromStealth: 0.3 }, desc: '+10% AP gain, +15% dodge, +30% dmg from stealth' },
   laser_sight: { name: 'Laser Sight Barrel', icon: '', iconImg: `${BASE}/images/icons/item-laser-sight.svg`, recipe: ['fusion_cell', 'stealth_boy'], effects: { atk: 15, dodge: 0.1, critChance: 0.2 }, desc: '+15 ATK, +10% dodge, +20% crit chance' },
+  // plasma_core recipes — the 7th component opens these pairs with no collisions
+  plasma_cleaver: { name: 'Plasma Cleaver', icon: '', iconImg: `${BASE}/images/icons/item-plasma-cleaver.svg`, recipe: ['plasma_core', 'plasma_core'], effects: { atk: 30, critChance: 0.2, critMult: 0.5 }, desc: '+30 ATK, +20% crit chance, +50% crit damage' },
+  bottle_cap_mine: { name: 'Bottle Cap Mine', icon: '', iconImg: `${BASE}/images/icons/item-bottle-cap-mine.svg`, recipe: ['plasma_core', 'fusion_cell'], effects: { aoeOnDeath: 250, abilityPower: 0.15 }, desc: 'On death, explode for 250 AoE damage; +15% ability power' },
+  rad_hardened_plating: { name: 'Rad-Hardened Plating', icon: '', iconImg: `${BASE}/images/icons/item-rad-hardened-plating.svg`, recipe: ['plasma_core', 'scrap_metal'], effects: { hp: 150, def: 25, poisonImmune: true, regenPerTick: 0.02 }, desc: '+150 HP, +25 DEF, poison immune, regen 2% max HP/4s' },
+  t_60_power_helmet: { name: 'T-60 Power Helmet', icon: '', iconImg: `${BASE}/images/icons/item-t60-power-helmet.svg`, recipe: ['plasma_core', 'targeting_module'], effects: { hp: 150, def: 15, apGain: 0.1, stunResist: true }, desc: '+150 HP, +15 DEF, +10% AP gain, stun immune' },
 };
-
-// Spread Wave 1 extras into the completed-items table. They use the new
-// `plasma_core` component so no recipe collisions are possible.
-// Keys are slugified from the display name (e.g. "Plasma Cleaver" → "plasma_cleaver").
-for (const xi of extraItems) {
-  const key = xi.name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
-  COMPLETED_ITEMS[key] = { name: xi.name, icon: xi.icon, iconImg: xi.iconImg, recipe: xi.recipe, effects: xi.effects, desc: xi.desc };
-}
 
 export const findCompletedItem = (comp1, comp2) => {
   return Object.entries(COMPLETED_ITEMS).find(([key, item]) => {

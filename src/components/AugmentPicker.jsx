@@ -13,6 +13,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { createGameIcon } from './GameIcon.jsx';
+import Modal from './Modal.jsx';
 
 const REROLLS_PER_SLOT = 3;
 
@@ -63,17 +64,15 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
   };
 
   return (
-    <div style={{
-      position: 'fixed', inset: 0,
+    // No onClose: augment choice is mandatory — the modal only adds the focus
+    // trap so keyboard users can't tab out into the game underneath.
+    <Modal label="Choose an augment" zIndex="var(--z-overlay)" scrimStyle={{
       background: 'radial-gradient(ellipse at center, rgba(10,20,30,0.94) 0%, rgba(3,6,10,0.97) 70%)',
       backdropFilter: 'blur(6px)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 2500,
+    }} panelStyle={{
+      textAlign: 'center',
+      animation: 'wt-aug-panel-in 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
     }}>
-      <div style={{
-        textAlign: 'center',
-        animation: 'wt-aug-panel-in 0.35s cubic-bezier(0.22, 1, 0.36, 1)',
-      }}>
         <div style={{
           fontSize: 36, fontWeight: 'bold', color: '#e8c780', marginBottom: 22,
           letterSpacing: 6, textTransform: 'uppercase',
@@ -223,7 +222,6 @@ export default function AugmentPicker({ choice, onPick, availableAugments = [] }
             );
           })}
         </div>
-      </div>
-    </div>
+    </Modal>
   );
 }

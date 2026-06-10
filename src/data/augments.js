@@ -5,7 +5,6 @@
 // longer renders emojis — the icon strings are intentionally empty and
 // GameIcon renders the iconImg instead. See GameIcon.jsx for the lookup.
 import { BASE } from '../baseUrl.js';
-import { extraAugments } from './extraAugments.js';
 import { CHARACTER_AUGMENTS } from './characterAugments.js';
 export const AUGMENT_POOL = [
   { id: 'vault_training', name: 'Vault-Tec Training', icon: '', iconImg: `${BASE}/images/icons/aug-vault-training.svg`, desc: '+5 ATK to all units', effect: { atkAdd: 5 } },
@@ -24,8 +23,10 @@ export const AUGMENT_POOL = [
   { id: 'econ_scale', name: 'Economy of Scale', icon: '', iconImg: `${BASE}/images/icons/aug-econ-scale.svg`, desc: 'Interest cap raised to 7', effect: { interestCap: 7 } },
   { id: 'lucky_find', name: 'Lucky Find', icon: '', iconImg: `${BASE}/images/icons/aug-lucky-find.svg`, desc: '20% chance of free shop reroll', effect: { freeReroll: 0.2 } },
   { id: 'high_roller', name: 'High Roller', icon: '', iconImg: `${BASE}/images/icons/aug-high-roller.svg`, desc: 'One free re-spin per Lucky 38 round', effect: { reSpinLucky38: true } },
-  // Spread Wave 1 extras at the bottom of the pool. Same schema, same offer path.
-  ...extraAugments,
+  { id: 'mysterious_stranger', name: 'Mysterious Stranger', icon: '', iconImg: `${BASE}/images/icons/aug-mysterious-stranger.svg`, desc: '10% chance on attack to deal a 250 damage burst', effect: { strangerProc: 0.1, strangerDmg: 250 } },
+  { id: 'hardened', name: 'Hardened', icon: '', iconImg: `${BASE}/images/icons/aug-hardened.svg`, desc: 'First incoming damage each round is reduced to 0 for all units', effect: { firstHitImmunity: true } },
+  { id: 'trigger_disc_2', name: 'Trigger Discipline II', icon: '', iconImg: `${BASE}/images/icons/aug-trigger-disc-2.svg`, desc: '+15% crit chance for ranged ballistic-weapon units', effect: { ballisticCritAdd: 0.15 } },
+  { id: 'vault_resilience', name: 'Vault Resilience', icon: '', iconImg: `${BASE}/images/icons/aug-vault-resilience.svg`, desc: '+20% HP to all units that share at least 2 traits with another ally', effect: { sharedTraitHpMult: 0.2, sharedTraitThreshold: 2 } },
   // Character-tied augments (Cait / Robot Dog / Virgil). They surface in the
   // regular offer flow; Game.jsx handles their imperative grant/transform side-effects.
   ...CHARACTER_AUGMENTS,

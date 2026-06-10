@@ -46,10 +46,6 @@ export const isMeleeUnit = (unitId) => MELEE_UNITS.includes(unitId);
 // Units whose `range` is 'dual' — melee in front rows, ranged in back rows.
 // Combat.js (Agent C) decides per-fight which mode they enter.
 export const DUAL_RANGE_UNITS = ['hancock', 'sarah-lyon', 'sole-survivor'];
-export const isDualRangeUnit = (unitId) => DUAL_RANGE_UNITS.includes(unitId);
-
-// Unit IDs that should NOT appear in the shop pool (transform targets, etc).
-export const NON_SHOPPABLE_UNITS = ['robot-dog'];
 
 // Portrait helper. The UI agent reads <portraitBase>/<star>.png; this legacy
 // helper returns the single-file fallback used by older UI paths.

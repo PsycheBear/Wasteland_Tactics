@@ -14,7 +14,10 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     }
     if (audioCtx && audioCtx.state === 'suspended') {
-      audioCtx.resume();
+      // resume() is async and can reject on iOS/restricted contexts; swallow
+      // the rejection (it just means "still locked until a user gesture")
+      // but don't leave it unhandled.
+      audioCtx.resume().catch(() => {});
     }
     return audioCtx;
   };
@@ -22,6 +25,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
   // Retro synth tone – triangle for warmth, lowpass for CRT/analog feel
   const playTone = (freq, duration, type = 'square', volume = 0.2) => {
     try {
+      if (getVol() <= 0) return; // muted — also silences queued setTimeout layers
       const ctx = getAudioContext();
       if (!ctx) return;
       const osc = ctx.createOscillator();
@@ -46,6 +50,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
   // Richer layered tone – two oscillators detuned for fatness
   const playRichTone = (freq, duration, type = 'square', volume = 0.15) => {
     try {
+      if (getVol() <= 0) return; // muted — also silences queued setTimeout layers
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
@@ -76,6 +81,7 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
   // Noise burst for impacts
   const playNoise = (duration = 0.04, volume = 0.12, filterFreq = 3000) => {
     try {
+      if (getVol() <= 0) return; // muted — also silences queued setTimeout layers
       const ctx = getAudioContext();
       if (!ctx) return;
       const t = ctx.currentTime;
@@ -183,16 +189,28 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
     } catch(_) {}
   };
 
+  // Autoplay-policy rejections (NotAllowedError) are expected before the
+  // first user gesture and stay silent; anything else (missing file, decode
+  // failure) is logged once per source so silent-audio bugs are diagnosable.
+  const reportedAudioErrors = new Set();
+  const reportAudioError = (e, src) => {
+    if (e && e.name === 'NotAllowedError') return;
+    if (reportedAudioErrors.has(src)) return;
+    reportedAudioErrors.add(src);
+    // eslint-disable-next-line no-console
+    console.error('[wt-audio]', src, e?.message || e);
+  };
+
   const playAudio = (src) => {
     try {
       const audio = new Audio(src);
       audio.volume = Math.max(0.01, 0.5 * getVol());
       const playPromise = audio.play();
       if (playPromise !== undefined) {
-        playPromise.catch(() => {});
+        playPromise.catch((e) => reportAudioError(e, src));
       }
     } catch(e) {
-      /* audio error - silent in production */
+      reportAudioError(e, src);
     }
   };
 
@@ -202,8 +220,9 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
       const audio = new Audio(path);
       audio.volume = Math.max(0.01, volume * getVol());
       const p = audio.play();
-      if (p) p.catch(() => { if (fallbackFn) fallbackFn(); });
-    } catch(_) {
+      if (p) p.catch((e) => { reportAudioError(e, path); if (fallbackFn) fallbackFn(); });
+    } catch(e) {
+      reportAudioError(e, path);
       if (fallbackFn) fallbackFn();
     }
   };
@@ -297,6 +316,13 @@ export const createSound = (getVol = () => WT_SETTINGS.volume) => {
         if (!prepMusic) {
           prepMusic = new Audio(`${BASE}/audio/prep-music.mp3`);
           prepMusic.loop = true;
+        }
+        // Warm the battle track while the player shops so the combat
+        // transition doesn't stutter on its first network fetch.
+        if (!battleMusic) {
+          battleMusic = new Audio(`${BASE}/audio/battle-music.m4a`);
+          battleMusic.loop = true;
+          battleMusic.preload = 'auto';
         }
         prepMusic.volume = Math.max(0.01, 0.3 * getVol());
         prepMusic.play().catch(() => {});

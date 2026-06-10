@@ -8,12 +8,8 @@
 //   Round 28  DEATHCLAW      — keep current stomp mechanic
 //   Round 35  ATOM THEIL     — glow burst (stacking rad DoT), heals allies 50% on death
 //   Round 42  LORENZO CABOT  — crimson stasis (freezes 1 unit per cast for 4s)
-//
-// `extraBosses.js` is kept for future content but exports an empty array now —
-// Mothman and the older one-off bosses were retired in this overhaul.
 
 import { BASE } from '../baseUrl.js';
-import { extraBosses } from './extraBosses.js';
 
 export const BOSS_DATABASE = {
   7: {
@@ -70,11 +66,6 @@ export const BOSS_DATABASE = {
     icon: '', iconImg: `${BASE}/images/icons/boss-lorenzo-cabot.svg`,
   },
 };
-
-// Spread any extras under their round-number keys. Currently empty.
-for (const b of extraBosses) {
-  BOSS_DATABASE[b.round] = b;
-}
 
 // Boss ID is derived from the kebab-cased name. Used for portrait path + replay.
 export const getBossId = (boss) => {

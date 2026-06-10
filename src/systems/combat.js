@@ -1,5 +1,5 @@
 import { UNIT_DATABASE, MELEE_UNITS, isMeleeUnit } from '../data/units.js';
-import { getWeaponType, WEAPON_COLORS } from './unitTypes.js';
+import { getWeaponType, WEAPON_COLORS } from '../data/unitTypes.js';
 import { TRAITS } from '../data/traits.js';
 import { ITEM_COMPONENTS, COMPLETED_ITEMS, getRandomComponent } from '../data/items.js';
 import { AUGMENT_POOL } from '../data/augments.js';
@@ -8,20 +8,14 @@ import { getDifficultyMode, DEFAULT_DIFFICULTY_ID } from '../data/difficulty.js'
 import { isPveRound, getPveWave } from '../data/pveWaves.js';
 import { COST_COLORS, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, isCarouselRound, getRandomCost, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from './audio.js';
+import { FO4_COMPANIONS } from '../data/fo4Companions.js';
+import { logError } from '../lib/logger.js';
 
 // ── FO4 Companion roster ─────────────────────────────────────────────
-// Used by Sole Survivor's "Survivor's Bond" passive (each hex-adjacent FO4
-// companion grants +8% ATK and +8% AP gain). Agent B is shipping the
-// canonical list at `../data/fo4Companions.js` in the same wave; the
-// integration step will swap this inline default for the real import.
-// Until then this fallback keeps combat.js loadable and tests green.
-// Canonical roster (12). Codsworth was removed in the character overhaul so
-// the Survivor's Bond passive no longer searches for him.
-export const FO4_COMPANIONS = [
-  'cait', 'curie', 'danse', 'deacon', 'dogmeat',
-  'hancock', 'maccready', 'nick', 'piper', 'preston', 'strong',
-  'x6-88',
-];
+// Used by Sole Survivor's "Survivor's Bond" passive (each adjacent FO4
+// companion grants +8% ATK and +8% AP gain). Canonical list lives in
+// `../data/fo4Companions.js`; re-exported here for existing consumers.
+export { FO4_COMPANIONS };
 
 // ── Dual-range positional resolver ──────────────────────────────────
 // Units with `range === 'dual'` (Agent B: Hancock, Sarah Lyon, Sole
@@ -1161,6 +1155,27 @@ export const triggerAbility = (unit, allies, enemies, logs, abilityMult, ability
   }
 };
 
+// ── Combat-stat sanitizer ───────────────────────────────────────────
+// Bad data (a missing multiplier, an undefined base stat) multiplies into
+// NaN and silently breaks every damage calc downstream. Clamp the core
+// numeric stats to finite values once at combat start so one malformed
+// unit can't poison the whole fight.
+export const sanitizeCombatUnit = (u) => {
+  if (!u) return u;
+  const fin = (v, fallback) => (Number.isFinite(v) ? v : fallback);
+  u.maxHp = Math.max(1, fin(u.maxHp, fin(u.hp, 100)));
+  u.currentHp = Math.min(u.maxHp, Math.max(0, fin(u.currentHp, u.maxHp)));
+  u.atk = Math.max(0, fin(u.atk, 10));
+  u.baseAtk = Math.max(0, fin(u.baseAtk, u.atk));
+  u.def = Math.max(0, fin(u.def, 0));
+  u.baseDef = Math.max(0, fin(u.baseDef, u.def));
+  u.mana = fin(u.mana, 0);
+  u.manaMax = Math.max(0, fin(u.manaMax, 0));
+  const as = fin(u.attackSpeed, 1);
+  u.attackSpeed = as > 0 ? as : 1;
+  return u;
+};
+
 // ── runCombat ───────────────────────────────────────────────────────
 export const runCombat = (playerUnits, enemyUnits, callbacks) => {
   const {
@@ -1212,6 +1227,9 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
   // fight if the unit is later repositioned by abilities/knockbacks.
   pUnits.forEach(u => lockDualRange(u));
   enemyUnits.forEach(u => { if (u) lockDualRange(u); });
+
+  pUnits.forEach(sanitizeCombatUnit);
+  enemyUnits.forEach(u => { if (u) sanitizeCombatUnit(u); });
 
   // ── Sole Survivor: combat-start bookkeeping ───────────────────────
   // (a) Merge the player's persistent per-round scaling bonus into the
@@ -1735,9 +1753,15 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
 
   sound.startCombat();
 
+  // A single bad tick must not kill the whole run. Errors are logged and the
+  // tick skipped; three consecutive failures force the fight to resolve
+  // through the normal end-of-combat path (tick cap) so rewards still flow.
+  let tickErrors = 0;
+
   const combatInterval = setInterval(() => {
     tick++;
     setCombatTick?.(tick);
+    try {
     let attackingUnits = [];
     let hitUnits = [];
     let dyingUnits = [];
@@ -2435,6 +2459,14 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
 
     while (logs.length > 120) logs.pop();
 
+    tickErrors = 0;
+    } catch (e) {
+      tickErrors++;
+      logError(e, { source: 'combat.tick', tick, round });
+      if (tickErrors === 1) logs.unshift('[WARN] Combat glitch detected — recovering...');
+      if (tickErrors >= 3) tick = Math.max(tick, 150);
+    }
+
     const logSlice = logs.slice(0, 10);
     const logSnap = logSlice.join('\x01');
     if (logSnap !== lastLogSnap) {
@@ -2456,6 +2488,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
     if (!playerAlive || !enemyAlive || tick >= 150) {
       clearInterval(combatInterval);
       combatRef.current = null;
+      try {
       // Clean up animation timers
       Object.values(animTimers).forEach(group => {
         Object.values(group).forEach(t => clearTimeout(t));
@@ -2542,6 +2575,7 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
       });
 
       setTimeout(() => {
+        try {
         const finalHp = won ? hpRef.current : Math.max(0, hpRef.current - dmg);
         setHp(finalHp);
 
@@ -2654,7 +2688,27 @@ export const runCombat = (playerUnits, enemyUnits, callbacks) => {
         }
         // Auto-save at start of each prep phase (delay to let React flush state)
         setTimeout(() => { try { saveGame(); } catch(e) {} }, 500);
+        } catch (e) {
+          // Post-round progression failed — still hand control back to the
+          // player rather than leaving the game stuck on the combat screen.
+          logError(e, { source: 'combat.postRound', round });
+          setRound(r => r + 1);
+          setShop(prev => { try { return generateShop(prev); } catch (_) { return prev; } });
+          setPhase('prep');
+          setTimer(callbacks.prepTimer || 30);
+        }
       }, 1500);
+      } catch (e) {
+        // End-of-combat bookkeeping failed before the round transition was
+        // scheduled — log and advance directly so the run survives.
+        logError(e, { source: 'combat.end', tick, round });
+        setAnimations({ attacking: [], hit: [], dying: [], ability: [] });
+        setLog(prev => ['[WARN] Combat ended with an error — advancing to next round.', ...prev.slice(0, 9)]);
+        setRound(r => r + 1);
+        setShop(prev => { try { return generateShop(prev); } catch (_) { return prev; } });
+        setPhase('prep');
+        setTimer(callbacks.prepTimer || 30);
+      }
     }
   }, 100);
   combatRef.current = combatInterval;

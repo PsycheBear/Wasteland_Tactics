@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo } from 'react';
-import { UNIT_DATABASE, MELEE_UNITS, isMeleeUnit } from '../data/units.js';
+import React, { useState, useEffect, useLayoutEffect, useCallback, useRef, useMemo, lazy, Suspense } from 'react';
+import { UNIT_DATABASE } from '../data/units.js';
 import { TRAITS } from '../data/traits.js';
-import { ITEM_COMPONENTS, COMPLETED_ITEMS, ITEM_COMPONENT_KEYS, findCompletedItem, getRandomComponent } from '../data/items.js';
+import { ITEM_COMPONENTS, COMPLETED_ITEMS, findCompletedItem, getRandomComponent } from '../data/items.js';
 import { AUGMENT_POOL } from '../data/augments.js';
 import { BOSS_DATABASE } from '../data/bosses.js';
 import { isPveRound, getPveWave } from '../data/pveWaves.js';
@@ -9,158 +9,26 @@ import { IMAGES } from '../data/images.js';
 import { COST_COLORS, TIER_LABELS, SHOP_ODDS, getRandomCost, POOL_SIZES, UNIT_KEYS, XP_TO_LEVEL, CAROUSEL_ROUNDS, ROUNDS_PER_STAGE, isCarouselRound, initPool, makeUid } from '../data/constants.js';
 import { sound, WT_SETTINGS } from '../systems/audio.js';
 import { getActiveSynergies, generateEnemies, initGhostPlayers, ghostPlayerShop, ghostPlayerBoard, runCombat, spawnFloat } from '../systems/combat.js';
-import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard, PortraitImg, hasPortrait } from './UiComponents.jsx';
+import { CombatBars, UnitPlaceholder, UnitTooltip, UnitCard, PortraitImg, hasPortrait, renderStars } from './UiComponents.jsx';
 import { GameIcon, createGameIcon } from './GameIcon.jsx';
-import Lucky38Carousel from './Lucky38Carousel.jsx';
 import LoadingScreen from './LoadingScreen.jsx';
-import DevTools from './DevTools.jsx';
 import AugmentPicker from './AugmentPicker.jsx';
-import BossIntro from './BossIntro.jsx';
+// Heavy, occasionally-shown surfaces load on demand so they stay out of the
+// initial bundle: the carousel only appears at stage ends, boss intros every
+// 7th round, and DevTools only in dev builds.
+const Lucky38Carousel = lazy(() => import('./Lucky38Carousel.jsx'));
+const DevTools = lazy(() => import('./DevTools.jsx'));
+const BossIntro = lazy(() => import('./BossIntro.jsx'));
 import ProfilePanel from './ProfilePanel.jsx';
 import DifficultySelector, { loadStoredDifficulty } from './DifficultySelector.jsx';
 import { BASE } from '../baseUrl.js';
-import { saveReplay } from '../hooks/useSave.js';
+import { saveReplay, saveRun, SAVE_VERSION, migrateSave } from '../hooks/useSave.js';
 import { logError } from '../lib/logger.js';
-
-/* === Combat log tag => colored badge parser =================================
- *
- * Combat log lines emitted from combat.js (and a handful of UI helpers
- * below) start with a bracketed tag token like `[VICTORY]` or `[GOLD]`.
- * Each key here maps to a terminal-style prefix label + a badge color so
- * the line is parsed and rendered with a colored monospace prefix.
- *
- * The previous emoji-keyed map has been replaced with bracket tokens;
- * the project no longer renders emoji glyphs anywhere.
- *
- * The export name is preserved (LOG_EMOJI_MAP) so future search&replace
- * stays easy to grep, but the keys are deliberately ASCII-only now.
- * ============================================================================ */
-const LOG_EMOJI_MAP = {
-  '[UP]':      { label: 'UP',    color: '#ffd700' },
-  '[DEF]':     { label: 'DEF',   color: '#6688ff' },
-  '[TECH]':    { label: 'TECH',  color: '#708090' },
-  '[MED]':     { label: 'MED',   color: '#ff6666' },
-  '[STIM]':    { label: 'MED',   color: '#ff8888' },
-  '[DOG]':     { label: 'DOG',   color: '#cc8844' },
-  '[DET]':     { label: 'DET',   color: '#aaaaff' },
-  '[PSI]':     { label: 'PSI',   color: '#cc66ff' },
-  '[FIRE]':    { label: 'FIRE',  color: '#ff6600' },
-  '[STR]':     { label: 'STR',   color: '#ff6644' },
-  '[ZAP]':     { label: 'ZAP',   color: '#ffff44' },
-  '[CLAW]':    { label: 'CLAW',  color: '#66cc66' },
-  '[LAB]':     { label: 'LAB',   color: '#44ff88' },
-  '[NEWS]':    { label: 'NEWS',  color: '#ffcc44' },
-  '[RAD]':     { label: 'RAD',   color: '#44ff44' },
-  '[AIM]':     { label: 'AIM',   color: '#ffaa00' },
-  '[RAGE]':    { label: 'RAGE',  color: '#ff4444' },
-  '[HEAL]':    { label: 'HEAL',  color: '#2E8B57' },
-  '[SPY]':     { label: 'SPY',   color: '#aa88cc' },
-  '[BIO]':     { label: 'BIO',   color: '#669933' },
-  '[GLOW]':    { label: 'BIO',   color: '#88cc44' },
-  '[BOT]':     { label: 'BOT',   color: '#aaaaaa' },
-  '[KILL]':    { label: 'KILL',  color: '#ff4444' },
-  '[DEFEAT]':  { label: 'KILL',  color: '#ff4444' },
-  '[USA]':     { label: 'USA',   color: '#4488ff' },
-  '[BOSS]':    { label: 'BOSS',  color: '#ff4444' },
-  '[PVE]':     { label: 'BOSS',  color: '#ff9966' },
-  '[JET]':     { label: 'JET',   color: '#aaccff' },
-  '[BOOM]':    { label: 'BOOM',  color: '#ffaa44' },
-  '[VOID]':    { label: 'VOID',  color: '#cc66ff' },
-  '[SHROUD]':  { label: 'VOID',  color: '#aa99cc' },
-  '[SCOPE]':   { label: 'SCOPE', color: '#44ccff' },
-  '[LASER]':   { label: 'LASER', color: '#ff4444' },
-  '[CRIT]':    { label: 'CRIT',  color: '#ff8844' },
-  '[GUN]':     { label: 'GUN',   color: '#aaaaaa' },
-  '[BLADE]':   { label: 'BLADE', color: '#ff8844' },
-  '[WEAVE]':   { label: 'WEAVE', color: '#cccccc' },
-  '[FIX]':     { label: 'FIX',   color: '#aaaaaa' },
-  '[DODGE]':   { label: 'DODGE', color: '#aa66ff' },
-  '[WIN]':     { label: 'WIN',   color: '#ffd700' },
-  '[VICTORY]': { label: 'WIN',   color: '#ffd700' },
-  '[LUCKY]':   { label: 'WIN',   color: '#ffd700' },
-  '[ITEM]':    { label: 'ITEM',  color: '#ffaa00' },
-  '[GIFT]':    { label: 'ITEM',  color: '#ffaa00' },
-  '[CAPS]':    { label: 'CAPS',  color: '#ffd700' },
-  '[GOLD]':    { label: 'CAPS',  color: '#ffd700' },
-  '[XP]':      { label: 'UP',    color: '#88ff88' },
-  '[WARN]':    { label: 'WARN',  color: '#ffaa00' },
-  '[SAVE]':    { label: 'SAVE',  color: '#44aaff' },
-};
-
-/* Terminal-style log prefixes based on emoji category */
-const TERMINAL_PREFIX = {
-  KILL: { prefix: '[KILL]', color: '#ff4444' },
-  HEAL: { prefix: '[HEAL]', color: '#44cc88' },
-  CRIT: { prefix: '[CRIT]', color: '#ffaa00' },
-  ZAP:  { prefix: '[ZAP]',  color: '#cc8800' },
-  FIRE: { prefix: '[FIRE]', color: '#ff6600' },
-  BOSS: { prefix: '[BOSS]', color: '#ff4444' },
-  WIN:  { prefix: '[SYS]',  color: '#c8942a' },
-  SAVE: { prefix: '[SYS]',  color: '#c8942a' },
-  WARN: { prefix: '[SYS]',  color: '#c8942a' },
-  ITEM: { prefix: '[ITEM]', color: '#ffaa00' },
-  CAPS: { prefix: '[CAPS]', color: '#ffd700' },
-  UP:   { prefix: '[UP]',   color: '#ffd700' },
-  DEF:  { prefix: '[DEF]',  color: '#6688ff' },
-  TECH: { prefix: '[TECH]', color: '#708090' },
-  MED:  { prefix: '[MED]',  color: '#44cc88' },
-  DOG:  { prefix: '[ATK]',  color: '#cc8844' },
-  DET:  { prefix: '[DET]',  color: '#aaaaff' },
-  PSI:  { prefix: '[PSI]',  color: '#cc66ff' },
-  STR:  { prefix: '[STR]',  color: '#ff6644' },
-  CLAW: { prefix: '[ATK]',  color: '#66cc66' },
-  NEWS: { prefix: '[DBF]',  color: '#ffcc44' },
-  AIM:  { prefix: '[AIM]',  color: '#ffaa00' },
-  RAGE: { prefix: '[DBF]',  color: '#ff4444' },
-  SPY:  { prefix: '[SPY]',  color: '#aa88cc' },
-  BIO:  { prefix: '[RAD]',  color: '#669933' },
-  BOT:  { prefix: '[BOT]',  color: '#aaaaaa' },
-  USA:  { prefix: '[USA]',  color: '#4488ff' },
-  JET:  { prefix: '[JET]',  color: '#aaccff' },
-  BOOM: { prefix: '[BOOM]', color: '#ffaa44' },
-  VOID: { prefix: '[VOID]', color: '#cc66ff' },
-  SCOPE:{ prefix: '[AIM]',  color: '#44ccff' },
-  LASER:{ prefix: '[FIRE]', color: '#ff4444' },
-  GUN:  { prefix: '[GUN]',  color: '#aaaaaa' },
-  BLADE:{ prefix: '[ATK]',  color: '#ff8844' },
-  WEAVE:{ prefix: '[DEF]',  color: '#cccccc' },
-  FIX:  { prefix: '[FIX]',  color: '#aaaaaa' },
-  DODGE:{ prefix: '[MISS]', color: '#aa66ff' },
-};
-// Map existing label → terminal prefix
-const LABEL_TO_TERMINAL = {};
-for (const [, v] of Object.entries(LOG_EMOJI_MAP)) {
-  LABEL_TO_TERMINAL[v.label] = TERMINAL_PREFIX[v.label] || { prefix: '>', color: '#33ff33' };
-}
-// Sort tokens by length descending so `[DEFEAT]` is tried before `[DEF]`
-// (otherwise the shorter prefix would shadow the longer token).
-const LOG_EMOJI_ENTRIES = Object.entries(LOG_EMOJI_MAP).sort(
-  ([a], [b]) => b.length - a.length,
-);
-
-let logActionCounter = 0;
-function formatLogEntry(text, roundNum) {
-  if (!text || typeof text !== 'string') return text;
-  logActionCounter++;
-  const ts = `[R${roundNum || '?'}-${String(logActionCounter % 100).padStart(2, '0')}]`;
-
-  for (const [token, style] of LOG_EMOJI_ENTRIES) {
-    if (text.startsWith(token)) {
-      const rest = text.slice(token.length).trimStart();
-      const tp = LABEL_TO_TERMINAL[style.label] || { prefix: '>', color: 'var(--ui-primary)' };
-      return React.createElement('span', { style: { fontFamily: "'Share Tech Mono', monospace" } },
-        React.createElement('span', { style: { color: 'var(--ui-text-dim)', fontSize: 8, marginRight: 4, opacity: 0.5 } }, ts),
-        React.createElement('span', { style: { color: tp.color, fontWeight: 'bold', marginRight: 4, fontSize: 9 } }, tp.prefix),
-        React.createElement('span', { style: { color: 'var(--ui-text)' } }, rest)
-      );
-    }
-  }
-  return React.createElement('span', { style: { fontFamily: "'Share Tech Mono', monospace" } },
-    React.createElement('span', { style: { color: 'var(--ui-text-dim)', fontSize: 8, marginRight: 4, opacity: 0.5 } }, ts),
-    React.createElement('span', { style: { color: 'var(--ui-secondary)', marginRight: 4 } }, '>'),
-    React.createElement('span', { style: { color: 'var(--ui-text)' } }, text)
-  );
-}
+import { setLog, setCombatTick } from '../game/uiStores.js';
+import LogPanel from './panels/LogPanel.jsx';
+import CombatProgressBar from './panels/CombatProgressBar.jsx';
+import SynergyPanel from './panels/SynergyPanel.jsx';
+import GameOverScreen from '../screens/GameOverScreen.jsx';
 
 function playStarUp(uid, stars) {
   if (!uid) return;
@@ -293,7 +161,8 @@ function WastelandTactics() {
   // across combat boundaries.
   const [shopLocked, setShopLocked] = useState([false, false, false, false, false]);
   const [selected, setSelected] = useState(null);
-  const [log, setLog] = useState([]);
+  // log + combatTick live in external stores (game/uiStores.js) so their
+  // high-frequency updates only re-render LogPanel / CombatProgressBar.
   const [combatUnits, setCombatUnits] = useState([]);
   const [combatEnemies, setCombatEnemies] = useState([]);
   const [animations, setAnimations] = useState({ attacking: [], hit: [], dying: [], ability: [] });
@@ -312,7 +181,6 @@ function WastelandTactics() {
   const [tutorialStep, setTutorialStep] = useState(0);
   const [hasSave, setHasSave] = useState(() => !!localStorage.getItem('wt_save'));
   const [showContinuePrompt, setShowContinuePrompt] = useState(false);
-  const [combatTick, setCombatTick] = useState(0);
   const [incomeBreakdown, setIncomeBreakdown] = useState(null);
   const [showIncome, setShowIncome] = useState(false);
   const [shopFlipping, setShopFlipping] = useState(false);
@@ -522,6 +390,11 @@ function WastelandTactics() {
   }, [settings]);
   const combatRef = useRef(null);
   const startCombatRef = useRef(() => {});
+  // Synchronous re-entry gate for startCombat. The prep timer and the manual
+  // start button can both fire inside the window between setPhase('combat')
+  // and the next render (where the closure's `phase` is still 'prep'), so a
+  // state-based guard alone can double-launch combat.
+  const combatStartingRef = useRef(false);
   const poolRef = useRef(initPool());
   const ghostPlayersRef = useRef(initGhostPlayers(poolRef.current));
   const [currentOpponent, setCurrentOpponent] = useState(null);
@@ -619,6 +492,7 @@ function WastelandTactics() {
 
   useEffect(() => {
     if (phase !== 'prep') return;
+    combatStartingRef.current = false;
     const interval = setInterval(() => {
       if (pausedRef.current || itemSelectionRef.current || augmentChoiceRef.current) return;
       setTimer(t => {
@@ -632,7 +506,14 @@ function WastelandTactics() {
     return () => clearInterval(interval);
   }, [phase, settings.prepTimer]);
 
+  // Double-click guard: two clicks on the same shop slot can both pass the
+  // gold/bench checks before React re-renders with the updated state.
+  const lastBuyRef = useRef({ index: -1, time: 0 });
+
   const buyUnit = (index) => {
+    const now = performance.now();
+    if (lastBuyRef.current.index === index && now - lastBuyRef.current.time < 200) return;
+    lastBuyRef.current = { index, time: now };
     const unit = shop[index];
     if (!unit || gold < unit.cost) { try { sound.deny?.(); } catch(_) {} return; }
     const emptySlot = bench.findIndex(slot => slot === null);
@@ -943,7 +824,8 @@ function WastelandTactics() {
   sellUnitRef.current = sellUnit;
 
   const startCombat = () => {
-    if (phase !== 'prep') return;
+    if (phase !== 'prep' || combatStartingRef.current) return;
+    combatStartingRef.current = true;
     setUnitTooltip(null);
     if (combatRef.current) {
       clearInterval(combatRef.current);
@@ -1131,6 +1013,7 @@ function WastelandTactics() {
       };
     });
     if (boardUnits.length === 0) {
+      combatStartingRef.current = false;
       setLog(prev => ['[WARN] No units on board!', ...prev.slice(0, 9)]);
       setNoBoardFlash(true);
       setTimeout(() => setNoBoardFlash(false), 600);
@@ -1269,13 +1152,14 @@ function WastelandTactics() {
   const saveGameRef = useRef(null);
   const saveGame = () => {
     const state = {
+      version: SAVE_VERSION,
       round, gold, hp: hpRef.current, level, xp, xpNeeded: xpMetaRef.current.xpNeeded, streak,
       bench: bench.map(u => u ? { id: u.id, stars: u.stars, uid: u.uid, items: u.items || [] } : null),
       board: board.map(u => u ? { id: u.id, stars: u.stars, uid: u.uid, items: u.items || [] } : null),
       pool: poolRef.current,
       itemInventory, augments,
     };
-    localStorage.setItem('wt_save', JSON.stringify(state));
+    saveRun(state); // quota-aware write (evicts replays and retries on QuotaExceeded)
     setHasSave(true);
     setLog(prev => ['[SAVE] Game saved!', ...prev.slice(0, 9)]);
   };
@@ -1286,7 +1170,17 @@ function WastelandTactics() {
     try {
       const raw = localStorage.getItem('wt_save');
       if (!raw) return;
-      const state = JSON.parse(raw);
+      let state = null;
+      try { state = migrateSave(JSON.parse(raw)); } catch (_) { state = null; }
+      if (!state) {
+        // Corrupted or from a newer build — preserve the raw blob for rescue
+        // instead of silently destroying it, then clear so the menu doesn't
+        // keep offering a save that can't load.
+        try { localStorage.setItem('wt_save_backup', raw); localStorage.removeItem('wt_save'); } catch (_) {}
+        setHasSave(false);
+        setLog(prev => ['[WARN] Save was corrupted or incompatible — backed up and cleared.', ...prev.slice(0, 9)]);
+        return;
+      }
       if (combatRef.current) clearInterval(combatRef.current);
       setFloatingNumbers([]);
       const restoreUnit = (u) => {
@@ -1316,7 +1210,7 @@ function WastelandTactics() {
   };
 
   const getColor = (cost) => ({ 1: '#888', 2: '#4CAF50', 3: '#2196F3', 4: '#9C27B0', 5: '#FF9800' }[cost] || '#888');
-  const stars = (n) => '\u2605'.repeat(n);
+  const stars = renderStars; // inline-SVG star rank (shared with UnitCard)
   const synergies = useMemo(() => getActiveSynergies(board), [board]);
 
   // Image constants
@@ -1463,7 +1357,7 @@ function WastelandTactics() {
             {/* Spacer */}
             <div style={{ flex: 1 }} />
             {/* Profile area — Vault-Tec style */}
-            <div className="wt-profile-area" onClick={() => { /* TODO: open profile/stats panel */ }} style={{ '--profile-glow': rank.color, display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px', height: 52 }}>
+            <div className="wt-profile-area" role="button" tabIndex={0} aria-label="Open profile and stats" onClick={() => setProfileOpen(true)} onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setProfileOpen(true); } }} style={{ '--profile-glow': rank.color, display: 'flex', alignItems: 'center', gap: 10, padding: '4px 12px', height: 52, cursor: 'pointer' }}>
               {/* Rank + stats */}
               <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <div style={{ fontSize: 11, color: 'var(--ui-text)', fontWeight: 'bold', letterSpacing: 2 }}>OVERSEER</div>
@@ -1926,11 +1820,11 @@ function WastelandTactics() {
                     <div style={{ fontSize: 10, color: '#7a6030', marginBottom: 12 }}>Changes the battlefield background and grid lines during combat.</div>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
                       {[
-                        { id: 'arena2', name: 'Dustbowl', image: `${BASE}/arena-2.png`, border: '#a08040' },
-                        { id: 'arena1', name: 'Ruined Pit', image: `${BASE}/arena-1.png`, border: '#c85a20' },
-                        { id: 'arena3', name: 'The Cage', image: `${BASE}/arena-3.png`, border: '#666688' },
-                        { id: 'arena4', name: 'Fight Club', image: `${BASE}/arena-4.png`, border: '#aa6644' },
-                        { id: 'arena5', name: 'Rubble Ring', image: `${BASE}/arena-5.png`, border: '#777766' },
+                        { id: 'arena2', name: 'Dustbowl', image: `${BASE}/arena-2.webp`, border: '#a08040' },
+                        { id: 'arena1', name: 'Ruined Pit', image: `${BASE}/arena-1.webp`, border: '#c85a20' },
+                        { id: 'arena3', name: 'The Cage', image: `${BASE}/arena-3.webp`, border: '#666688' },
+                        { id: 'arena4', name: 'Fight Club', image: `${BASE}/arena-4.webp`, border: '#aa6644' },
+                        { id: 'arena5', name: 'Rubble Ring', image: `${BASE}/arena-5.webp`, border: '#777766' },
                       ].map(skin => {
                         const isImageSkin = !!skin.image;
                         return (
@@ -2025,11 +1919,11 @@ function WastelandTactics() {
                   {/* Mini battlefield preview */}
                   <div key={settings.boardSkin || 'arena2'} style={(() => {
                     const imageSkins = {
-                      arena1: { image: `${BASE}/arena-1.png`, border: '#c85a20' },
-                      arena2: { image: `${BASE}/arena-2.png`, border: '#a08040' },
-                      arena3: { image: `${BASE}/arena-3.png`, border: '#666688' },
-                      arena4: { image: `${BASE}/arena-4.png`, border: '#aa6644' },
-                      arena5: { image: `${BASE}/arena-5.png`, border: '#777766' },
+                      arena1: { image: `${BASE}/arena-1.webp`, border: '#c85a20' },
+                      arena2: { image: `${BASE}/arena-2.webp`, border: '#a08040' },
+                      arena3: { image: `${BASE}/arena-3.webp`, border: '#666688' },
+                      arena4: { image: `${BASE}/arena-4.webp`, border: '#aa6644' },
+                      arena5: { image: `${BASE}/arena-5.webp`, border: '#777766' },
                     };
                     const currentSkin = settings.boardSkin || 'arena2';
                     const imgSkin = imageSkins[currentSkin] || imageSkins.arena2;
@@ -2596,7 +2490,7 @@ function WastelandTactics() {
       {/* Settings panel — reworked overlay */}
       {settingsOpen && (
         <div className="wt-settings-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.88)', backdropFilter: 'blur(4px)', WebkitBackdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3100, animation: 'wt-settings-fade-in 0.25s ease-out' }} onClick={() => setSettingsOpen(false)}>
-          <div className="wt-menu-scroll" style={{ background: 'linear-gradient(180deg, rgba(25,15,5,0.98) 0%, rgba(10,6,2,0.99) 50%, rgba(5,3,1,0.99) 100%)', border: '2px solid var(--ui-border)', borderRadius: 10, padding: '28px 36px', width: 560, maxWidth: '92vw', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 40px var(--ui-glow), 0 8px 32px rgba(0,0,0,0.6)', animation: 'wt-settings-panel-in 0.3s ease-out' }} onClick={e => e.stopPropagation()}>
+          <div className="wt-menu-scroll" role="dialog" aria-modal="true" aria-label="Settings" style={{ background: 'linear-gradient(180deg, rgba(25,15,5,0.98) 0%, rgba(10,6,2,0.99) 50%, rgba(5,3,1,0.99) 100%)', border: '2px solid var(--ui-border)', borderRadius: 10, padding: '28px 36px', width: 'clamp(300px, 92vw, 560px)', maxHeight: '85vh', overflowY: 'auto', boxShadow: '0 0 40px var(--ui-glow), 0 8px 32px rgba(0,0,0,0.6)', animation: 'wt-settings-panel-in 0.3s ease-out' }} onClick={e => e.stopPropagation()}>
             {/* Header */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid var(--ui-border-dim)', paddingBottom: 10 }}>
               <span style={{ fontSize: 18, fontWeight: 'bold', color: 'var(--ui-text)', letterSpacing: 3, textShadow: '0 0 10px var(--ui-glow)' }}>SETTINGS</span>
@@ -2677,16 +2571,17 @@ function WastelandTactics() {
                 <div style={{ fontSize: 9, color: 'var(--ui-text-dim)', marginBottom: 8 }}>Point to your Fallout 4 install to use authentic sounds</div>
                 <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                   <input type="text" placeholder="C:\Program Files\Steam\steamapps\common\Fallout 4" value={settings.fo4Path || ''} onChange={e => setSettings(s => ({ ...s, fo4Path: e.target.value }))} style={{ flex: 1, padding: '6px 10px', fontSize: 10, background: 'rgba(0,0,0,0.4)', border: '1px solid var(--ui-border-dim)', borderRadius: 4, color: 'var(--ui-text)', fontFamily: 'inherit' }} />
-                  <button onClick={() => {
+                  <button disabled={settings.fo4Status === 'testing'} onClick={() => {
                     try {
                       localStorage.setItem('wt_fo4_cache_dir', settings.fo4Path || '');
+                      setSettings(s => ({ ...s, fo4Status: 'testing' }));
                       fetch('/fo4-audio/ui/pipboy-click.wav', { method: 'HEAD' }).then(r => {
                         setSettings(s => ({ ...s, fo4Status: r.ok ? 'found' : 'not_found' }));
                       }).catch(() => setSettings(s => ({ ...s, fo4Status: 'not_found' })));
                     } catch(_) { setSettings(s => ({ ...s, fo4Status: 'not_found' })); }
-                  }} style={{ padding: '6px 14px', fontSize: 10, fontWeight: 'bold', background: 'var(--ui-hover)', border: '1px solid var(--ui-border-dim)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', fontFamily: 'inherit', whiteSpace: 'nowrap' }}>TEST</button>
+                  }} style={{ padding: '6px 14px', fontSize: 10, fontWeight: 'bold', background: 'var(--ui-hover)', border: '1px solid var(--ui-border-dim)', borderRadius: 4, color: 'var(--ui-primary)', cursor: settings.fo4Status === 'testing' ? 'wait' : 'pointer', opacity: settings.fo4Status === 'testing' ? 0.6 : 1, fontFamily: 'inherit', whiteSpace: 'nowrap' }}>{settings.fo4Status === 'testing' ? 'TESTING…' : 'TEST'}</button>
                 </div>
-                {settings.fo4Status && (
+                {settings.fo4Status && settings.fo4Status !== 'testing' && (
                   <div style={{ marginTop: 6, fontSize: 10, color: settings.fo4Status === 'found' ? '#44ff44' : '#ff4444', display: 'flex', alignItems: 'center', gap: 4 }}>
                     <span style={{ fontSize: 14 }}>{settings.fo4Status === 'found' ? '✓' : '✗'}</span>
                     {settings.fo4Status === 'found' ? 'FO4 audio files detected' : 'FO4 audio files not found'}
@@ -2748,7 +2643,7 @@ function WastelandTactics() {
             {/* Left — Logo + Settings */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative', zIndex: 2 }}>
               {LOGO_IMG ? <img src={LOGO_IMG} alt="WT" style={{ height: 32, objectFit: 'contain', filter: 'drop-shadow(0 0 8px rgba(0,255,0,0.5))' }} /> : <span style={{ fontSize: 18, fontWeight: 'bold', textShadow: '0 0 10px var(--ui-primary)' }}>WT</span>}
-              <button onClick={() => setSettingsOpen(o => !o)} style={{ background: 'transparent', border: '1px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', padding: '3px 6px', fontSize: 14 }} title="Settings"><svg width="14" height="14" viewBox="0 0 20 20"><path d="M10 7a3 3 0 100 6 3 3 0 000-6zm7.3 2.2l-1.4-.3a5.8 5.8 0 00-.7-1.7l.8-1.2-1.4-1.4-1.2.8a5.8 5.8 0 00-1.7-.7L11.4.3h-2l-.3 1.4a5.8 5.8 0 00-1.7.7L6.2 1.6 4.8 3l.8 1.2a5.8 5.8 0 00-.7 1.7l-1.4.3v2l1.4.3c.1.6.4 1.2.7 1.7l-.8 1.2 1.4 1.4 1.2-.8c.5.3 1.1.6 1.7.7l.3 1.4h2l.3-1.4a5.8 5.8 0 001.7-.7l1.2.8 1.4-1.4-.8-1.2c.3-.5.6-1.1.7-1.7l1.4-.3z" fill="currentColor"/></svg></button>
+              <button onClick={() => setSettingsOpen(o => !o)} aria-label="Open settings" style={{ background: 'transparent', border: '1px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', padding: '3px 6px', fontSize: 14 }} title="Settings"><svg width="14" height="14" viewBox="0 0 20 20"><path d="M10 7a3 3 0 100 6 3 3 0 000-6zm7.3 2.2l-1.4-.3a5.8 5.8 0 00-.7-1.7l.8-1.2-1.4-1.4-1.2.8a5.8 5.8 0 00-1.7-.7L11.4.3h-2l-.3 1.4a5.8 5.8 0 00-1.7.7L6.2 1.6 4.8 3l.8 1.2a5.8 5.8 0 00-.7 1.7l-1.4.3v2l1.4.3c.1.6.4 1.2.7 1.7l-.8 1.2 1.4 1.4 1.2-.8c.5.3 1.1.6 1.7.7l.3 1.4h2l.3-1.4a5.8 5.8 0 001.7-.7l1.2.8 1.4-1.4-.8-1.2c.3-.5.6-1.1.7-1.7l1.4-.3z" fill="currentColor"/></svg></button>
             </div>
 
             {/* Center — Stage + Progress (absolutely centered, TFT-style) */}
@@ -2891,77 +2786,18 @@ function WastelandTactics() {
       {/* Main game area — TFT-style layout */}
       <div className="wt-main-layout">
         {/* Left panel - Synergies */}
-        <div className="wt-synergy-panel">
-          <div className="wt-panel-header">SYNERGIES</div>
-          {synergies.length === 0 ? <div className="wt-synergy-empty">No active synergies</div> : synergies.map(s => {
-            // TFT-style tier ladder: surface every threshold (2, 3, ...) and highlight reached ones.
-            // bonuses is keyed by count thresholds — derive the ladder from that data.
-            const tiers = Object.keys(s.bonuses).map(Number).sort((a, b) => a - b);
-            const reachedTiers = tiers.filter(t => s.count >= t);
-            const activeTier = reachedTiers.length ? reachedTiers[reachedTiers.length - 1] : null;
-            const nextTier = tiers.find(t => s.count < t);
-            const displayBonus = activeTier ? s.bonuses[activeTier] : (nextTier ? `Need ${nextTier - s.count} more for ${s.bonuses[nextTier]}` : s.bonuses[tiers[0]]);
-            return (
-            <div key={s.trait} className={`wt-synergy-row ${s.count >= 2 ? 'wt-synergy-row-active' : ''}`} style={{ '--synergy-color': s.color, borderColor: s.count >= 2 ? `${s.color}44` : undefined, boxShadow: s.count >= 2 ? `0 0 8px ${s.color}33` : undefined }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <GameIcon iconImg={s.iconImg} icon={s.icon} size={14} />
-                <span style={{ color: s.color, fontWeight: 'bold', fontSize: 11 }}>{s.name}</span>
-                <span style={{ marginLeft: 'auto', fontSize: 11, color: s.count >= 2 ? s.color : 'var(--ui-text-dim)' }}>{s.count}</span>
-              </div>
-              {/* TFT-style tier ladder: 2 › 4 › 6 with reached tiers bright + active tier outlined. */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginTop: 3, fontFamily: "'Share Tech Mono', monospace" }}>
-                {tiers.map((t, idx) => {
-                  const reached = s.count >= t;
-                  const isActive = t === activeTier;
-                  return (
-                    <React.Fragment key={t}>
-                      <span
-                        title={`${t}: ${s.bonuses[t]}`}
-                        className={isActive ? 'wt-synergy-tier-active' : ''}
-                        style={{
-                          fontSize: 10, fontWeight: 'bold',
-                          color: reached ? s.color : `${s.color}55`,
-                          textShadow: isActive ? `0 0 6px ${s.color}88` : 'none',
-                          padding: isActive ? '0 3px' : 0,
-                          background: isActive ? `${s.color}22` : 'transparent',
-                          borderRadius: 2,
-                          minWidth: 10, textAlign: 'center',
-                          // animation's box-shadow uses currentColor — that's `color` above.
-                        }}
-                      >{t}</span>
-                      {idx < tiers.length - 1 && (
-                        <span style={{ fontSize: 9, color: s.color, opacity: s.count >= tiers[idx + 1] ? 0.7 : 0.25 }}>{'›'}</span>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </div>
-              <div style={{ fontSize: 8, opacity: activeTier ? 0.75 : 0.45, marginTop: 3, lineHeight: 1.3 }}>{displayBonus}</div>
-            </div>
-            );
-          })}
-          {augments.length > 0 && (
-            <div style={{ marginTop: 8, borderTop: '1px solid var(--ui-border-dim)', paddingTop: 6 }}>
-              <div style={{ fontSize: 10, fontWeight: 'bold', color: '#cc66ff', marginBottom: 4 }}>AUGMENTS</div>
-              {augments.map(augId => {
-                const aug = AUGMENT_POOL.find(a => a.id === augId);
-                if (!aug) return null;
-                return React.createElement('div', { key: augId, style: { fontSize: 9, marginBottom: 2, opacity: 0.8, display: 'flex', alignItems: 'center', gap: 3 } }, createGameIcon(aug.iconImg, aug.icon, 10), ` ${aug.name}`);
-              })}
-            </div>
-          )}
-        </div>
+        <SynergyPanel synergies={synergies} augments={augments} />
 
         {/* Center column — Board, Bench, Shop stacked */}
         <div className="wt-center-column">
           {/* Arena */}
           <div className="wt-combat-arena wt-arena-frame" style={(() => {
             const imageSkins = {
-              arena1: { image: `${BASE}/arena-1.png`, border: '#c85a20' },
-              arena2: { image: `${BASE}/arena-2.png`, border: '#a08040' },
-              arena3: { image: `${BASE}/arena-3.png`, border: '#666688' },
-              arena4: { image: `${BASE}/arena-4.png`, border: '#aa6644' },
-              arena5: { image: `${BASE}/arena-5.png`, border: '#777766' },
+              arena1: { image: `${BASE}/arena-1.webp`, border: '#c85a20' },
+              arena2: { image: `${BASE}/arena-2.webp`, border: '#a08040' },
+              arena3: { image: `${BASE}/arena-3.webp`, border: '#666688' },
+              arena4: { image: `${BASE}/arena-4.webp`, border: '#aa6644' },
+              arena5: { image: `${BASE}/arena-5.webp`, border: '#777766' },
             };
             const currentSkin = settings.boardSkin || 'arena2';
             const imgSkin = imageSkins[currentSkin] || imageSkins.arena2;
@@ -2974,11 +2810,13 @@ function WastelandTactics() {
           })()}>
             <div className="wt-board-vignette" />
             {bossIntro && (
-              <BossIntro
-                boss={bossIntro}
-                frames={Array.isArray(bossIntro.introFrames) ? bossIntro.introFrames : null}
-                onDone={() => { /* boss intro auto-dismiss handled by existing timeout in setBossIntro flow */ }}
-              />
+              <Suspense fallback={null}>
+                <BossIntro
+                  boss={bossIntro}
+                  frames={Array.isArray(bossIntro.introFrames) ? bossIntro.introFrames : null}
+                  onDone={() => { /* boss intro auto-dismiss handled by existing timeout in setBossIntro flow */ }}
+                />
+              </Suspense>
             )}
             {/* PvE creep-wave banner — shown when on a themed PvE round, in either prep or combat.
                 Non-intrusive: thin coloured bar, no full overlay. */}
@@ -3003,34 +2841,7 @@ function WastelandTactics() {
                 </div>
               );
             })()}
-            {/* Combat progress bar — TFT-style slim drain bar with text ABOVE the bar
-                instead of overlaid (was unreadable against the gradient). Color
-                shifts in three discrete bands (green / amber / red) for clarity. */}
-            {phase === 'combat' && (() => {
-              const remainingPct = Math.max(0, (1 - combatTick / 150) * 100);
-              const remainingSec = Math.max(0, Math.ceil((150 - combatTick) / 10)); // 10 ticks ≈ 1 second
-              const fillColor = remainingPct > 50 ? '#4eff4e' : remainingPct > 25 ? '#ffaa00' : '#ff4444';
-              const glow = remainingPct > 50 ? 'rgba(78,255,78,0.4)' : remainingPct > 25 ? 'rgba(255,170,0,0.55)' : 'rgba(255,68,68,0.7)';
-              return (
-                <div style={{ maxWidth: 780, width: '100%', margin: '0 auto 8px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                  {/* Timer text above */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: "'Share Tech Mono', monospace", fontSize: 10, letterSpacing: 1.5, color: fillColor, textShadow: `0 0 6px ${glow}` }}>
-                    <span style={{ opacity: 0.7 }}>COMBAT</span>
-                    <span style={{ fontWeight: 'bold', fontSize: 12 }}>{remainingSec}s</span>
-                  </div>
-                  {/* Slim drain bar */}
-                  <div style={{ width: '100%', height: 6, background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 2, overflow: 'hidden', boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.6)' }}>
-                    <div style={{
-                      width: `${remainingPct}%`,
-                      height: '100%',
-                      background: `linear-gradient(180deg, ${fillColor} 0%, ${fillColor}cc 100%)`,
-                      boxShadow: `0 0 8px ${glow}, inset 0 1px 0 rgba(255,255,255,0.18)`,
-                      transition: 'width 0.1s linear, background 0.3s, box-shadow 0.3s',
-                    }} />
-                  </div>
-                </div>
-              );
-            })()}
+            {phase === 'combat' && <CombatProgressBar />}
             {/* Enemy board / Scout preview — only for ghost PvP rounds (not PvE creep waves, not bosses) */}
             {phase === 'prep' && round > 3 && !isPveRound(round) && !(round % 7 === 0 && BOSS_DATABASE[round]) && (() => {
               const aliveGhosts = ghostPlayersRef.current.filter(g => g.alive);
@@ -3523,7 +3334,7 @@ function WastelandTactics() {
           {/* Combat Log — Theme-matching terminal */}
           <div style={{ flex: 1, background: 'var(--ui-bg)', border: '2px solid var(--ui-border-dim)', borderRadius: 4, padding: 8, display: 'flex', flexDirection: 'column', minHeight: 0, position: 'relative', overflow: 'hidden' }}>
             <div className="wt-panel-header">COMBAT LOG</div>
-            <div className="wt-log-panel" style={{ flex: 1, fontSize: 11, overflow: 'auto' }}>{log.map((l, i) => <div key={i} className="wt-log-entry" style={{ padding: '3px 0', opacity: Math.max(0.3, 1 - i * 0.05), lineHeight: 1.5 }}>{formatLogEntry(l, round)}</div>)}{!log.length && <div className="wt-log-empty">Awaiting orders<span className="wt-terminal-cursor">█</span></div>}</div>
+            <LogPanel round={round} />
             <div style={{ color: 'var(--ui-text-dim)', fontFamily: "'Share Tech Mono', monospace", fontSize: 7, marginTop: 4, borderTop: '1px solid var(--ui-border-dim)', paddingTop: 3, opacity: 0.4 }}>TERMLINK PROTOCOL<span className="wt-terminal-cursor" style={{ marginLeft: 4 }}>█</span></div>
           </div>
         </div>
@@ -4521,7 +4332,7 @@ function WastelandTactics() {
           return results;
         };
         return (
-        <div className="wt-item-select-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(14,27,43,0.4)', backdropFilter: 'blur(12px) saturate(1.4) brightness(0.85)', WebkitBackdropFilter: 'blur(12px) saturate(1.4) brightness(0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500 }}>
+        <div className="wt-item-select-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(14,27,43,0.4)', backdropFilter: 'blur(12px) saturate(1.4) brightness(0.85)', WebkitBackdropFilter: 'blur(12px) saturate(1.4) brightness(0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--z-overlay)' }}>
           {/* Animated shimmer overlay */}
           <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(120deg, transparent 30%, rgba(212,168,68,0.03) 50%, transparent 70%)', backgroundSize: '200% 100%', animation: 'wt-item-shimmer 3s ease-in-out infinite', pointerEvents: 'none' }} />
           {/* Modal container */}
@@ -4759,6 +4570,7 @@ function WastelandTactics() {
 
       {/* Lucky 38 Carousel */}
       {phase === 'carousel' && carouselActive && (
+        <Suspense fallback={null}>
         <Lucky38Carousel
           round={round} gold={gold} setGold={setGold} hp={hp} setHp={setHp}
           level={level} bench={bench} setBench={setBench}
@@ -4773,12 +4585,13 @@ function WastelandTactics() {
             setTimer(settings.prepTimer || 30);
           }}
         />
+        </Suspense>
       )}
 
       {/* Income Breakdown Overlay — suppressed if a higher-priority modal is open
           (item picker carousel, augment offer, boss intro, Lucky 38) to prevent stacking. */}
       {showIncome && incomeBreakdown && !itemSelection && !augmentChoice && !bossIntro && !carouselActive && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2500 }} onClick={() => setShowIncome(false)}>
+        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 'var(--z-overlay)' }} onClick={() => setShowIncome(false)}>
           <div style={{ background: 'var(--ui-panel)', border: '2px solid var(--ui-border)', borderRadius: 8, padding: 24, minWidth: 260, fontFamily: "'Share Tech Mono', monospace", boxShadow: '0 0 30px var(--ui-glow)' }} onClick={e => e.stopPropagation()}>
             <div style={{ fontSize: 14, fontWeight: 'bold', color: 'var(--ui-primary)', letterSpacing: 2, marginBottom: 12, textAlign: 'center' }}>INCOME</div>
             {[
@@ -4803,23 +4616,11 @@ function WastelandTactics() {
 
       {/* Game Over */}
       {phase === 'gameover' && (
-        <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.9)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2900 }}>
-          <div style={{ background: 'linear-gradient(180deg, #1a0000 0%, #0a0a00 100%)', border: '3px solid #ff0000', borderRadius: 8, padding: 40, textAlign: 'center', boxShadow: '0 0 50px rgba(255,0,0,0.5)' }}>
-            <div style={{ fontSize: 32, fontWeight: 'bold', color: '#ff0000', marginBottom: 16, letterSpacing: 4 }}>GAME OVER</div>
-            <div style={{ fontSize: 32, fontWeight: 'bold', color: '#ff0000', marginBottom: 8 }}>YOU DIED</div>
-            <div style={{ fontSize: 18, marginBottom: 12, opacity: 0.8 }}>Survived {round} rounds</div>
-            <div style={{ fontSize: 12, opacity: 0.6, marginBottom: 4 }}>Level {level} | {augments.length} augment{augments.length !== 1 ? 's' : ''} | {itemInventory.length} item{itemInventory.length !== 1 ? 's' : ''}</div>
-            {augments.length > 0 && <div style={{ fontSize: 10, opacity: 0.5, marginBottom: 12, display: 'flex', alignItems: 'center', gap: 3, justifyContent: 'center' }}>Augments: {augments.map(id => { const a = AUGMENT_POOL.find(a => a.id === id); return a ? <GameIcon key={id} iconImg={a.iconImg} icon={a.icon} size={12} /> : null; })}</div>}
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
-              <button onClick={restart} style={{ padding: '12px 32px', fontSize: 16, background: 'rgba(0,100,0,0.6)', border: '2px solid var(--ui-border)', borderRadius: 4, color: 'var(--ui-primary)', cursor: 'pointer', fontFamily: 'inherit', fontWeight: 'bold' }}>RESTART</button>
-              <button onClick={() => { navigator.clipboard?.writeText(`Wasteland Tactics - Survived ${round} rounds! Level ${level}, ${augments.length} augments.`); }} style={{ padding: '12px 16px', fontSize: 12, background: 'rgba(0,0,100,0.4)', border: '1px solid #6666ff', borderRadius: 4, color: '#6666ff', cursor: 'pointer', fontFamily: 'inherit' }}>Share</button>
-            </div>
-          </div>
-        </div>
+        <GameOverScreen round={round} level={level} augments={augments} itemInventory={itemInventory} onRestart={restart} />
       )}
 
       </>)}
-      {import.meta.env.DEV && <DevTools externalActivate={devToolsActivate} onActivateConsumed={() => setDevToolsActivate(false)} />}
+      {import.meta.env.DEV && <Suspense fallback={null}><DevTools externalActivate={devToolsActivate} onActivateConsumed={() => setDevToolsActivate(false)} /></Suspense>}
     </div>
   );
 }

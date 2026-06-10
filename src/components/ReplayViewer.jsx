@@ -9,6 +9,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { loadReplays } from '../hooks/useSave.js';
+import Modal from './Modal.jsx';
 
 const SPEEDS = [0.5, 1, 2];
 const BASE_INTERVAL_MS = 500; // 1x speed = one action every 500ms
@@ -51,12 +52,11 @@ export default function ReplayViewer({ onClose, initialReplay = null }) {
   };
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 3500 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        background: 'var(--ui-panel, #0a0a0a)', border: '2px solid var(--ui-border, #33ff33)', borderRadius: 8, padding: 24,
-        minWidth: 500, maxWidth: 700, maxHeight: '80vh', display: 'flex', flexDirection: 'column',
-        color: 'var(--ui-text, #ddd)', fontFamily: "'Share Tech Mono', monospace",
-      }}>
+    <Modal onClose={onClose} label="Combat replays" zIndex="var(--z-toast)" panelStyle={{
+      background: 'var(--ui-panel, #0a0a0a)', border: '2px solid var(--ui-border, #33ff33)', borderRadius: 8, padding: 24,
+      width: 'clamp(300px, 92vw, 700px)', maxHeight: '80vh', display: 'flex', flexDirection: 'column',
+      color: 'var(--ui-text, #ddd)', fontFamily: "'Share Tech Mono', monospace",
+    }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
           <div style={{ fontSize: 16, color: 'var(--ui-primary, #33ff33)', letterSpacing: 2 }}>REPLAYS</div>
           <button onClick={onClose} style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--ui-border-dim, #444)', borderRadius: 3, padding: '2px 10px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
@@ -119,8 +119,7 @@ export default function ReplayViewer({ onClose, initialReplay = null }) {
             </div>
           </>
         )}
-      </div>
-    </div>
+    </Modal>
   );
 }
 

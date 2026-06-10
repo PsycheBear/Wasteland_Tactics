@@ -22,6 +22,25 @@ body {
   font-family: 'VT323', 'Share Tech Mono', 'Courier New', monospace;
 }
 
+/* === Z-INDEX SCALE ===
+ * Single source of truth for stacking order. Inline styles in components
+ * should use these via `zIndex: 'var(--z-...)'` instead of magic numbers.
+ *   chrome    — sticky headers, top bars
+ *   overlay   — income breakdown, scrim layers
+ *   modal     — settings, profile, augment picker, item picker
+ *   carousel  — Lucky 38 takeover (above normal modals)
+ *   gameover  — game-over screen (above everything interactive)
+ *   toast     — floating damage numbers, round banners, tooltips
+ */
+:root {
+  --z-chrome: 100;
+  --z-overlay: 2500;
+  --z-modal: 2700;
+  --z-carousel: 2800;
+  --z-gameover: 2900;
+  --z-toast: 3100;
+}
+
 /* === UI THEME CSS VARIABLES === */
 :root, [data-theme="tactical"] {
   --ui-primary: #c8942a;

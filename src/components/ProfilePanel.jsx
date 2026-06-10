@@ -16,6 +16,7 @@ import { loadPlayerStats } from '../hooks/useSave.js';
 import { getRecentErrors } from '../lib/logger.js';
 import { encode as encodeBuild, decode as decodeBuild } from '../lib/buildCodec.js';
 import ReplayViewer from './ReplayViewer.jsx';
+import Modal from './Modal.jsx';
 
 export default function ProfilePanel({ onClose, currentBuild = null, onImport = null }) {
   const [stats] = useState(() => loadPlayerStats());
@@ -56,14 +57,13 @@ export default function ProfilePanel({ onClose, currentBuild = null, onImport = 
   }
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2700 }} onClick={onClose}>
-      <div onClick={e => e.stopPropagation()} style={{
-        background: 'linear-gradient(180deg, #00130a 0%, #0a0a0a 100%)',
-        border: '3px solid var(--ui-border, #33ff33)', borderRadius: 8, padding: 24,
-        minWidth: 480, maxWidth: 640, maxHeight: '85vh', overflowY: 'auto',
-        color: 'var(--ui-text, #ddd)', fontFamily: "'Share Tech Mono', monospace",
-        boxShadow: '0 0 40px rgba(51,255,51,0.25)',
-      }}>
+    <Modal onClose={onClose} label="Vault-Tec profile" panelStyle={{
+      background: 'linear-gradient(180deg, #00130a 0%, #0a0a0a 100%)',
+      border: '3px solid var(--ui-border, #33ff33)', borderRadius: 8, padding: 24,
+      width: 'clamp(300px, 92vw, 640px)', maxHeight: '85vh', overflowY: 'auto',
+      color: 'var(--ui-text, #ddd)', fontFamily: "'Share Tech Mono', monospace",
+      boxShadow: '0 0 40px rgba(51,255,51,0.25)',
+    }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
           <div style={{ fontSize: 18, color: 'var(--ui-primary, #33ff33)', letterSpacing: 2 }}>VAULT-TEC PROFILE</div>
           <button onClick={onClose} style={{ background: 'transparent', color: 'inherit', border: '1px solid var(--ui-border-dim, #444)', borderRadius: 3, padding: '2px 12px', cursor: 'pointer', fontFamily: 'inherit' }}>Close</button>
@@ -131,8 +131,7 @@ export default function ProfilePanel({ onClose, currentBuild = null, onImport = 
             </div>
           )}
         </section>
-      </div>
-    </div>
+    </Modal>
   );
 }
 

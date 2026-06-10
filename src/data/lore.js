@@ -48,7 +48,9 @@ export const BOSS_LORE = {
   14: "Mirelurk Queens are the apex of the mirelurk hive, towering crustaceans that nest in flooded ruins and spit corrosive bile across the battlefield. A queen will flood the field with her brood and chase intruders until the swamp itself runs red.",
   21: "Super Mutant Behemoths are the largest and oldest of their kind, calcified into hulking giants over decades of FEV mutation. They drag wrecked cars and fire hydrants as clubs and view smaller mutants as little more than insects.",
   28: "Mythic Deathclaws are the rarest and most lethal variant of an already-apex species, scarred white veterans of countless wasteland kills. To meet one in the open is widely considered a death sentence, even for a heavily armed survivor.",
-  // Mothman: triggered at round 35 by extraBosses.js
+  // NOTE: stale since the boss overhaul — round 35 is Atom Theil in
+  // BOSS_DATABASE now (and 14/21 are Swan / Synth Courser, not the bosses
+  // described above). Kept for reference until new lore is written.
   35: "The Mothman is a cryptid drawn from West Virginia folklore, sighted around Point Pleasant between 1966 and 1967 as a winged humanoid with glowing red eyes. In post-war Appalachia it stalks the woods as a half-divine harbinger of doom, worshipped by its own cult and feared by every settlement on the I-64 corridor.",
 };
 
